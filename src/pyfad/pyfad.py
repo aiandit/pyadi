@@ -3,7 +3,7 @@ import sys, os, inspect, json
 from io import StringIO
 
 from astunparse import loadast, unparse2j, unparse
-from astunparse.astnode import ASTNode, BinOp, Constant
+from astunparse.astnode import ASTNode, BinOp, Constant, isgeneric
 from .astvisitor import ASTVisitorID
 
 class ASTVisitorFMAD(ASTVisitorID):
@@ -15,18 +15,23 @@ class ASTVisitorFMAD(ASTVisitorID):
     def ddispatch(self, tree):
         if isinstance(tree, list):
             return [self.ddispatch(t) for t in tree]
-        if not isinstance(tree, ASTNode):
+        elif isgeneric(tree):
             return tree
         cname = tree._class
         meth = getattr(self, "_D"+cname, None)
-        print(cname, vars(tree))
-        tree = tree.clone()
+        print('ddispatch?', cname, vars(tree))
         if meth:
+            print('Found method', cname)
             return meth(tree)
         else:
-            for name in vars(tree):
-                setattr(tree, name, self.ddispatch(getattr(tree, name)))
-            return tree
+            print('start dispatch', vars(tree).keys())
+            print('start dispatch', dir(tree))
+            res = ASTNode()
+            for name in vars(tree).keys():
+                delem = self.ddispatch(getattr(tree, name))
+                print(f'DDispatch {name} => {repr(delem)}')
+                setattr(res, name, delem)
+            return res
 
     def _FunctionDef(self, t):
         if t.name in self.active_methods:
@@ -39,37 +44,36 @@ class ASTVisitorFMAD(ASTVisitorID):
                 if item._class == "Assign":
                     nbody += [ self.ddispatch(item.clone()) ]
                     nbody += [ self.dispatch(item) ]
+                elif item._class == "AugAssign":
+                    nbody += [ self.ddispatch(item.clone()) ]
+                    nbody += [ self.dispatch(item) ]
                 else:
                     nbody += [ self.dispatch(item) ]
             t.body = nbody
+            t.decorator_list = []
         else:
             t.args = self.dispatch(t.args)
             t.body = self.dispatch(t.body)
         return t
 
-    def __Darguments(self, t):
-        return t
-
-    def _Darguments(self, t):
-        assert(type(t.args) == type([]))
+    def _Darguments(self, node):
+        assert(type(node.args) == type([]))
         dargs = []
-        for t in t.args:
-            print('   * args', t.arg, t.arg in self.active_objects)
+        for t in node.args:
             if t.arg in self.active_objects:
-                tr1 = self.ddispatch(t.clone())
-                tr2 = t.clone()
+                tr1 = self.ddispatch(t)
+                tr2 = t
                 dargs += [tr1, tr2]
             else:
-                dargs += [t.clone()]
-#        t.args = dargs
-#        return t
-        t.args = [d for d in dargs]
-        return t
+                dargs += [t]
+        node.args = dargs
+        return node
 
-    def _Call(self, t):
-        print(f'Catch Call {t.func} {vars(t)}')
-        t.func = self.dispatch(t.func)
-        t.args = self.dispatch(t.args)
+    def _Darg(self, t):
+        if t.arg in self.active_objects:
+            t = t.clone()
+            t.arg = 'd_' + t.arg
+            print('   * active arg', t.arg)
         return t
 
     def _DCall(self, t):
@@ -103,7 +107,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _DBinOp(self, t):
-        print(f'Diff BinOp {t.op} left {vars(t.left)}')
+        print(f'Diff BinOp {t} left {vars(t.left)}')
         if t.op == '*':
             left = BinOp('*')
             left.left = self.ddispatch(t.left.clone())
@@ -123,16 +127,14 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _BinOp(self, t):
-        print(f'Catch BinOp {t.op}')
-        t.left = self.dispatch(t.left)
-        t.right = self.dispatch(t.right)
+        print(f'Catch BinOp {repr(t.op)}')
         return t
 
 
 def diff2pys(intree, visitor):
-    print('intree', unparse2j(intree), file=open('intree.json', 'w'))
+    print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
     outtree = visitor(intree)
-    print('outtree', unparse2j(outtree), file=open('outtree.json', 'w'))
+    print('outtree', unparse2j(outtree, indent=1), file=open('outtree.json', 'w'))
     return unparse(outtree)
 
 def diff2py(fname):
@@ -152,16 +154,33 @@ def roundtrip2JID(fname):
         source = pyfile.read()
         return roundtrip2JIDs(source, fname)
 
+def execompile(source, imports=['math', 'sys', 'os'], vars=['x'], **kw):
+
+    importstr = '\n'.join([f'import {name}' for name in imports])
+    collectstr = '\n'.join([f'data["{name}"] = {name}' for name in vars])
+
+    dsrc = f"{importstr}\n{source}\n{collectstr}"
+    print(dsrc)
+    res = compile(dsrc, 'diff.py', 'exec')
+
+    gvars = {'data': {}}
+    exec(res, gvars)
+
+    result = {name: gvars["data"][name] for name in vars}
+    return result
+
 def diffmethod(obj, method, active=[]):
     meth = getattr(obj, method)
     csrc = inspect.getsource(meth).strip()
     fmadtrans = ASTVisitorFMAD()
     fmadtrans.active_methods = [method] + active
-    fmadtrans.active_fields = ['position', 'speed', 'acceleration', 'axis'] + active
-    fmadtrans.active_objects = ['self', 'dself', 'forces'] + active
+    fmadtrans.active_fields += ['position', 'speed', 'acceleration', 'axis'] + active
+    fmadtrans.active_objects = ['self', 'dself', 'dt', 'forces'] + active
     dsrc = diff2pys(loadast(csrc), fmadtrans)
     print(dsrc)
     gvars = {'data': {}}
+    with open('diff.json', 'w') as f:
+        f.write(unparse2j(dsrc, '', 1))
     with open('diff.py', 'w') as f:
         f.write(dsrc)
     res = compile('import math\n' +
@@ -171,6 +190,16 @@ def diffmethod(obj, method, active=[]):
     print('er', er)
     setattr(obj, 'd_' + method, er)
     return res
+
+def difffunction(func, active=[]):
+    csrc = inspect.getsource(func).strip()
+    fmadtrans = ASTVisitorFMAD()
+    fmadtrans.active_methods = [func.__name__] + active
+    fmadtrans.active_fields += ['position', 'speed', 'acceleration', 'axis'] + active
+    fmadtrans.active_objects = ['self', 'dself', 'dt', 'forces'] + active
+    dsrc = diff2pys(loadast(csrc), fmadtrans)
+    dfunc = execompile(dsrc, vars=['d_' + func.__name__])
+    return (dfunc, active)
 
 def run():
     fname = 'pyphy/parser.py'
@@ -202,19 +231,62 @@ Source:
 Result:
 {res}""")
 
+def pyfad_diff(active='all'):
+    def _pyfad_diff(function):
+
+        adc = {'f': None}
+
+        def inner(*args, **kw):
+            if 'mode' in kw and kw['mode'] == 'f':
+                result = function(*args)
+            else:
+                result = function(*args)
+
+                if adc['f'] is None:
+                    (adfun, actind) = difffunction(function, active=active)
+                    adc['f'] = (adfun, actind)
+                else:
+                    (adfun, actind) = adc['f']
+
+                if 'dx' in kw:
+                    dargs = dx
+                else:
+                    dargs = createGradients(args, actind)
+
+                (dresult, result) = adfun(dargs, args)
+                return (dresult, result)
+
+        return inner
+    return _pyfad_diff
+
+@pyfad_diff(active=['x', 'z'])
+def demof1(x,y,z):
+    r = x*y*z
+
+def rundifffunc():
+    x, y, z = 3,6,2
+    (a, b) = demof1(x, y, z)
+    print(a,b)
+    (a, b) = demof1(x, y, z, dx=[1,2,3])
+    print(a,b)
+
 class Flywheel:
+    pos = 0
+    vel = 0
+    acc = 0
     def equations(self, dt):
         self.pos += self.vel * dt
         self.vel += self.acc * dt
-                
+
 def rundiffmethod():
     diffmethod(Flywheel, 'equations')
     fl = Flywheel()
     print(dir(fl))
-    fl.d_equations()
-    fl.equations()
+    fl.d_equations(fl, 1, 1)
+    fl.equations(1)
 
 if __name__ == "__main__":
-    rundiffmethod()
+    rundifffunc()
+    # rundiffmethod()
     # testdir()
 #run()
