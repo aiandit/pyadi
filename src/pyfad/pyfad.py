@@ -3,8 +3,8 @@ import sys, os, inspect, json
 from io import StringIO
 
 from astunparse import loadast, unparse2j, unparse
-from astunparse.astnode import ASTNode, BinOp, Constant, isgeneric
-from .astvisitor import ASTVisitorID
+from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric
+from .astvisitor import ASTVisitorID, canonicalize, reolvetmpvars
 
 class ASTVisitorFMAD(ASTVisitorID):
 
@@ -133,9 +133,18 @@ class ASTVisitorFMAD(ASTVisitorID):
 
 def diff2pys(intree, visitor):
     print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
+    intree = canonicalize(intree)
+    intree = reolvetmpvars(intree.clone())
+    print('canon', unparse2j(intree, indent=1), file=open('canon.json', 'w'))
+    print('canon', unparse(intree), file=open('canon.py', 'w'))
+    print('canon', unparse(intree))
+    intree = reolvetmpvars(intree.clone())
+    print('canon', unparse2j(intree, indent=1), file=open('norm.json', 'w'))
+    print('canon', unparse(intree), file=open('norm.py', 'w'))
+    print('canon', unparse(intree))
     outtree = visitor(intree)
     print('outtree', unparse2j(outtree, indent=1), file=open('outtree.json', 'w'))
-    return unparse(outtree)
+    return unparse(outtree), outtree
 
 def diff2py(fname):
     with open(fname, "r") as pyfile:
@@ -197,8 +206,17 @@ def difffunction(func, active=[]):
     fmadtrans.active_methods = [func.__name__] + active
     fmadtrans.active_fields += ['position', 'speed', 'acceleration', 'axis'] + active
     fmadtrans.active_objects = ['self', 'dself', 'dt', 'forces'] + active
-    dsrc = diff2pys(loadast(csrc), fmadtrans)
-    dfunc = execompile(dsrc, vars=['d_' + func.__name__])
+    dsrc, dtree = diff2pys(loadast(csrc), fmadtrans)
+    try:
+        dfunc = execompile(dsrc, vars=['d_' + func.__name__])
+    except:
+        print(unparse2j(dtree, indent=1), file=open('d_failed.json', 'w'))
+        print(dsrc, file=open('d_failed.py', 'w'))
+        print(f"""Failed to load diff code
+Source:
+{csrc}
+Result:
+{dsrc}""")
     return (dfunc, active)
 
 def run():
@@ -231,6 +249,38 @@ Source:
 Result:
 {res}""")
 
+def fid(func):
+    return f'{func.__name__}{func.__module__.__file__}'
+
+def pyadDiffFunction(function, opts={'active': 'all'}):
+    adc = {}
+
+    if adc[fid(function)] is None:
+        print(f'Diff function {{func.__name__}}')
+        (adfun, actind) = difffunction(function, active=active)
+        adc[fid(function)] = (adfun, actind)
+    else:
+        print(f'Found diff function {{func.__name__}}')
+        (adfun, actind) = adc[fid(function)]
+
+    return (adfun, actind)
+
+D = pyadDiffFunction
+
+def pyadDiffFor(function, args, seed=1, opts={'active': 'all'}):
+    result = function(*args)
+
+    (adfun, actind) = D(function, opts)
+
+    if 'dx' in kw:
+        dargs = dx
+    else:
+        dargs = createGradients(args, actind)
+
+    (dresult, result) = adfun(dargs, args)
+    return (dresult, result)
+
+
 def pyfad_diff(active='all'):
     def _pyfad_diff(function):
 
@@ -259,15 +309,19 @@ def pyfad_diff(active='all'):
         return inner
     return _pyfad_diff
 
+@pyfad_diff(active=['x', 'y'])
+def demof1(x,y):
+    r = x*y
+
 @pyfad_diff(active=['x', 'z'])
-def demof1(x,y,z):
+def demof2(x,y,z):
     r = x*y*z
 
 def rundifffunc():
     x, y, z = 3,6,2
-    (a, b) = demof1(x, y, z)
+    (a, b) = demof2(x, y, z)
     print(a,b)
-    (a, b) = demof1(x, y, z, dx=[1,2,3])
+    (a, b) = demof2(x, y, z, dx=[1,2,3])
     print(a,b)
 
 class Flywheel:
