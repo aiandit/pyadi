@@ -9,7 +9,7 @@ from .astvisitor import ASTVisitorID, canonicalize, reolvetmpvars
 class ASTVisitorFMAD(ASTVisitorID):
 
     active_objects = ['self', 'dself', 'dt']
-    active_fields = ['acc', 'vel', 'pos', 'axis']
+    active_fields = ['acc', 'vel', 'pos', 'axis', 'x', 'y', 'z']
     active_methods = ['equations']
 
     def ddispatch(self, tree):
@@ -200,13 +200,22 @@ def diffmethod(obj, method, active=[]):
     setattr(obj, 'd_' + method, er)
     return res
 
-def difffunction(func, active=[]):
+def py(func):
     csrc = inspect.getsource(func).strip()
+    return csrc
+
+def Dpy(func, active=[]):
+    csrc = py(func)
     fmadtrans = ASTVisitorFMAD()
     fmadtrans.active_methods = [func.__name__] + active
     fmadtrans.active_fields += ['position', 'speed', 'acceleration', 'axis'] + active
     fmadtrans.active_objects = ['self', 'dself', 'dt', 'forces'] + active
     dsrc, dtree = diff2pys(loadast(csrc), fmadtrans)
+    return (dsrc, dtree)
+
+
+def difffunction(func, active=[]):
+    dsrc, dtree = Dpy(func, active)
     try:
         dfunc = execompile(dsrc, vars=['d_' + func.__name__])
     except:
@@ -252,17 +261,22 @@ Result:
 def fid(func,active):
     fmod = func.__module__
     modfile = sys.modules[fmod].__file__
-    return f'{func.__name__}:{modfile}:{repr(active)}'
+    return f'{func.__qualname__}:{modfile}:{repr(active)}'
 
-def varspec(x):
+def varspec(f, x):
     if isinstance(x, str):
-        return x.split(',')
+        if x == "all":
+            x = inspect.signature(f)
+            x = [f for f in x.parameters]
+        else:
+            x = x.split(',')
+        return x
     else: return x
 
 def DiffFunction(function, opts={'active': 'all'}):
     adc = {}
 
-    active = varspec(opts['active']) if 'active' in opts else []
+    active = varspec(function, opts['active']) if 'active' in opts else []
     findex = fid(function,active)
     if findex in adc:
         print(f'Found diff function {{func.__name__}}')
@@ -271,6 +285,7 @@ def DiffFunction(function, opts={'active': 'all'}):
         print(f'Diff function {{func.__name__}}')
         (adfun, actind) = difffunction(function, active=active)
         adc[findex] = (adfun, actind)
+        print(f'Diff function {{func.__name__}} cached => {findex}')
 
     return (adfun, actind)
 
@@ -284,7 +299,8 @@ def DiffFor(function, args, seed=1, opts={'active': 'all'}):
     if 'dx' in kw:
         dargs = dx
     else:
-        dargs = createGradients(args, actind)
+        if seed == 1:
+            dargs = createFullGradients(args, actind)
 
     (dresult, result) = adfun(dargs, args)
     return (dresult, result)
@@ -317,6 +333,8 @@ def Diff(active='all'):
 
         return inner
     return _pyfad_diff
+
+
 
 @Diff(active=['x', 'y'])
 def demof1(x,y):

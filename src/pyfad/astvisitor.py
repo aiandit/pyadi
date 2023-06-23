@@ -160,6 +160,30 @@ def reolvetmpvars(tree, **kw):
     an = ASTReolvetmpvars()
     return an(tree)
 
+class ASTFLocals:
+    def __init__(self, tree):
+        self.locals = []
+        self.dispatch(tree)
+
+    def dispatch(self, tree):
+        if type(tree) == type([]):
+            res = list(map(self.dispatch, tree))
+        elif isinstance(tree, ASTNode):
+
+            res = {k: self.dispatch(v) for k,v in fields(tree).items()}
+            for k in vars(tree).keys():
+                setattr(res, k, self.dispatch(getattr(tree, k)))
+
+            if tree._class == "Name":
+                self.locals.append(t.id)
+        else:
+            res = tree
+        return res
+
+def locals(tree, **kw):
+    an = ASTFLocals(tree)
+    return an.locals
+
 def py2pys_check(jdict, visitor):
     if type(jdict) == type(''):
         jdict = json.loads(jdict)
