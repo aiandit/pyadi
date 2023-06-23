@@ -23,3 +23,9 @@ class UnparseTestCase(unittest.TestCase):
         print('test f1', df)
         print('test f1 f', pyfad.py(self.f1))
         print('test f1 d/dx f', pyfad.Dpy(self.f1)[1])
+
+    def test_D_f1_call(self):
+        df, actind = pyfad.D(self.f1, opts={'active': ['x']})
+        print('actind', actind)
+        print('df', df)
+        dy, y = df([1,2,3], [1])

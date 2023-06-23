@@ -5,7 +5,11 @@ import time
 import random
 
 from astunparse import loadast, unparse2j
-from astunparse.astnode import ASTNode, BinOp, Constant, Name
+from astunparse.astnode import ASTNode, BinOp, Constant, Name, fields
+
+def py(func):
+    csrc = inspect.getsource(func).strip()
+    return csrc
 
 class ASTVisitor:
 
@@ -57,6 +61,16 @@ def isop(cn):
 class Assign(ASTNode):
     def __init__(self):
         self._class = 'Assign'
+
+class List(ASTNode):
+    def __init__(self, elts):
+        self._class = 'List'
+        self.elts = elts
+
+class Tuple(ASTNode):
+    def __init__(self, elts):
+        self._class = 'Tuple'
+        self.elts = elts
 
 tmpvars = {}
 class TmpVar(ASTNode):
@@ -171,16 +185,17 @@ class ASTFLocals:
         elif isinstance(tree, ASTNode):
 
             res = {k: self.dispatch(v) for k,v in fields(tree).items()}
-            for k in vars(tree).keys():
-                setattr(res, k, self.dispatch(getattr(tree, k)))
 
             if tree._class == "Name":
-                self.locals.append(t.id)
+                print('got Name', tree.id)
+                self.locals.append(tree.id)
         else:
             res = tree
         return res
 
 def locals(tree, **kw):
+    if callable(tree):
+        tree = loadast(py(tree))
     an = ASTFLocals(tree)
     return an.locals
 

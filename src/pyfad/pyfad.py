@@ -4,7 +4,7 @@ from io import StringIO
 
 from astunparse import loadast, unparse2j, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric
-from .astvisitor import ASTVisitorID, canonicalize, reolvetmpvars
+from .astvisitor import ASTVisitorID, canonicalize, reolvetmpvars, Assign, List, Tuple, py
 
 class ASTVisitorFMAD(ASTVisitorID):
 
@@ -47,6 +47,8 @@ class ASTVisitorFMAD(ASTVisitorID):
                 elif item._class == "AugAssign":
                     nbody += [ self.ddispatch(item.clone()) ]
                     nbody += [ self.dispatch(item) ]
+                elif item._class == "Return":
+                    nbody += [self.ddispatch(item)]
                 else:
                     nbody += [ self.dispatch(item) ]
             t.body = nbody
@@ -130,6 +132,11 @@ class ASTVisitorFMAD(ASTVisitorID):
         print(f'Catch BinOp {repr(t.op)}')
         return t
 
+    def _DReturn(self, t):
+        print('Diff Return')
+        t.value = Tuple([self.ddispatch(t.value.clone()), self.dispatch(t.value)])
+        return t
+
 
 def diff2pys(intree, visitor):
     print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
@@ -200,10 +207,6 @@ def diffmethod(obj, method, active=[]):
     setattr(obj, 'd_' + method, er)
     return res
 
-def py(func):
-    csrc = inspect.getsource(func).strip()
-    return csrc
-
 def Dpy(func, active=[]):
     csrc = py(func)
     fmadtrans = ASTVisitorFMAD()
@@ -217,7 +220,9 @@ def Dpy(func, active=[]):
 def difffunction(func, active=[]):
     dsrc, dtree = Dpy(func, active)
     try:
-        dfunc = execompile(dsrc, vars=['d_' + func.__name__])
+        fkey = 'd_' + func.__name__
+        dfunc = execompile(dsrc, vars=[fkey])
+        dfunc = dfunc[fkey]
     except:
         print(unparse2j(dtree, indent=1), file=open('d_failed.json', 'w'))
         print(dsrc, file=open('d_failed.py', 'w'))
