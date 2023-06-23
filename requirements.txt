@@ -1,2 +1,3 @@
 wheel
+build
 ../astunparse/dist/astunparse-1.6.3-py2.py3-none-any.whl
