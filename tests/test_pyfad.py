@@ -9,7 +9,10 @@ class UnparseTestCase(unittest.TestCase):
         r = x*y*z
         return r
 
-    def test_function(self):
+    def test_D_f1(self):
         df = pyfad.D(self.f1)
-        print(df)
-        self.assertTrue(False)
+        print('test f1', df)
+
+    def test_Diff_f1(self):
+        df = pyfad.Diff(self.f1)
+        print('test2', df)
