@@ -16,3 +16,10 @@ class UnparseTestCase(unittest.TestCase):
     def test_Diff_f1(self):
         df = pyfad.Diff(self.f1)
         print('test2', df)
+
+    def test_D_f1_active(self):
+        df = pyfad.D(self.f1, opts={'active': ['x']})
+        print('LOCALS', pyfad.locals(self.f1))
+        print('test f1', df)
+        print('test f1 f', pyfad.py(self.f1))
+        print('test f1 d/dx f', pyfad.Dpy(self.f1)[1])
