@@ -30,6 +30,7 @@ setup(
     package_dir={'': 'src'},
     packages=find_packages("src"),
     include_package_data=True,
+    install_requires='-r requirements.txt'
 #    package_data={'': ['lib/astunparse/xsl/xml2json.xsl']},
     entry_points={
         'console_scripts': [
@@ -41,7 +42,7 @@ setup(
     classifiers=[
         'Development Status :: 4 - Production/Stable',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: GPLv3 License',
+        'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
         'Topic :: Software Development :: Code Generators',

@@ -37,11 +37,9 @@ docs:
 	tox -e docs
 
 dist: clean
-	python setup.py sdist
-	python setup.py bdist_wheel
-	python setup.py bdist_egg
+	python -m build
 	ls -l dist
 
 PIP ?= pip
 install: dist
-	$(PIP) install src
+	$(PIP) install .
