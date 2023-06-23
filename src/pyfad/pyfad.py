@@ -249,25 +249,34 @@ Source:
 Result:
 {res}""")
 
-def fid(func):
-    return f'{func.__name__}{func.__module__.__file__}'
+def fid(func,active):
+    fmod = func.__module__
+    modfile = sys.modules[fmod].__file__
+    return f'{func.__name__}:{modfile}:{repr(active)}'
 
-def pyadDiffFunction(function, opts={'active': 'all'}):
+def varspec(x):
+    if isinstance(x, str):
+        return x.split(',')
+    else: return x
+
+def DiffFunction(function, opts={'active': 'all'}):
     adc = {}
 
-    if adc[fid(function)] is None:
+    active = varspec(opts['active']) if 'active' in opts else []
+    findex = fid(function,active)
+    if findex in adc:
+        print(f'Found diff function {{func.__name__}}')
+        (adfun, actind) = adc[findex]
+    else:
         print(f'Diff function {{func.__name__}}')
         (adfun, actind) = difffunction(function, active=active)
-        adc[fid(function)] = (adfun, actind)
-    else:
-        print(f'Found diff function {{func.__name__}}')
-        (adfun, actind) = adc[fid(function)]
+        adc[findex] = (adfun, actind)
 
     return (adfun, actind)
 
-D = pyadDiffFunction
+D = DiffFunction
 
-def pyadDiffFor(function, args, seed=1, opts={'active': 'all'}):
+def DiffFor(function, args, seed=1, opts={'active': 'all'}):
     result = function(*args)
 
     (adfun, actind) = D(function, opts)
@@ -281,7 +290,7 @@ def pyadDiffFor(function, args, seed=1, opts={'active': 'all'}):
     return (dresult, result)
 
 
-def pyfad_diff(active='all'):
+def Diff(active='all'):
     def _pyfad_diff(function):
 
         adc = {'f': None}
@@ -309,11 +318,11 @@ def pyfad_diff(active='all'):
         return inner
     return _pyfad_diff
 
-@pyfad_diff(active=['x', 'y'])
+@Diff(active=['x', 'y'])
 def demof1(x,y):
     r = x*y
 
-@pyfad_diff(active=['x', 'z'])
+@Diff(active=['x', 'z'])
 def demof2(x,y,z):
     r = x*y*z
 
