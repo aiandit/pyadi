@@ -10,4 +10,6 @@ class UnparseTestCase(unittest.TestCase):
         return r
 
     def test_function(self):
-        df = pyfad.D(f1)
+        df = pyfad.D(self.f1)
+        print(df)
+        self.assertTrue(False)
