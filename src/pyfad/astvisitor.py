@@ -4,6 +4,7 @@ from io import StringIO
 import time
 import random
 
+import astunparse
 from astunparse import loadast, unparse2j
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, fields
 
@@ -170,9 +171,16 @@ class ASTReolvetmpvars:
             res = tree
         return res
 
-def reolvetmpvars(tree, **kw):
+def resolvetmpvars(tree, **kw):
     an = ASTReolvetmpvars()
     return an(tree)
+
+
+def normalize(tree, **kw):
+    tree = resolvetmpvars(tree)
+    tree = astunparse.normalize(tree)
+    return tree
+
 
 class ASTFLocals:
     def __init__(self, tree):

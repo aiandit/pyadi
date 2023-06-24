@@ -4,7 +4,7 @@ from io import StringIO
 
 from astunparse import loadast, unparse2j, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric
-from .astvisitor import ASTVisitorID, canonicalize, reolvetmpvars, Assign, List, Tuple, py
+from .astvisitor import ASTVisitorID, canonicalize, resolvetmpvars, normalize, Assign, List, Tuple, py
 
 class ASTVisitorFMAD(ASTVisitorID):
 
@@ -138,37 +138,45 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
 
-def diff2pys(intree, visitor):
+def diff2pys(intree, visitor, *kw):
     print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
     intree = canonicalize(intree)
-    intree = reolvetmpvars(intree.clone())
+    intree = resolvetmpvars(intree.clone())
     print('canon', unparse2j(intree, indent=1), file=open('canon.json', 'w'))
     print('canon', unparse(intree), file=open('canon.py', 'w'))
     print('canon', unparse(intree))
-    intree = reolvetmpvars(intree.clone())
+    intree = normalize(intree.clone())
     print('canon', unparse2j(intree, indent=1), file=open('norm.json', 'w'))
     print('canon', unparse(intree), file=open('norm.py', 'w'))
     print('canon', unparse(intree))
     outtree = visitor(intree)
     print('outtree', unparse2j(outtree, indent=1), file=open('outtree.json', 'w'))
-    return unparse(outtree), outtree
+    return outtree
+
+def differentiate(intree, activef=None, active=None, **kw):
+    fmadtrans = ASTVisitorFMAD()
+    fmadtrans.active_methods = activef if activef is not None else []
+    fmadtrans.active_fields  = active if active is not None else []
+    fmadtrans.active_objects = ['self', 'dself', 'dt', 'forces'] + active
+    dtree = diff2pys(intree, fmadtrans)
+    return dtree
+
 
 def diff2py(fname):
     with open(fname, "r") as pyfile:
         source = pyfile.read()
-    return json2pys(source, fname)
+    return unparse(diff2pys(source, fname))
 
 
-def roundtrip2JIDs(source, fname):
-    fmadtrans = ASTVisitorFMAD()
-    fmadtrans.active_methods = ['equations']
-    fmadtrans.active_fields = ['pos', 'vel', 'acc', 'axis']
-    return diff2pys(loadast(source), fmadtrans)
+def diff2pys2s(source, fname):
+    return unparse(differentiate(loadast(source)))
+
 
 def roundtrip2JID(fname):
     with open(fname, "r") as pyfile:
         source = pyfile.read()
         return roundtrip2JIDs(source, fname)
+
 
 def execompile(source, imports=['math', 'sys', 'os'], vars=['x'], **kw):
 
@@ -185,35 +193,11 @@ def execompile(source, imports=['math', 'sys', 'os'], vars=['x'], **kw):
     result = {name: gvars["data"][name] for name in vars}
     return result
 
-def diffmethod(obj, method, active=[]):
-    meth = getattr(obj, method)
-    csrc = inspect.getsource(meth).strip()
-    fmadtrans = ASTVisitorFMAD()
-    fmadtrans.active_methods = [method] + active
-    fmadtrans.active_fields += ['position', 'speed', 'acceleration', 'axis'] + active
-    fmadtrans.active_objects = ['self', 'dself', 'dt', 'forces'] + active
-    dsrc = diff2pys(loadast(csrc), fmadtrans)
-    print(dsrc)
-    gvars = {'data': {}}
-    with open('diff.json', 'w') as f:
-        f.write(unparse2j(dsrc, '', 1))
-    with open('diff.py', 'w') as f:
-        f.write(dsrc)
-    res = compile('import math\n' +
-                  dsrc + '\ndata["d_equations"] = d_equations', 'diff.py', 'exec')
-    exec(res, gvars)
-    er = gvars['data']['d_equations']
-    print('er', er)
-    setattr(obj, 'd_' + method, er)
-    return res
 
 def Dpy(func, active=[]):
     csrc = py(func)
-    fmadtrans = ASTVisitorFMAD()
-    fmadtrans.active_methods = [func.__name__] + active
-    fmadtrans.active_fields += ['position', 'speed', 'acceleration', 'axis'] + active
-    fmadtrans.active_objects = ['self', 'dself', 'dt', 'forces'] + active
-    dsrc, dtree = diff2pys(loadast(csrc), fmadtrans)
+    dtree = differentiate(loadast(csrc), activef=[func.__name__, func.__qualname__], active=active)
+    dsrc = unparse(dtree)
     return (dsrc, dtree)
 
 
@@ -228,10 +212,11 @@ def difffunction(func, active=[]):
         print(dsrc, file=open('d_failed.py', 'w'))
         print(f"""Failed to load diff code
 Source:
-{csrc}
+{py(func)}
 Result:
 {dsrc}""")
     return (dfunc, active)
+
 
 def run():
     fname = 'pyphy/parser.py'
@@ -248,6 +233,7 @@ def run():
 #        tree = compile(src, 'test_py', "exec", ast.PyCF_ONLY_AST, dont_inherit=True)
 #        c2 = ASTFragment(tree)
 #       UnparserJ(tree, output)
+
 
 def testdir():
     base = 'examples'
@@ -363,13 +349,6 @@ class Flywheel:
     def equations(self, dt):
         self.pos += self.vel * dt
         self.vel += self.acc * dt
-
-def rundiffmethod():
-    diffmethod(Flywheel, 'equations')
-    fl = Flywheel()
-    print(dir(fl))
-    fl.d_equations(fl, 1, 1)
-    fl.equations(1)
 
 if __name__ == "__main__":
     rundifffunc()
