@@ -1,10 +1,24 @@
 from astunparse import Unparser
-import sys, os, inspect, json
+import sys, os, inspect, json, shutil
 from io import StringIO
+import tempfile
 
 from astunparse import loadast, unparse2j, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric
 from .astvisitor import ASTVisitorID, canonicalize, resolvetmpvars, normalize, Assign, List, Tuple, py
+
+class Call(ASTNode):
+    def __init__(self, func):
+        self._class = "Call"
+        self.func = func
+        self.args = []
+        self.keywords = []
+
+class Keyword(ASTNode):
+    def __init__(self, arg, value):
+        self._class = "Keyword"
+        self.arg = arg
+        self.value = value
 
 class ASTVisitorFMAD(ASTVisitorID):
 
@@ -43,7 +57,8 @@ class ASTVisitorFMAD(ASTVisitorID):
             for item in t.body:
                 if item._class == "Assign":
                     nbody += [ self.ddispatch(item.clone()) ]
-                    nbody += [ self.dispatch(item) ]
+                    if item.value._class not in ['Call']:
+                        nbody += [ self.dispatch(item) ]
                 elif item._class == "AugAssign":
                     nbody += [ self.ddispatch(item.clone()) ]
                     nbody += [ self.dispatch(item) ]
@@ -64,11 +79,8 @@ class ASTVisitorFMAD(ASTVisitorID):
         for t in node.args:
             if t.arg in self.active_objects:
                 tr1 = self.ddispatch(t)
-                tr2 = t
-                dargs += [tr1, tr2]
-            else:
-                dargs += [t]
-        node.args = dargs
+                dargs += [tr1]
+        node.args = dargs + node.args
         return node
 
     def _Darg(self, t):
@@ -78,12 +90,24 @@ class ASTVisitorFMAD(ASTVisitorID):
             print('   * active arg', t.arg)
         return t
 
+    def _DAssign(self, t):
+        if t.value._class == 'Call':
+            t.targets = self.ddispatch(t.targets) + self.dispatch(t.targets)
+        else:
+            t.targets = self.ddispatch(t.targets)
+        t.value = self.ddispatch(t.value)
+        return t
+
     def _DCall(self, t):
         print(f'Diff Call {t.func} {vars(t)}')
         t = t.clone()
-        t.func.attr = 'd_' + t.func.attr
-        t.args = self.ddispatch(t.args)
-        return t
+        dcall = Call(Name('D'))
+        dcall.args = [t.func]
+
+        res = Call(dcall)
+        res.args = self.ddispatch([t.clone() for t in t.args]) + self.dispatch(t.args)
+        res.keywords = self.ddispatch(t.keywords)
+        return res
 
     def _DName(self, t):
         print(f'Diff Name {t.id}')
@@ -157,7 +181,7 @@ def differentiate(intree, activef=None, active=None, **kw):
     fmadtrans = ASTVisitorFMAD()
     fmadtrans.active_methods = activef if activef is not None else []
     fmadtrans.active_fields  = active if active is not None else []
-    fmadtrans.active_objects = ['self', 'dself', 'dt', 'forces'] + active
+    fmadtrans.active_objects = ['self', 'dself', 'dt', 'forces'] + active if active is not None else []
     dtree = diff2pys(intree, fmadtrans)
     return dtree
 
@@ -178,19 +202,27 @@ def roundtrip2JID(fname):
         return roundtrip2JIDs(source, fname)
 
 
-def execompile(source, imports=['math', 'sys', 'os'], vars=['x'], **kw):
+def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'pyfad': 'D'}], vars=['x'], **kw):
 
-    importstr = '\n'.join([f'import {name}' for name in imports])
+    importstr = '\n'.join([f'import {name}' if isinstance(name, str) else ('\n'.join([f'from {k} import {v}' for k,v in name.items()])) for name in imports])
     collectstr = '\n'.join([f'data["{name}"] = {name}' for name in vars])
 
-    dsrc = f"{importstr}\n{source}\n{collectstr}"
+#    dsrc = f"{importstr}\n{source}\n{collectstr}"
+    dsrc = f"{source}\n{collectstr}"
     print(dsrc)
-    res = compile(dsrc, 'diff.py', 'exec')
+    tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
+    sfname = f'{tmpsdir}/diff.py'
+    with open(sfname, 'w') as f:
+        f.write(dsrc)
+    res = compile(dsrc, sfname, "exec")
 
     gvars = {'data': {}}
-    exec(res, gvars)
+    print('compiling with globals', (gvars|globals()|fglobals).keys())
+    exec(res, gvars|globals()|fglobals, flocals)
 
     result = {name: gvars["data"][name] for name in vars}
+
+#    shutil.rmtree(tmpsdir)
     return result
 
 
@@ -205,16 +237,18 @@ def difffunction(func, active=[]):
     dsrc, dtree = Dpy(func, active)
     try:
         fkey = 'd_' + func.__name__
-        dfunc = execompile(dsrc, vars=[fkey])
+        dfunc = execompile(dsrc, vars=[fkey], fglobals=func.__globals__)
         dfunc = dfunc[fkey]
-    except:
+    except BaseException as ex:
         print(unparse2j(dtree, indent=1), file=open('d_failed.json', 'w'))
         print(dsrc, file=open('d_failed.py', 'w'))
-        print(f"""Failed to load diff code
+        print(f"""Failed to load diff code, exception:
+{ex}
 Source:
 {py(func)}
 Result:
 {dsrc}""")
+        raise(ex)
     return (dfunc, active)
 
 
@@ -278,7 +312,7 @@ def DiffFunction(function, opts={'active': 'all'}):
         adc[findex] = (adfun, actind)
         print(f'Diff function {{func.__name__}} cached => {findex}')
 
-    return (adfun, actind)
+    return adfun
 
 D = DiffFunction
 
