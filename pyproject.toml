@@ -1,6 +1,21 @@
 [project]
 name = "pyfad"
 version = "1.0.1"
+authors = [
+  { name="Johannes Willkomm", email="jwillkomm@ai-and-it.de" },
+]
+description = "Source AD for python"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/aiandit/pyfad"
+"Bug Tracker" = "https://github.com/aiandit/pyfad/issues"
 
 [build-system]
 requires = ["hatchling"]
