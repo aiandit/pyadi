@@ -59,6 +59,12 @@ class ASTVisitorID(ASTVisitor):
 def isop(cn):
     return cn._class in ['BinOp', 'UnaryOp', 'BoolOp', 'AugAssign']
 
+def iscall(cn):
+    return cn._class in ['Call']
+
+def iscanon(cn):
+    return isop(cn) or iscall(cn)
+
 class Assign(ASTNode):
     def __init__(self):
         self._class = 'Assign'
@@ -128,12 +134,22 @@ class ASTCanonicalizer:
                 setattr(tree, k, self.dispatch(getattr(tree, k)))
 
             if tree._class == "BinOp":
-                if isop(tree.left):
+                if iscanon(tree.left):
                     (tl, tmpvar) = self.edispatch(tree.left)
                     tree.left = tmpvar
-                if isop(tree.right):
+                if iscanon(tree.right):
                     (tr, tmpvar) = self.edispatch(tree.right)
                     tree.right = tmpvar
+
+            elif tree._class == "Call":
+                nargs = []
+                for arg in tree.args:
+                    if iscanon(arg):
+                        nargs += [self.edispatch(arg.clone())[1]]
+                    else:
+                        nargs += [arg]
+                print('nargs', nargs)
+                tree.args = nargs
 
             res = tree
         else:
@@ -163,7 +179,7 @@ class ASTReolvetmpvars:
                 setattr(res, k, self.dispatch(getattr(tree, k)))
 
             if tree._class == "TmpVar":
-                res = Name(f'{tree.kind}_{tree.id}'.replace('.', ''))
+                res = Name(f'{tree.kind}_{int(tree.id * (1<<48)):d}')
         else:
             res = tree
         return res
