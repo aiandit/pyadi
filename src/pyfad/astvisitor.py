@@ -78,7 +78,7 @@ class TmpVar(ASTNode):
     def __init__(self, kind='t'):
         self._class = 'TmpVar'
         self.id = random.random()
-        print('****** TmpVar', self.id, self._class)
+#        print('****** TmpVar', self.id, self._class)
         self.kind = kind
         tmpvars[self.id] = self
 
@@ -91,19 +91,16 @@ class ASTCanonicalizer:
         return result
 
     def edispatch(self, tree):
-        print('edisp', tree)
+#        print('edisp', tree)
         if type(tree) == type([]):
             res = list(map(self.edispatch, tree))
         elif isinstance(tree, ASTNode):
             tmpas = Assign()
-            print('new tmp', dir(tmpas))
-            print('new tmp', vars(tmpas).keys())
             tmpv = TmpVar()
             tmpas.targets = [tmpv]
-            tmpas.value = self.dispatch(tree)
+            tmpas.value = self.dispatch(tree.clone())
             self._list.append(tmpas)
-            print('new tmp', dir(tmpas))
-            print('new tmp', vars(tmpas).keys())
+#            print('new tmp', repr(tmpas))
             res = tree
         else:
             res = tree
@@ -113,31 +110,31 @@ class ASTCanonicalizer:
         if type(tree) == type([]):
             res = list(map(self.dispatch, tree))
         elif isinstance(tree, ASTNode):
-            print('visit', vars(tree))
+#            print('visit', vars(tree))
+
             if tree._class == "FunctionDef":
-                print('canon', repr(tree))
+#                print('canon', tree)
                 nbody = []
                 for stmt in tree.body:
                     self._list = []
-                    self.dispatch(stmt.clone())
+                    pstmt = self.dispatch(stmt.clone())
                     nbody += self._list
-                    nbody += [stmt]
+                    nbody += [pstmt]
                 tree.body = nbody
-                print('nbody:', nbody)
+#                print('nbody:', astunparse.unparse(nbody))
+                return tree
 
-            elif tree._class == "BinOp":
-                print(' canon bin  ', repr(tree))
-                if isop(tree.left):
-                    print('edisp.left', repr(tree.left))
-                    (tl, tmpvar) = self.edispatch(tree.left.clone())
-                    tree.left = tmpvar.clone()
-                if isop(tree.right):
-                    print('edisp.right', repr(tree.right))
-                    (tr, tmpvar) = self.edispatch(tree.right.clone())
-                    tree.right = tmpvar.clone()
-
-            for k in vars(tree).keys():
+            for k in fields(tree):
                 setattr(tree, k, self.dispatch(getattr(tree, k)))
+
+            if tree._class == "BinOp":
+                if isop(tree.left):
+                    (tl, tmpvar) = self.edispatch(tree.left)
+                    tree.left = tmpvar
+                if isop(tree.right):
+                    (tr, tmpvar) = self.edispatch(tree.right)
+                    tree.right = tmpvar
+
             res = tree
         else:
             res = tree
