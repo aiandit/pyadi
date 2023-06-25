@@ -1,5 +1,9 @@
 from math import sin, cos, tan, asin, acos, atan, log, sqrt
 
+def f1(x):
+    z = fsin(x)
+    return z
+
 def fsin(x):
     z = sin(x)
     return z
