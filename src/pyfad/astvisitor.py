@@ -126,6 +126,8 @@ class ASTCanonicalizer:
                 tree.body = nbody
 #                print('nbody:', astunparse.unparse(nbody))
                 return tree
+            elif tree._class == "DictComp" or tree._class == "ListComp":
+                return tree
 
             for k in fields(tree):
                 setattr(tree, k, self.dispatch(getattr(tree, k)))

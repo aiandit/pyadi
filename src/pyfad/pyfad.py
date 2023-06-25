@@ -97,6 +97,10 @@ class ASTVisitorFMAD(ASTVisitorID):
         node.value = self.ddispatch(node.value)
         return node
 
+    def _DListComp(self, node):
+        node.elt = self.ddispatch(node.elt)
+        return node
+
     def _Dcomprehension(self, node):
         node.target = self.ddispatch(node.target)
         return node
@@ -127,6 +131,8 @@ class ASTVisitorFMAD(ASTVisitorID):
         node.defaults = list(chain(*zip(ddefs, node.defaults)))
 #        node.args = dargs + curargs
         return node
+
+    nonder_builtins = ['len']
 
     def _DCall(self, t):
         print(f'Diff Call {t.func} {vars(t)}')
