@@ -207,8 +207,10 @@ class Pyfad(unittest.TestCase):
         self.do_sourceDiff_f_x(fx.fsqrt)
 
     def test_sD_ftan_1(self):
+        pyfad.delrule(math.tan)
         with self.assertRaises(pyfad.NoRule):
             self.do_sourceDiff_f_x(fx.ftan)
+        pyfad.restorerule(math.tan)
  
     def test_sD_ftan(self):
         adf = lambda dx, x: (0, math.tan(x))
@@ -216,6 +218,13 @@ class Pyfad(unittest.TestCase):
         with self.assertRaises(WrongDerivative):
             self.do_sourceDiff_f_x(fx.ftan)
         pyfad.delrule(math.tan)
+
+    def _test_sD_fsqrt_1(self):
+        adf = lambda dx, x: (0, math.tan(x))
+        pyfad.setrule(fx.gbabylonian, adf)
+        with self.assertRaises(WrongDerivative):
+            self.do_sourceDiff_f_x(fx.ftan)
+        pyfad.delrule(fx.gbabylonian)
 
     def test_sD_ftan(self):
         adf = lambda dx, x: (dx / (1 + x*x), math.atan(x))
@@ -225,11 +234,14 @@ class Pyfad(unittest.TestCase):
         print('RULES', pyfad.getrules())
         pyfad.delrule(math.atan)
 
-    def test_fxyz(self, module=None):
+    def test_fxyz(self, module=None, args=[1,2,3]):
         if module is None:
             module = fxyz
         fnames = [f for f in dir(module) if f[0] == 'f']
         for f in fnames:
-            fn = getattr(fxyz, f)
+            fn = getattr(module, f)
             print(f'Test function {fn.__name__} from {module.__name__}')
-            self.do_sourceDiff_f_xyz(fn)
+            self.do_sourceDiff_f_xyz(fn, args=args)
+
+    def test_fx(self, module=None):
+        self.test_fxyz(module=fx, args=[0.234])
