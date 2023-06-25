@@ -1,23 +1,31 @@
 from astunparse import Unparser
-import sys, os, inspect, json, shutil
+import sys
+import os
+import inspect
+import json
+import shutil
 from io import StringIO
 import tempfile
 from itertools import chain
 
 from astunparse import loadast, unparse2j, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric
-from .astvisitor import ASTVisitorID, canonicalize, resolvetmpvars, normalize, Assign, List, Tuple, py, filterLastFunction, infoSignature, filterFunctions
+
+from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py
+from .astvisitor import ASTVisitorID, Assign, List, Tuple
 
 from . import rules
 
 Debug = False
 
-def czip(a,b):
-    return chain(*zip(a,b))
+
+def czip(a, b):
+    return chain(*zip(a, b))
 
 
 class NoRule(BaseException):
     pass
+
 
 class Call(ASTNode):
     def __init__(self, func, args=[], kw=[]):
@@ -29,16 +37,19 @@ class Call(ASTNode):
         self.args = args
         self.keywords = kw
 
+
 class Keyword(ASTNode):
     def __init__(self, arg, value):
         self._class = "Keyword"
         self.arg = arg
         self.value = value
 
+
 class Starred(ASTNode):
     def __init__(self, value):
         self._class = "Starred"
         self.value = value
+
 
 class ASTVisitorFMAD(ASTVisitorID):
 
@@ -71,14 +82,14 @@ class ASTVisitorFMAD(ASTVisitorID):
         nbody = []
         for item in body:
             if item._class == "Assign":
-                nbody += [ self.ddispatch(item.clone()) ]
+                nbody += [self.ddispatch(item.clone())]
                 if item.value._class not in ['Call']:
-                    nbody += [ self.dispatch(item) ]
+                    nbody += [self.dispatch(item)]
             elif item._class == "AugAssign":
-                nbody += [ self.ddispatch(item.clone()) ]
-                nbody += [ self.dispatch(item) ]
+                nbody += [self.ddispatch(item.clone())]
+                nbody += [self.dispatch(item)]
             else:
-                nbody += [ self.ddispatch(item) ]
+                nbody += [self.ddispatch(item)]
         return nbody
 
     def _FunctionDef(self, t):
@@ -135,7 +146,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         return node
 
     def _Darguments(self, node):
-        assert(type(node.args) == type([]))
+        assert isinstance(node.args, list)
         dargs = []
         curargs = node.args
         for t in curargs:
@@ -305,7 +316,7 @@ def roundtrip2JID(fname):
 
 def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'pyfad': 'D'}], vars=['x'], **kw):
 
-    importstr = '\n'.join([f'import {name}' if isinstance(name, str) else ('\n'.join([f'from {k} import {v}' for k,v in name.items()])) for name in imports])
+    importstr = '\n'.join([f'import {name}' if isinstance(name, str) else ('\n'.join([f'from {k} import {v}' for k, v in name.items()])) for name in imports])
     collectstr = '\n'.join([f'data["{name}"] = {name}' for name in vars])
 
 #    dsrc = f"{importstr}\n{source}\n{collectstr}"
@@ -335,12 +346,10 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
             shutil.rmtree(tmpsdir)
 
     gvars = {'data': {}}
-    print('compiling with globals', (gvars|globals()|fglobals).keys())
-    exec(res, gvars|globals()|fglobals, flocals)
+    exec(res, gvars | globals() | fglobals, flocals)
 
     result = {name: gvars["data"][name] for name in vars}
 
-#    shutil.rmtree(tmpsdir)
     return result
 
 
@@ -364,7 +373,7 @@ def difffunction(func, active=[]):
 Source:
 {py(func)}
 """)
-        raise(ex)
+        raise ex
     return (dfunc, active)
 
 
@@ -372,7 +381,7 @@ def run():
     fname = 'pyphy/parser.py'
     with open(fname) as f:
         code = f.read()
-        output=sys.stdout
+        output = sys.stdout
         tree = compile(code, fname, "exec", ast.PyCF_ONLY_AST, dont_inherit=True)
         c1 = ASTFragment(tree)
         Unparser(tree, output)
@@ -380,9 +389,6 @@ def run():
         src = inspect.getsource(Test.energy).strip()
         print(f'prop: "\n{src}"')
         roundtrip2Js(src, 'test_py')
-#        tree = compile(src, 'test_py', "exec", ast.PyCF_ONLY_AST, dont_inherit=True)
-#        c2 = ASTFragment(tree)
-#       UnparserJ(tree, output)
 
 
 def testdir():
@@ -399,7 +405,8 @@ Source:
 Result:
 {res}""")
 
-def fid(func,active):
+
+def fid(func, active):
     fmod = func.__module__
     if fmod is None:
         fmod = func.__class__.__module__
@@ -467,6 +474,8 @@ def varspec(x):
 
 
 adc = {}
+
+
 def clear(search=None):
     global adc
     if search is None:
@@ -490,16 +499,17 @@ def DiffFunction(function, **opts):
     adfun = getattr(rules, id, None)
 
     if isbuiltin(function) and adfun is None:
-        raise(NoRule(f'No rule for buitin {function}, {id} not found in rules'))
+        fname = function.__name__
+        msg = f'No rule for buitin {fname}, function {id} not found'
+        raise (NoRule(msg))
 
     if adfun is None:
 
         # Try source diff
 
-#        print('DDD', opts, getsig(function, []))
         active = opts.get('active', [])
         print('DDD', active)
-        findex = fid(function,active)
+        findex = fid(function, active)
         if findex in adc:
             print(f'Found diff function {function.__name__}')
             (adfun, actind) = adc[findex]
@@ -515,17 +525,22 @@ def DiffFunction(function, **opts):
 
         adfun.issource = False
         adfunOrig = adfun
-        adfun = lambda *args: runRule(adfunOrig, function, args)
+
+        def inner(*args):
+            return runRule(adfunOrig, function, args)
+        adfun = inner
 
     return adfun
 
+
 D = DiffFunction
+
 
 def nvars(args):
     if isinstance(args, list) or isinstance(args, tuple):
         return sum([nvars(f) for f in args])
     elif isinstance(args, dict):
-        return sum([nvars(v) for f,v in args.items()])
+        return sum([nvars(v) for f, v in args.items()])
     elif isgeneric(args):
         return 1
 
@@ -534,7 +549,7 @@ def varv(args):
     if isinstance(args, list) or isinstance(args, tuple):
         return chain(*[varv(f) for f in args])
     elif isinstance(args, dict):
-        return chain(*[varv(v) for f,v in args.items()])
+        return chain(*[varv(v) for f, v in args.items()])
     elif isgeneric(args):
         return [args]
 
@@ -545,7 +560,7 @@ def dzeros(args):
     elif isinstance(args, tuple):
         return tuple([dzeros(f) for f in args])
     elif isinstance(args, dict):
-        return {f: dzeros(v) for f,v in args.items()}
+        return {f: dzeros(v) for f, v in args.items()}
     elif isgeneric(args):
         return 0.0
 
@@ -575,7 +590,7 @@ def fill(arg, seed):
     elif isinstance(arg, tuple):
         return tuple(fill(f, seed) for f in arg)
     elif isinstance(arg, dict):
-        return {f: fill(v, seed) for f,v in arg.items()}
+        return {f: fill(v, seed) for f, v in arg.items()}
     elif isgeneric(arg):
         return next(seed)
 
@@ -588,6 +603,7 @@ def dargs(args, seed=1):
     dargs = fill(zargs, seed)
     return dargs
 
+
 def createFullGradients(args):
     N = nvars(args)
     seeds = []
@@ -598,6 +614,7 @@ def createFullGradients(args):
         dargs = fill(zargs, seed)
         seeds.append(dargs)
     return seeds
+
 
 def DiffFor(function, *args, **opts):
     result = function(*args)
@@ -613,7 +630,7 @@ def DiffFor(function, *args, **opts):
             dargsList = createFullGradients(args)
             dresult = [adfun(*czip(dargs, args)) for dargs in dargsList]
             result = dresult[0][1]
-            dresult = [d for d,r in dresult]
+            dresult = [d for d, r in dresult]
         elif isinstance(arg, list):
             dargs = fill(dzeros(args), seed)
             (dresult, result) = adfun(*czip(dargs, args))
@@ -663,8 +680,9 @@ def DiffFD(f, *args, **opts):
         sig = getsig(f)
         inds = [sig.index(a) for a in sig if a in active]
         fullargs = [v for v in args]
+
         def inner(*aargs):
-            for i,k in enumerate(inds):
+            for i, k in enumerate(inds):
                 fullargs[k] = aargs[i]
             return f(*fullargs)
         func = inner
@@ -694,33 +712,3 @@ def DiffFD(f, *args, **opts):
     else:
         dres = dirder(func, args, seed)
     return dres, r
-
-
-@Diff(active=['x', 'y'])
-def demof1(x,y):
-    r = x*y
-
-@Diff(active=['x', 'z'])
-def demof2(x,y,z):
-    r = x*y*z
-
-def rundifffunc():
-    x, y, z = 3,6,2
-    (a, b) = demof2(x, y, z)
-    print(a,b)
-    (a, b) = demof2(x, y, z, dx=[1,2,3])
-    print(a,b)
-
-class Flywheel:
-    pos = 0
-    vel = 0
-    acc = 0
-    def equations(self, dt):
-        self.pos += self.vel * dt
-        self.vel += self.acc * dt
-
-if __name__ == "__main__":
-    rundifffunc()
-    # rundiffmethod()
-    # testdir()
-#run()
