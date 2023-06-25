@@ -79,3 +79,71 @@ def f12(x,y,z):
     s = l[-1] * x
     r = f1(l[0], x*y, s)
     return r
+
+def f13(x,y,z):
+    a = 17
+    b = 2.3 * a
+    l = {"t": x, "k": y*2, "m": z*y}
+    s = l["t"] * x
+    r = f1(l["m"], x*y, s)
+    return r
+
+def f14(x,y,z):
+    a = 17
+    b = 2.3 * a
+    l = {"t": x, "k": y*2, "m": z*y}
+    s = l["t"] * x
+    if x < y:
+        r = f1(l["m"], x*y, s)
+    else:
+        r = f2(l["m"], x*y, s)
+    return r
+
+def f15(x,y,z):
+    a = 17
+    b = 2.3 * a
+    l = {"t": x, "k": y*2, "m": z*y}
+    s = l["t"] * x
+    if x < y:
+        s += 2*y
+        r = f1(l["m"], x*y, s)
+    elif x > z:
+        r = f2(l["m"], x*y, s)
+    else:
+        r = f3(l["m"], x*y, s)
+    return r
+
+def f16(x,y,z):
+    a = 17
+    b = 2.3 * a
+    l = {"t": x, "k": y*2, "m": z*y}
+    s = l["t"] * x
+    i = 0
+    for k in range(4):
+        while i < 3:
+            if x < y:
+                s += 2*y
+                r = f1(l["m"], x*y, s)
+            elif x > z:
+                r = f2(l["m"], x*y, s)
+            else:
+                r = f3(l["m"], x*y, s)
+            i += 1
+        s = 0
+    return r
+
+def f17(x,y,z):
+    a = 17
+    b = 2.3 * a
+    l = {"t": x, "k": y*2, "m": z*y}
+    l2 = { k: l[k] for k in l }
+    r = f1(l2["m"], x*y, l2["k"]*x)
+    return r
+
+def _f18(x,y,z):
+    a = 17
+    b = 2.3 * a
+    l = {"t": x, "k": y*2, "m": z*y}
+    l2 = { k: l[k]*x*y*z for k in l }
+    r = f1(l2["m"], x*y, l2["k"]*x)
+    return r
