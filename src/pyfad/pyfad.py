@@ -8,6 +8,11 @@ from astunparse import loadast, unparse2j, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric
 from .astvisitor import ASTVisitorID, canonicalize, resolvetmpvars, normalize, Assign, List, Tuple, py
 
+from . import rules
+
+class NoRule(BaseException):
+    pass
+
 class Call(ASTNode):
     def __init__(self, func):
         self._class = "Call"
@@ -286,8 +291,34 @@ Result:
 
 def fid(func,active):
     fmod = func.__module__
-    modfile = sys.modules[fmod].__file__
-    return f'{func.__qualname__}:{modfile}:{repr(active)}'
+    modfile = getattr(sys.modules[fmod], '__file__', fmod)
+    fid = f'{func.__qualname__}:{modfile}:{repr(active)}'
+    print('FID', func, fid)
+    return fid
+
+
+def isbuiltin(func):
+    fmod = func.__module__
+    return getattr(sys.modules[fmod], '__file__', None) is None
+
+
+def setrule(func, adfunc):
+    id = 'D_' + rid(func)
+    print(f'set AD rule for {func.__name__}, key {id}')
+    setattr(rules, id, adfunc)
+
+
+def clearrule(func):
+    id = 'D_' + rid(func)
+    print(f'clear AD rule for {func.__name__}, key {id}')
+    delattr(rules, id)
+
+
+def rid(func):
+    fmod = func.__module__
+    fid = f'{func.__qualname__}_{fmod}'
+    print('Rule ID', func, fid)
+    return fid
 
 
 def varspec(f, x):
@@ -314,16 +345,25 @@ def clear(search=None):
 
 def DiffFunction(function, opts={'active': 'all'}):
 
-    active = varspec(function, opts['active']) if 'active' in opts else []
-    findex = fid(function,active)
-    if findex in adc:
-        print(f'Found diff function {function.__name__}')
-        (adfun, actind) = adc[findex]
+    if isbuiltin(function):
+        id = 'D_' + rid(function)
+
+        adfun = getattr(rules, id, None)
+        if adfun is None:
+            raise(NoRule(f'No rule for {function}, {id} not found in rules'))
+
     else:
-        print(f'Diff function {function.__name__}')
-        (adfun, actind) = difffunction(function, active=active)
-        adc[findex] = (adfun, actind)
-        print(f'Diff function {function.__name__} cached => {findex}')
+
+        active = varspec(function, opts['active']) if 'active' in opts else []
+        findex = fid(function,active)
+        if findex in adc:
+            print(f'Found diff function {function.__name__}')
+            (adfun, actind) = adc[findex]
+        else:
+            print(f'Diff function {function.__name__}')
+            (adfun, actind) = difffunction(function, active=active)
+            adc[findex] = (adfun, actind)
+            print(f'Diff function {function.__name__} cached => {findex}')
 
     return adfun
 
