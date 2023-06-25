@@ -93,6 +93,8 @@ class ASTVisitorFMAD(ASTVisitorID):
                 tr1 = self.ddispatch(t)
                 dargs += [tr1]
         node.args = list(chain(*zip(dargs, curargs)))
+        ddefs = self.ddispatch(node.defaults)
+        node.defaults = list(chain(*zip(ddefs, node.defaults)))
 #        node.args = dargs + curargs
         return node
 
@@ -149,7 +151,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _DConstant(self, t):
-        print(f'Diff Constant {t.value}')
+        t = t.clone()
         t.value = 0
         return t
 
