@@ -288,6 +288,7 @@ def fid(func,active):
     modfile = sys.modules[fmod].__file__
     return f'{func.__qualname__}:{modfile}:{repr(active)}'
 
+
 def varspec(f, x):
     if isinstance(x, str):
         if x == "all":
@@ -298,8 +299,19 @@ def varspec(f, x):
         return x
     else: return x
 
+
+adc = {}
+def clear(search=None):
+    global adc
+    if search is None:
+        adc = {}
+    else:
+        for k in adc:
+            if search in k:
+                del adc[k]
+
+
 def DiffFunction(function, opts={'active': 'all'}):
-    adc = {}
 
     active = varspec(function, opts['active']) if 'active' in opts else []
     findex = fid(function,active)
