@@ -437,14 +437,17 @@ def clear(search=None):
 
 def DiffFunction(function, **opts):
 
+    id = 'D_' + rid(function)
+    adfun = getattr(rules, id, None)
+
     if isbuiltin(function):
-        id = 'D_' + rid(function)
 
-        adfun = getattr(rules, id, None)
         if adfun is None:
-            raise(NoRule(f'No rule for {function}, {id} not found in rules'))
+            raise(NoRule(f'No rule for buitin {function}, {id} not found in rules'))
 
-    else:
+    elif adfun is None:
+
+        # Try source diff
 
         print('DDD', opts, varspec(function, []))
         active = varspec(function, opts.get('active', []))
