@@ -69,3 +69,16 @@ def ffor2(x):
     for i in range(len(l)):
         s += l[i]
     return s
+
+class Car:
+    distance = 0
+    velocity = 100
+
+    def drive(self, t):
+        self.distance += self.velocity * t
+
+def _fobj(x):
+    o = Car()
+    o.drive(x)
+    r = o.distance
+    return r
