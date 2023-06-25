@@ -56,3 +56,18 @@ def f10(x,y,z):
     b = 2.3 * a
     r = fdef(y=a*b,x=x*y)
     return r
+
+gx = 1.23
+
+#TODO: globals
+def _fdef2(x,y,z=gx*2):
+    a = 17
+    b = 2.3 * a
+    r = x*y*z*a*b
+    return r
+
+def f11(x,y,z):
+    a = 17
+    b = 2.3 * a
+    r = fdef(y=a*b,x=x*y)
+    return r
