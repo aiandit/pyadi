@@ -66,8 +66,16 @@ def _fdef2(x,y,z=gx*2):
     r = x*y*z*a*b
     return r
 
-def f11(x,y,z):
+def _f11(x,y,z):
     a = 17
     b = 2.3 * a
-    r = fdef(y=a*b,x=x*y)
+    r = fdef2(y=a*b,x=x*y)
+    return r
+
+def f12(x,y,z):
+    a = 17
+    b = 2.3 * a
+    l = [x, y*2, z*y]
+    s = l[-1] * x
+    r = f1(l[0], x*y, s)
     return r
