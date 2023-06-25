@@ -84,6 +84,10 @@ class ASTVisitorFMAD(ASTVisitorID):
             t.body = self.dispatch(t.body)
         return t
 
+    def _DSubscript(self, node):
+        node.value = self.ddispatch(node.value)
+        return node
+
     def _Darguments(self, node):
         assert(type(node.args) == type([]))
         dargs = []
