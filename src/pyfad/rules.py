@@ -6,6 +6,9 @@ hidden = {}
 def D_dict_items_builtins(r, dx, x):
     return dx.items()
 
+def D_range_builtins(r, dx, x):
+    return r
+
 
 def D_sin_math(r, dx, x):
     print('dsin', r, dx, x)
