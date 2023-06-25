@@ -435,17 +435,20 @@ def clear(search=None):
                 del adc[k]
 
 
+def runRule(adfun, function, args):
+    res = function(*args[1::2])
+    return (adfun(res, *args), res)
+
+
 def DiffFunction(function, **opts):
 
     id = 'D_' + rid(function)
     adfun = getattr(rules, id, None)
 
-    if isbuiltin(function):
+    if isbuiltin(function) and adfun is None:
+        raise(NoRule(f'No rule for buitin {function}, {id} not found in rules'))
 
-        if adfun is None:
-            raise(NoRule(f'No rule for buitin {function}, {id} not found in rules'))
-
-    elif adfun is None:
+    if adfun is None:
 
         # Try source diff
 
@@ -461,6 +464,14 @@ def DiffFunction(function, **opts):
             (adfun, actind) = difffunction(function, active=active)
             adc[findex] = (adfun, actind)
             print(f'Diff function {function.__name__} cached => {findex}')
+
+        adfun.issource = True
+
+    else:
+
+        adfun.issource = False
+        adfunOrig = adfun
+        adfun = lambda *args: runRule(adfunOrig, function, args)
 
     return adfun
 
