@@ -138,6 +138,11 @@ class ASTCanonicalizer:
                     (tr, tmpvar) = self.edispatch(tree.right)
                     tree.right = tmpvar
 
+            elif tree._class == "keyword":
+                if iscanon(tree.value):
+                    (tl, tmpvar) = self.edispatch(tree.value)
+                    tree.value = tmpvar
+
             elif tree._class == "Call":
                 nargs = []
                 for arg in tree.args:

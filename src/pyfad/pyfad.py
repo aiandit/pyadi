@@ -10,6 +10,11 @@ from .astvisitor import ASTVisitorID, canonicalize, resolvetmpvars, normalize, A
 
 from . import rules
 
+
+def czip(a,b):
+    return chain(*zip(a,b))
+
+
 class NoRule(BaseException):
     pass
 
@@ -82,18 +87,39 @@ class ASTVisitorFMAD(ASTVisitorID):
     def _Darguments(self, node):
         assert(type(node.args) == type([]))
         dargs = []
-        for t in node.args:
+        curargs = node.args
+        for t in curargs:
             if t.arg in self.active_objects:
                 tr1 = self.ddispatch(t)
                 dargs += [tr1]
-        node.args = dargs + node.args
+        node.args = list(chain(*zip(dargs, curargs)))
+#        node.args = dargs + curargs
         return node
+
+    def _DCall(self, t):
+        print(f'Diff Call {t.func} {vars(t)}')
+        t = t.clone()
+        dcall = Call(Name('D'))
+        dcall.args = [t.func]
+
+        res = Call(dcall)
+        curargs = t.args
+        dargs = self.ddispatch([t.clone() for t in curargs])
+        res.args = list(czip(dargs, curargs))
+        res.keywords = self.ddispatch(t.keywords) + self.dispatch(t.keywords)
+        return res
 
     def _Darg(self, t):
         if t.arg in self.active_objects:
             t = t.clone()
             t.arg = 'd_' + t.arg
             print('   * active arg', t.arg)
+        return t
+
+    def _Dkeyword(self, t):
+        t = t.clone()
+        t.arg = 'd_' + t.arg
+        t.value = self.ddispatch(t.value)
         return t
 
     def _DAssign(self, t):
@@ -103,17 +129,6 @@ class ASTVisitorFMAD(ASTVisitorID):
             t.targets = self.ddispatch(t.targets)
         t.value = self.ddispatch(t.value)
         return t
-
-    def _DCall(self, t):
-        print(f'Diff Call {t.func} {vars(t)}')
-        t = t.clone()
-        dcall = Call(Name('D'))
-        dcall.args = [t.func]
-
-        res = Call(dcall)
-        res.args = self.ddispatch([t.clone() for t in t.args]) + self.dispatch(t.args)
-        res.keywords = self.ddispatch(t.keywords)
-        return res
 
     def _DName(self, t):
         print(f'Diff Name {t.id}')
@@ -215,12 +230,18 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
 
 #    dsrc = f"{importstr}\n{source}\n{collectstr}"
     dsrc = f"{source}\n{collectstr}"
-    print(dsrc)
-    tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
-    sfname = f'{tmpsdir}/diff.py'
-    with open(sfname, 'w') as f:
-        f.write(dsrc)
-    res = compile(dsrc, sfname, "exec")
+    print(f"{source}")
+    try:
+        res = compile(dsrc, "", "exec")
+    except SyntaxError as ex:
+
+        print('Failed to compile python code', ex)
+        print(dsrc)
+        tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
+        sfname = f'{tmpsdir}/diff.py'
+        with open(sfname, 'w') as f:
+            f.write(dsrc)
+        res = compile(dsrc, sfname, "exec")
 
     gvars = {'data': {}}
     print('compiling with globals', (gvars|globals()|fglobals).keys())
@@ -235,8 +256,7 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
 def Dpy(func, active=[]):
     csrc = py(func)
     dtree = differentiate(loadast(csrc), activef=[func.__name__, func.__qualname__], active=active)
-    dsrc = unparse(dtree)
-    return dsrc
+    return dtree
 
 
 def difffunction(func, active=[]):
@@ -246,14 +266,13 @@ def difffunction(func, active=[]):
         dfunc = execompile(dsrc, vars=[fkey], fglobals=func.__globals__)
         dfunc = dfunc[fkey]
     except BaseException as ex:
-        print(unparse2j(dtree, indent=1), file=open('d_failed.json', 'w'))
-        print(dsrc, file=open('d_failed.py', 'w'))
+        print(unparse2j(dsrc, indent=1), file=open('d_failed.json', 'w'))
+        print(unparse(dsrc), file=open('d_failed.py', 'w'))
         print(f"""Failed to load diff code, exception:
 {ex}
 Source:
 {py(func)}
-Result:
-{dsrc}""")
+""")
         raise(ex)
     return (dfunc, active)
 
@@ -465,12 +484,12 @@ def DiffFor(function, *args, **opts):
     else:
         if seed == 1:
             dargsList = createFullGradients(args)
-            dresult = [adfun(*dargs, *args) for dargs in dargsList]
+            dresult = [adfun(*czip(dargs, args)) for dargs in dargsList]
             result = dresult[0][1]
             dresult = [d for d,r in dresult]
         elif isinstance(arg, list):
             dargs = fill(dzeros(args), seed)
-            (dresult, result) = adfun(*dargs, *args)
+            (dresult, result) = adfun(*czip(dargs, args))
 
     return (dresult, result)
 
