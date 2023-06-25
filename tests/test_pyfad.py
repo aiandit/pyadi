@@ -61,7 +61,7 @@ class Pyfad(unittest.TestCase):
 
 
     def checkDer(self, func, args, dx, seed=1, active=[]):
-        (der, r) = pyfad.DiffFD(func, *args, dict(seed=seed, active=active, h=fdH))
+        (der, r) = pyfad.DiffFD(func, *args, seed=seed, active=active, h=fdH)
         print('cd', (der, dx))
         self.assertTrue(self.assertEqFD(der, dx))
 
@@ -212,11 +212,12 @@ class Pyfad(unittest.TestCase):
         pyfad.setrule(math.tan, adf)
         with self.assertRaises(WrongDerivative):
             self.do_sourceDiff_f_x(fx.ftan)
-        pyfad.clearrule(math.tan)
+        pyfad.delrule(math.tan)
 
     def test_sD_ftan(self):
         adf = lambda dx, x: (dx / (1 + x*x), math.atan(x))
 #        adf = lambda dx, x: (dx * math.cos(math.tan(x))**2, math.atan(x))
         pyfad.setrule(math.atan, adf)
         self.do_sourceDiff_f_x(fx.fatan)
-        pyfad.clearrule(math.atan)
+        print('RULES', pyfad.getrules())
+        pyfad.delrule(math.atan)
