@@ -20,3 +20,27 @@ def f4(x,y,z):
 def f5(x,y,z):
     r = x*sin(y)
     return r
+
+def f6(x,y,z):
+    a = 17
+    b = 2.3 * a
+    r = x*y*z*a*b
+    return r
+
+def f7(x,y,z):
+    a = 17
+    b = 2.3 * a
+    r = f1(x*y,z*y,a*b)
+    return r
+
+def f8(x,y,z):
+    a = 17
+    b = 2.3 * a
+    r = f6(z=x*y,y=z*y,x=a*b)
+    return r
+
+def f9(x,y,z):
+    a = 17
+    b = 2.3 * a
+    r = f6(a*b,z=x*y,y=z*y)
+    return r

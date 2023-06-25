@@ -2,9 +2,11 @@ import ast
 import sys
 import unittest
 import math
+from itertools import chain
 
 import pyfad
 from .examples import fxyz, fx
+
 
 fdH = 1e-8
 tolFD = fdH * 10
@@ -54,7 +56,7 @@ def f3(x,y,z):
 
 class Pyfad(unittest.TestCase):
 
-    def assertEqFD(self, r1, r2):
+    def assertEqFD(self, f, r1, r2):
         if not almostEqFD(r1, r2):
             raise(WrongDerivative(r1, r2))
         return True
@@ -63,7 +65,7 @@ class Pyfad(unittest.TestCase):
     def checkDer(self, func, args, dx, seed=1, active=[]):
         (der, r) = pyfad.DiffFD(func, *args, seed=seed, active=active, h=fdH)
         print('cd', (der, dx))
-        self.assertTrue(self.assertEqFD(der, dx))
+        self.assertTrue(self.assertEqFD(func, der, dx))
 
     def test_D_f1(self):
         df = pyfad.D(f1)
@@ -79,16 +81,17 @@ class Pyfad(unittest.TestCase):
         print('LOCALS', pyfad.locals(f1))
         print('test f1', df)
         print('test f1 f', pyfad.py(f1))
-        print('test f1 d/dx f', pyfad.Dpy(f1)[1])
+        print('test f1 d/dx f', pyfad.Dpy(f1))
 
     def do_call_xyz(self, func, args):
         y = func(*args)
         df = pyfad.D(func, active=self.axyz)
         print('df', df)
         args = list(args)
-        dydx, y = df(*([1, 0, 0] + args))
-        dydy, y = df(*([0, 1, 0] + args))
-        dydz, y = df(*([0, 0, 1] + args))
+        print('dargs', list(pyfad.czip([1, 0, 0], args)))
+        dydx, y = df(*pyfad.czip([1, 0, 0], args))
+        dydy, y = df(*pyfad.czip([0, 1, 0], args))
+        dydz, y = df(*pyfad.czip([0, 0, 1], args))
         self.checkDer(func, args, dydx, active='x')
         self.checkDer(func, args, dydy, active='y')
         self.checkDer(func, args, dydz, active='z')
@@ -160,13 +163,13 @@ class Pyfad(unittest.TestCase):
         f = fx.fsin
         x = 2
         dr, r = pyfad.DiffFD(f, x)
-        self.assertTrue(self.assertEqFD(dr, math.cos(x)))
+        self.assertTrue(self.assertEqFD(f, dr, math.cos(x)))
 
     def test_DiffFD_cos(self):
         f = fx.fcos
         x = 2
         dr, r = pyfad.DiffFD(f, x)
-        self.assertTrue(self.assertEqFD(dr, -math.sin(x)))
+        self.assertTrue(self.assertEqFD(f, dr, -math.sin(x)))
         
     def test_DiffFD_partial(self):
         f = fxyz.f1
@@ -221,3 +224,12 @@ class Pyfad(unittest.TestCase):
         self.do_sourceDiff_f_x(fx.fatan)
         print('RULES', pyfad.getrules())
         pyfad.delrule(math.atan)
+
+    def test_fxyz(self, module=None):
+        if module is None:
+            module = fxyz
+        fnames = [f for f in dir(module) if f[0] == 'f']
+        for f in fnames:
+            fn = getattr(fxyz, f)
+            print(f'Test function {fn.__name__} from {module.__name__}')
+            self.do_sourceDiff_f_xyz(fn)
