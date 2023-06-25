@@ -5,7 +5,7 @@ import time
 import random
 
 import astunparse
-from astunparse import loadast, unparse2j
+from astunparse import loadastpy, unparse2j
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, fields
 
 def py(func):
@@ -175,7 +175,9 @@ class ASTLocalAction:
     def __call__(self, tree):
         self.Begin(tree)
         result = self.dispatch(tree)
-        self.End(tree)
+        er = self.End(tree)
+        if er is not None:
+            result = er
         return result
 
     def dispatch(self, tree):
@@ -269,27 +271,20 @@ def filterFunctions(intree, names):
     return trans(intree)
 
 
-class ASTVisitorLastFunctionSig:
-    def __init__(self):
+class ASTVisitorLastFunctionSig(ASTLocalAction):
+    def Begin(self, tree):
         self.name = ''
         self.sig = []
         self.seen = []
 
-    def __call__(self, tree):
-        self.dispatch(tree)
-        return self.sig, self.name
+    def Before(self, tree):
+        if tree._class == "FunctionDef":
+            self.sig = [t.arg for t in tree.args.args]
+            self.name = tree.name
+            return [tree, True]
 
-    def dispatch(self, tree):
-        if type(tree) == type([]):
-            res = list(map(self.dispatch, tree))
-        elif isinstance(tree, ASTNode):
-            if tree._class == "FunctionDef":
-                self.sig = [t.arg for t in tree.args.args]
-                self.name = tree.name
-                return
-
-            for k in vars(tree).keys():
-                self.dispatch(getattr(tree, k))
+    def End(self, tree):
+        return (self.name, self.sig)
 
 
 def infoSignature(intree):
@@ -303,30 +298,19 @@ def normalize(tree, **kw):
     return tree
 
 
-class ASTFLocals:
-    def __init__(self, tree):
+class ASTFLocals(ASTLocalAction):
+    def Begin(self, tree):
         self.locals = []
-        self.dispatch(tree)
+    def End(self, tree):
+        return self.locals
 
-    def dispatch(self, tree):
-        if type(tree) == type([]):
-            res = list(map(self.dispatch, tree))
-        elif isinstance(tree, ASTNode):
-
-            res = {k: self.dispatch(v) for k,v in fields(tree).items()}
-
-            if tree._class == "Name":
-                print('got Name', tree.id)
-                self.locals.append(tree.id)
-        else:
-            res = tree
-        return res
+    def Before(self, tree):
+        if tree._class == "Name":
+            self.locals.append(tree.id)
 
 def locals(tree, **kw):
-    if callable(tree):
-        tree = loadast(py(tree))
-    an = ASTFLocals(tree)
-    return an.locals
+    an = ASTFLocals()(tree)
+    return an
 
 def py2pys_check(jdict, visitor):
     if type(jdict) == type(''):

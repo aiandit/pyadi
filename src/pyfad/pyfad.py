@@ -277,7 +277,7 @@ def differentiate(intree, activef=None, active=None, **kw):
         intree = filterFunctions(intree, fmadtrans.active_methods)
 
     if active is None or len(active) == 0:
-        sig, fname = infoSignature(intree)
+        fname, sig = infoSignature(intree)
         # fmadtrans.active_fields = [sig[0]]
         fmadtrans.active_fields = sig
     else:
