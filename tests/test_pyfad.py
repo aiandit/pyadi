@@ -219,11 +219,17 @@ class Pyfad(unittest.TestCase):
             self.do_sourceDiff_f_x(fx.ftan)
         pyfad.delrule(math.tan)
 
-    def _test_sD_fsqrt_1(self):
+    def test_sD_fsqrt_1(self):
         adf = lambda dx, x: (0, math.tan(x))
         pyfad.setrule(fx.gbabylonian, adf)
         with self.assertRaises(WrongDerivative):
-            self.do_sourceDiff_f_x(fx.ftan)
+            self.do_sourceDiff_f_x(fx.fbabylonian)
+        pyfad.delrule(fx.gbabylonian)
+
+    def test_sD_fsqrt_2(self):
+        adf = lambda dx, x: (0.5 * dx / math.sqrt(x), math.sqrt(x))
+        pyfad.setrule(fx.gbabylonian, adf)
+        self.do_sourceDiff_f_x(fx.fbabylonian)
         pyfad.delrule(fx.gbabylonian)
 
     def test_sD_ftan(self):
