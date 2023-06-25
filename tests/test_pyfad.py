@@ -220,7 +220,7 @@ class Pyfad(unittest.TestCase):
         pyfad.delrule(math.tan)
 
     def test_sD_fsqrt_1(self):
-        adf = lambda dx, x: (0, math.tan(x))
+        adf = lambda dx, x: (0, math.sqrt(x))
         pyfad.setrule(fx.gbabylonian, adf)
         with self.assertRaises(WrongDerivative):
             self.do_sourceDiff_f_x(fx.fbabylonian)
@@ -234,7 +234,6 @@ class Pyfad(unittest.TestCase):
 
     def test_sD_ftan(self):
         adf = lambda dx, x: (dx / (1 + x*x), math.atan(x))
-#        adf = lambda dx, x: (dx * math.cos(math.tan(x))**2, math.atan(x))
         pyfad.setrule(math.atan, adf)
         self.do_sourceDiff_f_x(fx.fatan)
         print('RULES', pyfad.getrules())
