@@ -44,3 +44,15 @@ def f9(x,y,z):
     b = 2.3 * a
     r = f6(a*b,z=x*y,y=z*y)
     return r
+
+def fdef(x,y,z=2):
+    a = 17
+    b = 2.3 * a
+    r = x*y*z*a*b
+    return r
+
+def f10(x,y,z):
+    a = 17
+    b = 2.3 * a
+    r = fdef(y=a*b,x=x*y)
+    return r
