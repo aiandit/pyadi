@@ -8,6 +8,10 @@ def fcos(x):
     z = cos(x)
     return z
 
+def ftan(x):
+    z = tan(x)
+    return z
+
 def fsqrt(x):
     z = sqrt(x)
     return z

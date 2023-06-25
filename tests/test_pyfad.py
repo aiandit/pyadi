@@ -21,6 +21,10 @@ def almostEq(r1, r2, tol=tolAD):
     return d < tol
 
 
+class WrongDerivative(BaseException):
+    pass
+
+
 def sqsum(r1):
     s1 = sum([v*v for v in r1])
     return math.sqrt(s1)
@@ -50,10 +54,16 @@ def f3(x,y,z):
 
 class Pyfad(unittest.TestCase):
 
+    def assertEqFD(self, r1, r2):
+        if not almostEqFD(r1, r2):
+            raise(WrongDerivative(r1, r2))
+        return True
+
+
     def checkDer(self, func, args, dx, seed=1, active=[]):
         (der, r) = pyfad.DiffFD(func, *args, dict(seed=seed, active=active, h=fdH))
         print('cd', (der, dx))
-        self.assertTrue(almostEqFD(der, dx))
+        self.assertTrue(self.assertEqFD(der, dx))
 
     def test_D_f1(self):
         df = pyfad.D(f1)
@@ -101,6 +111,11 @@ class Pyfad(unittest.TestCase):
         (d_r, r) = pyfad.DiffFor(func, args)
         self.checkDer(func, args, d_r)
 
+    def do_sourceDiff_f_x(self, func, args=None):
+        if args is None:
+            args = [2]
+        self.do_sourceDiff_f_xyz(func, args)
+
     def test_sD_f1_call(self):
         self.do_sourceDiff_f_xyz(fxyz.f1)
         
@@ -145,13 +160,13 @@ class Pyfad(unittest.TestCase):
         f = fx.fsin
         x = 2
         dr, r = pyfad.DiffFD(f, x)
-        self.assertTrue(almostEqFD(dr, math.cos(x)))
+        self.assertTrue(self.assertEqFD(dr, math.cos(x)))
 
     def test_DiffFD_cos(self):
         f = fx.fcos
         x = 2
         dr, r = pyfad.DiffFD(f, x)
-        self.assertTrue(almostEqFD(dr, -math.sin(x)))
+        self.assertTrue(self.assertEqFD(dr, -math.sin(x)))
         
     def test_DiffFD_partial(self):
         f = fxyz.f1
@@ -176,6 +191,32 @@ class Pyfad(unittest.TestCase):
     def test_sD_f4(self):
         self.do_sourceDiff_f_xyz(fxyz.f4)
 
-#    def test_sD_f5(self):
-#        self.do_sourceDiff_f_xyz(fxyz.f5)
+    def test_sD_f5(self):
+        self.do_sourceDiff_f_xyz(fxyz.f5)
 
+    def test_sD_fsin(self):
+        self.do_sourceDiff_f_x(fx.fsin)
+
+    def test_sD_fcos(self):
+        self.do_sourceDiff_f_x(fx.fcos)
+
+    def test_sD_fsqrt(self):
+        self.do_sourceDiff_f_x(fx.fsqrt)
+
+    def test_sD_ftan_1(self):
+        with self.assertRaises(pyfad.NoRule):
+            self.do_sourceDiff_f_x(fx.ftan)
+ 
+    def test_sD_ftan(self):
+        adf = lambda dx, x: (0, math.tan(x))
+        pyfad.setrule(math.tan, adf)
+        with self.assertRaises(WrongDerivative):
+            self.do_sourceDiff_f_x(fx.ftan)
+        pyfad.clearrule(math.tan)
+
+    def test_sD_ftan(self):
+        adf = lambda dx, x: (dx / (1 + x*x), math.atan(x))
+#        adf = lambda dx, x: (dx * math.cos(math.tan(x))**2, math.atan(x))
+        pyfad.setrule(math.atan, adf)
+        self.do_sourceDiff_f_x(fx.fatan)
+        pyfad.clearrule(math.atan)
