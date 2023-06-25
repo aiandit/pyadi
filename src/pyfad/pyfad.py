@@ -317,13 +317,13 @@ def DiffFunction(function, opts={'active': 'all'}):
     active = varspec(function, opts['active']) if 'active' in opts else []
     findex = fid(function,active)
     if findex in adc:
-        print(f'Found diff function {{func.__name__}}')
+        print(f'Found diff function {function.__name__}')
         (adfun, actind) = adc[findex]
     else:
-        print(f'Diff function {{func.__name__}}')
+        print(f'Diff function {function.__name__}')
         (adfun, actind) = difffunction(function, active=active)
         adc[findex] = (adfun, actind)
-        print(f'Diff function {{func.__name__}} cached => {findex}')
+        print(f'Diff function {function.__name__} cached => {findex}')
 
     return adfun
 
@@ -456,14 +456,25 @@ def Diff(active='all'):
     return _pyfad_diff
 
 
-def DiffFD(f, *args, seed=1, active=''):
+def DiffFD(f, *args, opts=None, active=[], seed=1):
+
+    if opts is None:
+        if isinstance(args[len(args)-1], dict):
+            opts = args[len(args)-1]
+            args = args[0:-1]
+        else:
+            opts = {}
+
+    seed = opts['seed'] if 'seed' in opts else seed
+    active = varspec(f, opts['active'] if 'active' in opts else active)
+    h = opts['h'] if 'h' in opts else 1e-8
 
     if len(active) == 0:
         func = f
     else:
         sig = varspec(f, 'all')
-        inds = [sig.index(a) for a in varspec(f, active)]
-        fullargs = list(args)
+        inds = [sig.index(a) for a in sig if a in active]
+        fullargs = [v for v in args]
         def inner(*aargs):
             for i,k in enumerate(inds):
                 fullargs[k] = aargs[i]
@@ -473,7 +484,6 @@ def DiffFD(f, *args, seed=1, active=''):
 
     N = nvars(args)
     v = list(varv(args))
-    h = 1e-8
     h2 = h*2
     r = func(*args)
 
@@ -485,7 +495,7 @@ def DiffFD(f, *args, seed=1, active=''):
         rv1 = varv(r1)
         rv2 = varv(r2)
         der = ([(rv1[i] - rv2[i])/h2 for i in range(len(rv1))])
-        return der
+        return fill(r, der)
 
     if seed == 1:
         dres = []
