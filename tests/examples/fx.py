@@ -74,6 +74,13 @@ def ffor2(x):
         s += l[i]
     return s
 
+def ffor3(x):
+    l = [x, x*x, x*x*x]
+    s = 0
+    for (i,v) in enumerate(l):
+        s += i*v
+    return s
+
 class Car:
     distance = 0
     velocity = 100

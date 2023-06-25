@@ -12,6 +12,9 @@ def D_range_builtins(r, dx, x):
 def D_len_builtins(r, dx, x):
     return r
 
+def D_enumerate_builtins(r, dx, x):
+    return zip([0]*len(x), dx)
+
 
 def D_sin_math(r, dx, x):
     print('dsin', r, dx, x)
