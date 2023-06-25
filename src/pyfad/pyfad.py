@@ -231,11 +231,11 @@ def Dpy(func, active=[]):
     csrc = py(func)
     dtree = differentiate(loadast(csrc), activef=[func.__name__, func.__qualname__], active=active)
     dsrc = unparse(dtree)
-    return (dsrc, dtree)
+    return dsrc
 
 
 def difffunction(func, active=[]):
-    dsrc, dtree = Dpy(func, active)
+    dsrc = Dpy(func, active)
     try:
         fkey = 'd_' + func.__name__
         dfunc = execompile(dsrc, vars=[fkey], fglobals=func.__globals__)
@@ -410,15 +410,20 @@ def createFullGradients(args):
 def DiffFor(function, args, seed=1, opts={'active': 'all'}):
     result = function(*args)
 
-    (adfun, actind) = D(function, opts)
+    adfun = D(function, opts)
 
-    if 'dx' in kw:
+    if 'dx' in opts:
         dargs = dx
     else:
         if seed == 1:
-            dargs = createFullGradients(args, actind)
+            dargsList = createFullGradients(args)
+            dresult = [adfun(*dargs, *args) for dargs in dargsList]
+            result = dresult[0][1]
+            dresult = [d for d,r in dresult]
+        elif isinstance(arg, list):
+            dargs = fill(dzeros(args), seed)
+            (dresult, result) = adfun(*dargs, *args)
 
-    (dresult, result) = adfun(dargs, args)
     return (dresult, result)
 
 
