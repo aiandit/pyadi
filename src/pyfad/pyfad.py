@@ -306,12 +306,18 @@ def setrule(func, adfunc):
     id = 'D_' + rid(func)
     print(f'set AD rule for {func.__name__}, key {id}')
     setattr(rules, id, adfunc)
+    rules.dict[id] = adfunc
 
 
-def clearrule(func):
+def delrule(func):
     id = 'D_' + rid(func)
     print(f'clear AD rule for {func.__name__}, key {id}')
     delattr(rules, id)
+    del rules.dict[id]
+
+
+def getrules():
+    return rules.dict
 
 
 def rid(func):
@@ -496,18 +502,11 @@ def Diff(active='all'):
     return _pyfad_diff
 
 
-def DiffFD(f, *args, opts=None, active=[], seed=1):
+def DiffFD(f, *args, **opts):
 
-    if opts is None:
-        if isinstance(args[len(args)-1], dict):
-            opts = args[len(args)-1]
-            args = args[0:-1]
-        else:
-            opts = {}
-
-    seed = opts['seed'] if 'seed' in opts else seed
-    active = varspec(f, opts['active'] if 'active' in opts else active)
-    h = opts['h'] if 'h' in opts else 1e-8
+    seed = opts.get('seed', 1)
+    active = varspec(f, opts.get('active', []))
+    h = opts.get('h', 1e-8)
 
     if len(active) == 0:
         func = f
