@@ -165,13 +165,17 @@ def canonicalize(tree, **kw):
     return an(tree)
 
 
-class ASTReolvetmpvars:
-    def __init__(self):
-        self.seen = {}
-        pass
+class ASTLocalAction:
+    def __init__(self): pass
+    def Before(self, t): pass
+    def After(self, t): pass
+    def Begin(self, t): pass
+    def End(self, t): pass
 
     def __call__(self, tree):
+        self.Begin(tree)
         result = self.dispatch(tree)
+        self.End(tree)
         return result
 
     def dispatch(self, tree):
@@ -180,56 +184,61 @@ class ASTReolvetmpvars:
         elif isinstance(tree, ASTNode):
 
             res = tree
-            for k in vars(tree).keys():
-                setattr(res, k, self.dispatch(getattr(tree, k)))
+            br = self.Before(tree)
+            if br is not None:
+                b_res, b_ret = br
+                res = b_res
+                if b_ret:
+                    return b_res
 
-            if tree._class == "TmpVar":
-                if tree.id in self.seen:
-                    short = self.seen[tree.id]
-                else:
-                    short = f'{tree.kind}{len(self.seen):d}'
-                    self.seen[tree.id] = short
-                res = Name(f'{short}')
+            for k in vars(res).keys():
+                setattr(res, k, self.dispatch(getattr(res, k)))
+
+            ar = self.After(res)
+            if ar is not None:
+                res = ar
+
+
         else:
             res = tree
         return res
+
+class ASTReolvetmpvars(ASTLocalAction):
+
+    def Begin(self, tree):
+        self.seen = {}
+
+    def Before(self, tree):
+        if tree._class == "TmpVar":
+            if tree.id in self.seen:
+                short = self.seen[tree.id]
+            else:
+                short = f'{tree.kind}{len(self.seen):d}'
+                self.seen[tree.id] = short
+            tree = Name(f'{short}')
+            return (tree, True)
 
 def resolvetmpvars(tree, **kw):
     an = ASTReolvetmpvars()
     return an(tree)
 
 
-class ASTVisitorLastFunction:
-    def __init__(self):
+class ASTVisitorLastFunction(ASTLocalAction):
+
+    def Begin(self, tree):
         self.seen = []
         self.name = ''
 
-    def __call__(self, tree):
-        result = self.dispatch(tree)
-        return result
+    def Before(self, tree):
+        if tree._class == "FunctionDef":
+            self.seen.append((tree.name, tree))
+            return (tree, True)
 
-    def dispatch(self, tree):
-        if type(tree) == type([]):
-            res = list(map(self.dispatch, tree))
-        elif isinstance(tree, ASTNode):
-
-            res = tree
-
-            if tree._class == "FunctionDef":
-                self.seen.append((tree.name, tree))
-                return res
-
-            for k in vars(tree).keys():
-                setattr(res, k, self.dispatch(getattr(tree, k)))
-
-            if tree._class == "Module":
-                lname, lfunc = self.seen[-1]
-                self.name = lname
-                res.body = [lfunc]
-
-        else:
-            res = tree
-        return res
+    def After(self, tree):
+        if tree._class == "Module":
+            lname, lfunc = self.seen[-1]
+            self.name = lname
+            tree.body = [lfunc]
 
 
 def filterLastFunction(intree):
@@ -237,37 +246,22 @@ def filterLastFunction(intree):
     return trans(intree), trans.name
 
 
-class ASTVisitorFilterFunctions:
+class ASTVisitorFilterFunctions(ASTLocalAction):
     def __init__(self, names):
         self.names = names
+
+    def Begin(self, tree):
         self.seen = []
 
-    def __call__(self, tree):
-        self.seen = []
-        result = self.dispatch(tree)
-        return result
+    def Before(self, tree):
+        if tree._class == "FunctionDef":
+            if tree.name in self.names:
+                self.seen.append(tree)
+            return (tree, True)
 
-    def dispatch(self, tree):
-        if type(tree) == type([]):
-            res = list(map(self.dispatch, tree))
-        elif isinstance(tree, ASTNode):
-
-            res = tree
-
-            if tree._class == "FunctionDef":
-                if tree.name in self.names:
-                    self.seen.append(tree)
-                return res
-
-            for k in vars(tree).keys():
-                setattr(res, k, self.dispatch(getattr(tree, k)))
-
-            if tree._class == "Module":
-                res.body = self.seen
-
-        else:
-            res = tree
-        return res
+    def After(self, tree):
+        if tree._class == "Module":
+              tree.body = self.seen
 
 
 def filterFunctions(intree, names):
