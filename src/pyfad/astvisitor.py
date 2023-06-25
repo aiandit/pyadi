@@ -79,14 +79,11 @@ class Tuple(ASTNode):
         self._class = 'Tuple'
         self.elts = elts
 
-tmpvars = {}
 class TmpVar(ASTNode):
     def __init__(self, kind='t'):
         self._class = 'TmpVar'
         self.id = random.random()
-#        print('****** TmpVar', self.id, self._class)
         self.kind = kind
-        tmpvars[self.id] = self
 
 class ASTCanonicalizer:
     def __init__(self):
@@ -163,6 +160,7 @@ def canonicalize(tree, **kw):
 
 class ASTReolvetmpvars:
     def __init__(self):
+        self.seen = {}
         pass
 
     def __call__(self, tree):
@@ -179,7 +177,12 @@ class ASTReolvetmpvars:
                 setattr(res, k, self.dispatch(getattr(tree, k)))
 
             if tree._class == "TmpVar":
-                res = Name(f'{tree.kind}_{int(tree.id * (1<<48)):d}')
+                if tree.id in self.seen:
+                    short = self.seen[tree.id]
+                else:
+                    short = f'{tree.kind}{len(self.seen):d}'
+                    self.seen[tree.id] = short
+                res = Name(f'{short}')
         else:
             res = tree
         return res
