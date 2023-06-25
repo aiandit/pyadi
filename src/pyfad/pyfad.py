@@ -10,6 +10,7 @@ from .astvisitor import ASTVisitorID, canonicalize, resolvetmpvars, normalize, A
 
 from . import rules
 
+Debug = False
 
 def czip(a,b):
     return chain(*zip(a,b))
@@ -310,17 +311,28 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
 #    dsrc = f"{importstr}\n{source}\n{collectstr}"
     dsrc = f"{source}\n{collectstr}"
     print(f"{source}")
-    try:
-        res = compile(dsrc, "", "exec")
-    except SyntaxError as ex:
-
-        print('Failed to compile python code', ex)
-        print(dsrc)
+    sfname = ""
+    if Debug:
         tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
         sfname = f'{tmpsdir}/diff.py'
         with open(sfname, 'w') as f:
             f.write(dsrc)
+    try:
         res = compile(dsrc, sfname, "exec")
+    except SyntaxError as ex:
+
+        print('Failed to compile python code', ex)
+        print(dsrc)
+        if not sfname:
+            tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
+            sfname_ = f'{tmpsdir}/diff.py'
+            with open(sfname_, 'w') as f:
+                f.write(dsrc)
+        else:
+            sfname_ = sfname
+        res = compile(dsrc, sfname_, "exec")
+        if not sfname:
+            shutil.rmtree(tmpsdir)
 
     gvars = {'data': {}}
     print('compiling with globals', (gvars|globals()|fglobals).keys())
