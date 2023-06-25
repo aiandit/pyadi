@@ -2,6 +2,7 @@ from astunparse import Unparser
 import sys, os, inspect, json, shutil
 from io import StringIO
 import tempfile
+from itertools import chain
 
 from astunparse import loadast, unparse2j, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric
@@ -328,6 +329,84 @@ def DiffFunction(function, opts={'active': 'all'}):
 
 D = DiffFunction
 
+def nvars(args):
+    if isinstance(args, list) or isinstance(args, tuple):
+        return sum([nvars(f) for f in args])
+    elif isinstance(args, dict):
+        return sum([nvars(v) for f,v in args.items()])
+    elif isgeneric(args):
+        return 1
+
+
+def varv(args):
+    if isinstance(args, list) or isinstance(args, tuple):
+        return chain(*[varv(f) for f in args])
+    elif isinstance(args, dict):
+        return chain(*[varv(v) for f,v in args.items()])
+    elif isgeneric(args):
+        return [args]
+
+
+def dzeros(args):
+    if isinstance(args, list):
+        return [dzeros(f) for f in args]
+    elif isinstance(args, tuple):
+        return tuple([dzeros(f) for f in args])
+    elif isinstance(args, dict):
+        return {f: dzeros(v) for f,v in args.items()}
+    elif isgeneric(args):
+        return 0.0
+
+
+class FillHelper:
+    def __init__(self, seed):
+        self.seed = seed
+        self.offs = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.offs < len(self.seed):
+            r = self.seed[self.offs]
+            self.offs += 1
+            return r
+        else:
+            raise StopIteration
+
+
+def fill(arg, seed):
+    if not isinstance(seed, FillHelper):
+        seed = FillHelper(seed)
+    if isinstance(arg, list):
+        return [fill(f, seed) for f in arg]
+    elif isinstance(arg, tuple):
+        return tuple(fill(f, seed) for f in arg)
+    elif isinstance(arg, dict):
+        return {f: fill(v, seed) for f,v in arg.items()}
+    elif isgeneric(arg):
+        return next(seed)
+
+
+def dargs(args, seed=1):
+    zargs = dzeros(args)
+    if seed == 1:
+        seed = [0] * nvars(args)
+        seed[0] = 1
+    dargs = fill(zargs, seed)
+    return dargs
+
+def createFullGradients(args):
+    N = nvars(args)
+    seeds = []
+    zargs = dzeros(args)
+    for i in range(N):
+        seed = [0] * N
+        seed[i] = 1
+        dargs = fill(zargs, seed)
+        seeds.append(dargs)
+    return seeds
+
 def DiffFor(function, args, seed=1, opts={'active': 'all'}):
     result = function(*args)
 
@@ -371,6 +450,47 @@ def Diff(active='all'):
         return inner
     return _pyfad_diff
 
+
+def DiffFD(f, *args, seed=1, active=''):
+
+    if len(active) == 0:
+        func = f
+    else:
+        sig = varspec(f, 'all')
+        inds = [sig.index(a) for a in varspec(f, active)]
+        fullargs = list(args)
+        def inner(*aargs):
+            for i,k in enumerate(inds):
+                fullargs[k] = aargs[i]
+            return f(*fullargs)
+        func = inner
+        args = [args[i] for i in inds]
+
+    N = nvars(args)
+    v = list(varv(args))
+    h = 1e-8
+    h2 = h*2
+    r = func(*args)
+
+    def dirder(func, args, seed):
+        v1 = [v[i] + h * seed[i] for i in range(N)]
+        v2 = [v[i] - h * seed[i] for i in range(N)]
+        r1 = func(*fill(args, v1))
+        r2 = func(*fill(args, v2))
+        rv1 = varv(r1)
+        rv2 = varv(r2)
+        der = ([(rv1[i] - rv2[i])/h2 for i in range(len(rv1))])
+        return der
+
+    if seed == 1:
+        dres = []
+        for i in range(N):
+            seed = [0] * N
+            seed[i] = 1
+            dres.append(dirder(func, args, seed))
+    else:
+        dres = dirder(func, args, seed)
+    return dres, r
 
 
 @Diff(active=['x', 'y'])
