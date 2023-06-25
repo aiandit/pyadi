@@ -62,3 +62,10 @@ def ffor(x):
     for v in l:
         s += v
     return s
+
+def ffor2(x):
+    l = [x, x*x, x*x*x]
+    s = 0
+    for i in range(len(l)):
+        s += l[i]
+    return s
