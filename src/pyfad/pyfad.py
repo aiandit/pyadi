@@ -6,7 +6,7 @@ from itertools import chain
 
 from astunparse import loadast, unparse2j, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric
-from .astvisitor import ASTVisitorID, canonicalize, resolvetmpvars, normalize, Assign, List, Tuple, py
+from .astvisitor import ASTVisitorID, canonicalize, resolvetmpvars, normalize, Assign, List, Tuple, py, filterLastFunction, infoSignature, filterFunctions
 
 from . import rules
 
@@ -19,16 +19,24 @@ class NoRule(BaseException):
     pass
 
 class Call(ASTNode):
-    def __init__(self, func):
+    def __init__(self, func, args=[], kw=[]):
         self._class = "Call"
-        self.func = func
-        self.args = []
-        self.keywords = []
+        if isinstance(func, str):
+            self.func = Name(func)
+        else:
+            self.func = func
+        self.args = args
+        self.keywords = kw
 
 class Keyword(ASTNode):
     def __init__(self, arg, value):
         self._class = "Keyword"
         self.arg = arg
+        self.value = value
+
+class Starred(ASTNode):
+    def __init__(self, value):
+        self._class = "Starred"
         self.value = value
 
 class ASTVisitorFMAD(ASTVisitorID):
@@ -116,6 +124,13 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def _DFor(self, node):
         node.body = self.diffStmtList(node.body)
+        tnode = Tuple([self.ddispatch(node.target), node.target])
+        if node.iter._class == "Call":
+            itnode = Call('zip', [Starred(self.ddispatch(node.iter))])
+        else:
+            itnode = Call('zip', [self.ddispatch(node.iter), node.iter])
+        node.target = tnode
+        node.iter = itnode
         return node
 
     def _Darguments(self, node):
@@ -250,11 +265,23 @@ def diff2pys(intree, visitor, *kw):
     print('outtree', unparse2j(outtree, indent=1), file=open('outtree.json', 'w'))
     return outtree
 
+
 def differentiate(intree, activef=None, active=None, **kw):
     fmadtrans = ASTVisitorFMAD()
-    fmadtrans.active_methods = activef if activef is not None else []
-    fmadtrans.active_fields  = active if active is not None else []
-    fmadtrans.active_objects = ['self', 'dself', 'dt', 'forces'] + active if active is not None else []
+    if activef is None or len(active) == 0:
+        intree, fname = filterLastFunction(intree)
+        fmadtrans.active_methods = [fname]
+    else:
+        fmadtrans.active_methods = varspec(activef)
+        intree = filterFunctions(intree, fmadtrans.active_methods)
+
+    if active is None or len(active) == 0:
+        sig, fname = infoSignature(intree)
+        # fmadtrans.active_fields = [sig[0]]
+        fmadtrans.active_fields = sig
+    else:
+        fmadtrans.active_fields = varspec(active)
+    fmadtrans.active_objects = ['self', 'dself', 'dt'] + fmadtrans.active_fields
     dtree = diff2pys(intree, fmadtrans)
     return dtree
 
@@ -415,11 +442,14 @@ def rid(func):
     return fid
 
 
-def varspec(f, x):
-    if x == "all" or len(x) == 0:
-        x = inspect.signature(f)
-        x = [f for f in x.parameters]
-    elif isinstance(x, str):
+def getsig(f):
+    x = inspect.signature(f)
+    x = [f for f in x.parameters]
+    return x
+
+
+def varspec(x):
+    if isinstance(x, str):
         x = x.split(',')
     return x
 
@@ -429,10 +459,12 @@ def clear(search=None):
     global adc
     if search is None:
         adc = {}
-    else:
+    elif isinstance(search, str):
         for k in adc:
             if search in k:
                 del adc[k]
+    else:
+        del adc[fid(search)]
 
 
 def runRule(adfun, function, args):
@@ -452,8 +484,8 @@ def DiffFunction(function, **opts):
 
         # Try source diff
 
-        print('DDD', opts, varspec(function, []))
-        active = varspec(function, opts.get('active', []))
+#        print('DDD', opts, getsig(function, []))
+        active = opts.get('active', [])
         print('DDD', active)
         findex = fid(function,active)
         if findex in adc:
@@ -609,13 +641,14 @@ def Diff(active='all'):
 def DiffFD(f, *args, **opts):
 
     seed = opts.get('seed', 1)
-    active = varspec(f, opts.get('active', []))
+    active = opts.get('active', [])
     h = opts.get('h', 1e-8)
 
     if len(active) == 0:
         func = f
     else:
-        sig = varspec(f, 'all')
+        active = varspec(active)
+        sig = getsig(f)
         inds = [sig.index(a) for a in sig if a in active]
         fullargs = [v for v in args]
         def inner(*aargs):

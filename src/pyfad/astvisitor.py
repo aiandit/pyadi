@@ -199,6 +199,110 @@ def resolvetmpvars(tree, **kw):
     return an(tree)
 
 
+class ASTVisitorLastFunction:
+    def __init__(self):
+        self.seen = []
+        self.name = ''
+
+    def __call__(self, tree):
+        result = self.dispatch(tree)
+        return result
+
+    def dispatch(self, tree):
+        if type(tree) == type([]):
+            res = list(map(self.dispatch, tree))
+        elif isinstance(tree, ASTNode):
+
+            res = tree
+
+            if tree._class == "FunctionDef":
+                self.seen.append((tree.name, tree))
+                return res
+
+            for k in vars(tree).keys():
+                setattr(res, k, self.dispatch(getattr(tree, k)))
+
+            if tree._class == "Module":
+                lname, lfunc = self.seen[-1]
+                self.name = lname
+                res.body = [lfunc]
+
+        else:
+            res = tree
+        return res
+
+
+def filterLastFunction(intree):
+    trans = ASTVisitorLastFunction()
+    return trans(intree), trans.name
+
+
+class ASTVisitorFilterFunctions:
+    def __init__(self, names):
+        self.names = names
+        self.seen = []
+
+    def __call__(self, tree):
+        self.seen = []
+        result = self.dispatch(tree)
+        return result
+
+    def dispatch(self, tree):
+        if type(tree) == type([]):
+            res = list(map(self.dispatch, tree))
+        elif isinstance(tree, ASTNode):
+
+            res = tree
+
+            if tree._class == "FunctionDef":
+                if tree.name in self.names:
+                    self.seen.append(tree)
+                return res
+
+            for k in vars(tree).keys():
+                setattr(res, k, self.dispatch(getattr(tree, k)))
+
+            if tree._class == "Module":
+                res.body = self.seen
+
+        else:
+            res = tree
+        return res
+
+
+def filterFunctions(intree, names):
+    trans = ASTVisitorFilterFunctions(names)
+    return trans(intree)
+
+
+class ASTVisitorLastFunctionSig:
+    def __init__(self):
+        self.name = ''
+        self.sig = []
+        self.seen = []
+
+    def __call__(self, tree):
+        self.dispatch(tree)
+        return self.sig, self.name
+
+    def dispatch(self, tree):
+        if type(tree) == type([]):
+            res = list(map(self.dispatch, tree))
+        elif isinstance(tree, ASTNode):
+            if tree._class == "FunctionDef":
+                self.sig = [t.arg for t in tree.args.args]
+                self.name = tree.name
+                return
+
+            for k in vars(tree).keys():
+                self.dispatch(getattr(tree, k))
+
+
+def infoSignature(intree):
+    trans = ASTVisitorLastFunctionSig()
+    return trans(intree)
+
+
 def normalize(tree, **kw):
     tree = resolvetmpvars(tree)
     tree = astunparse.normalize(tree)
