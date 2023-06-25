@@ -140,10 +140,26 @@ def f17(x,y,z):
     r = f1(l2["m"], x*y, l2["k"]*x)
     return r
 
-def _f18(x,y,z):
+def f18(x,y,z):
     a = 17
     b = 2.3 * a
     l = {"t": x, "k": y*2, "m": z*y}
     l2 = { k: l[k]*x*y*z for k in l }
     r = f1(l2["m"], x*y, l2["k"]*x)
+    return r
+
+def f19(x,y,z):
+    a = 17
+    b = 2.3 * a
+    l = [ x, y*2, z*y ]
+    l2 = [l[k] for k in range(len(l))]
+    r = f1(l2[0], x*y, l2[-1]*x)
+    return r
+
+def f20(x,y,z):
+    a = 17
+    b = 2.3 * a
+    l = [ x, y*2, z*y*b ]
+    l2 = [l[k]*x*y*z for k in range(len(l))]
+    r = f1(l2[0], x*y, l2[-1]*x)
     return r
