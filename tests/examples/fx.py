@@ -29,7 +29,7 @@ def fatan(x):
     return z
 
 def fdiv(x):
-    s = sqrt(x)
+    s = sin(x)
     z = s / x
     return z
 
