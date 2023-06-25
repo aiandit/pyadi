@@ -12,6 +12,9 @@ def ftan(x):
     z = tan(x)
     return z
 
+def ftrig(x):
+    return asin(acos(atan(tan(cos(sin(x))))))
+
 def fsqrt(x):
     z = sqrt(x)
     return z
