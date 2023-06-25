@@ -58,26 +58,27 @@ class ASTVisitorFMAD(ASTVisitorID):
                 setattr(res, name, delem)
             return res
 
+    def diffStmtList(self, body):
+        nbody = []
+        for item in body:
+            if item._class == "Assign":
+                nbody += [ self.ddispatch(item.clone()) ]
+                if item.value._class not in ['Call']:
+                    nbody += [ self.dispatch(item) ]
+            elif item._class == "AugAssign":
+                nbody += [ self.ddispatch(item.clone()) ]
+                nbody += [ self.dispatch(item) ]
+            else:
+                nbody += [ self.ddispatch(item) ]
+        return nbody
+
     def _FunctionDef(self, t):
         if t.name in self.active_methods:
             t = t.clone()
             print(f'Catch Active FunctionDef {t.name} {vars(t)}')
             t.name = 'd_' + t.name
             t.args = self.ddispatch(t.args)
-            nbody = []
-            for item in t.body:
-                if item._class == "Assign":
-                    nbody += [ self.ddispatch(item.clone()) ]
-                    if item.value._class not in ['Call']:
-                        nbody += [ self.dispatch(item) ]
-                elif item._class == "AugAssign":
-                    nbody += [ self.ddispatch(item.clone()) ]
-                    nbody += [ self.dispatch(item) ]
-                elif item._class == "Return":
-                    nbody += [self.ddispatch(item)]
-                else:
-                    nbody += [ self.dispatch(item) ]
-            t.body = nbody
+            t.body = self.diffStmtList(t.body)
             t.decorator_list = []
         else:
             t.args = self.dispatch(t.args)
@@ -86,6 +87,31 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def _DSubscript(self, node):
         node.value = self.ddispatch(node.value)
+        return node
+
+    def _DDict(self, node):
+        node.values = self.ddispatch(node.values)
+        return node
+
+    def _DDictComp(self, node):
+        node.value = self.ddispatch(node.value)
+        return node
+
+    def _Dcomprehension(self, node):
+        node.target = self.ddispatch(node.target)
+        return node
+
+    def _DIf(self, node):
+        node.body = self.diffStmtList(node.body)
+        node.orelse = self.diffStmtList(node.orelse)
+        return node
+
+    def _DWhile(self, node):
+        node.body = self.diffStmtList(node.body)
+        return node
+
+    def _DFor(self, node):
+        node.body = self.diffStmtList(node.body)
         return node
 
     def _Darguments(self, node):
@@ -316,6 +342,8 @@ Result:
 
 def fid(func,active):
     fmod = func.__module__
+    if fmod is None:
+        fmod = func.__class__.__module__
     modfile = getattr(sys.modules[fmod], '__file__', fmod)
     fid = f'{func.__qualname__}:{modfile}:{repr(active)}'
     print('FID', func, fid)
@@ -324,6 +352,8 @@ def fid(func,active):
 
 def isbuiltin(func):
     fmod = func.__module__
+    if fmod is None:
+        fmod = func.__class__.__module__
     return getattr(sys.modules[fmod], '__file__', None) is None
 
 
@@ -347,7 +377,9 @@ def getrules():
 
 def rid(func):
     fmod = func.__module__
-    fid = f'{func.__qualname__}_{fmod}'
+    if fmod is None:
+        fmod = func.__class__.__module__
+    fid = f'{func.__qualname__}_{fmod}'.replace('.', '_')
     print('Rule ID', func, fid)
     return fid
 

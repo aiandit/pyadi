@@ -2,6 +2,9 @@ from math import sin, cos, tan, asin, acos, atan, log, sqrt
 
 dict = {}
 
+def D_dict_items_builtins(dx, x):
+    return dx.items(), x.items()
+
 def D_sin_math(dx, x):
     return dx * cos(x), sin(x)
 
