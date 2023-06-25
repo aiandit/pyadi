@@ -75,7 +75,7 @@ class Pyfad(unittest.TestCase):
 
     axyz = ['x', 'y', 'z']
     def test_D_f1_active(self):
-        df = pyfad.D(f1, opts={'active': self.axyz})
+        df = pyfad.D(f1, active=self.axyz)
         print('LOCALS', pyfad.locals(f1))
         print('test f1', df)
         print('test f1 f', pyfad.py(f1))
@@ -83,7 +83,7 @@ class Pyfad(unittest.TestCase):
 
     def do_call_xyz(self, func, args):
         y = func(*args)
-        df = pyfad.D(func, opts={'active': self.axyz})
+        df = pyfad.D(func, active=self.axyz)
         print('df', df)
         args = list(args)
         dydx, y = df(*([1, 0, 0] + args))
@@ -108,7 +108,7 @@ class Pyfad(unittest.TestCase):
     def do_sourceDiff_f_xyz(self, func, args=None):
         if args is None:
             args = [1,2,3]
-        (d_r, r) = pyfad.DiffFor(func, args)
+        (d_r, r) = pyfad.DiffFor(func, *args)
         self.checkDer(func, args, d_r)
 
     def do_sourceDiff_f_x(self, func, args=None):

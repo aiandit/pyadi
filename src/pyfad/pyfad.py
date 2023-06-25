@@ -328,14 +328,12 @@ def rid(func):
 
 
 def varspec(f, x):
-    if isinstance(x, str):
-        if x == "all":
-            x = inspect.signature(f)
-            x = [f for f in x.parameters]
-        else:
-            x = x.split(',')
-        return x
-    else: return x
+    if x == "all" or len(x) == 0:
+        x = inspect.signature(f)
+        x = [f for f in x.parameters]
+    elif isinstance(x, str):
+        x = x.split(',')
+    return x
 
 
 adc = {}
@@ -349,7 +347,7 @@ def clear(search=None):
                 del adc[k]
 
 
-def DiffFunction(function, opts={'active': 'all'}):
+def DiffFunction(function, **opts):
 
     if isbuiltin(function):
         id = 'D_' + rid(function)
@@ -360,7 +358,9 @@ def DiffFunction(function, opts={'active': 'all'}):
 
     else:
 
-        active = varspec(function, opts['active']) if 'active' in opts else []
+        print('DDD', opts, varspec(function, []))
+        active = varspec(function, opts.get('active', []))
+        print('DDD', active)
         findex = fid(function,active)
         if findex in adc:
             print(f'Found diff function {function.__name__}')
@@ -453,10 +453,12 @@ def createFullGradients(args):
         seeds.append(dargs)
     return seeds
 
-def DiffFor(function, args, seed=1, opts={'active': 'all'}):
+def DiffFor(function, *args, **opts):
     result = function(*args)
 
-    adfun = D(function, opts)
+    adfun = D(function, **opts)
+
+    seed = opts.get('seed', 1)
 
     if 'dx' in opts:
         dargs = dx
