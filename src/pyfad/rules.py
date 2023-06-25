@@ -1,6 +1,7 @@
 from math import sin, cos, tan, asin, acos, atan, log, sqrt
 
 dict = {}
+hidden = {}
 
 def D_dict_items_builtins(dx, x):
     return dx.items(), x.items()

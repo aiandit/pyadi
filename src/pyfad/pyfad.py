@@ -203,6 +203,22 @@ class ASTVisitorFMAD(ASTVisitorID):
             t = BinOp('+')
             t.left = left
             t.right = right
+        elif t.op == '/':
+            left = BinOp('*')
+            left.left = self.ddispatch(t.left.clone())
+            left.right = self.dispatch(t.right.clone())
+            right = BinOp('*')
+            right.left = self.dispatch(t.left.clone())
+            right.right = self.ddispatch(t.right.clone())
+            denom = BinOp('-')
+            denom.left = left
+            denom.right = right
+            sq = BinOp('**')
+            sq.left = t.right.clone()
+            sq.right = Constant(2)
+            t = BinOp('/')
+            t.left = denom
+            t.right = sq
         elif t.op == '+' or t.op == '-':
             t.left = self.ddispatch(t.left)
             t.right = self.ddispatch(t.right)
@@ -211,13 +227,11 @@ class ASTVisitorFMAD(ASTVisitorID):
             t.right = self.dispatch(t.right)
         return t
 
-    def _BinOp(self, t):
-        print(f'Catch BinOp {repr(t.op)}')
-        return t
-
     def _DReturn(self, t):
-        print('Diff Return')
-        t.value = Tuple([self.ddispatch(t.value.clone()), self.dispatch(t.value)])
+        if t.value._class == "Call":
+            t.value = self.ddispatch(t.value)
+        else:
+            t.value = Tuple([self.ddispatch(t.value.clone()), self.dispatch(t.value)])
         return t
 
 
@@ -373,8 +387,19 @@ def setrule(func, adfunc):
 def delrule(func):
     id = 'D_' + rid(func)
     print(f'clear AD rule for {func.__name__}, key {id}')
+    if id in rules.dict:
+        del rules.dict[id]
+    else:
+        rules.hidden[id] = getattr(rules, id)
     delattr(rules, id)
-    del rules.dict[id]
+
+
+def restorerule(func):
+    id = 'D_' + rid(func)
+    print(f'restore AD rule for {func.__name__}, key {id}')
+    if id in rules.hidden:
+        setattr(rules, id, rules.hidden[id])
+        del rules.hidden[id]
 
 
 def getrules():
