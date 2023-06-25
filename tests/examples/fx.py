@@ -55,3 +55,10 @@ def gbabylonian2(x, y=1):
 
 def fbabylonian2(x):
     return gbabylonian2(x)
+
+def ffor(x):
+    l = [x, x*x, x*x*x]
+    s = 0
+    for v in l:
+        s += v
+    return s
