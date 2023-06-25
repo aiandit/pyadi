@@ -93,7 +93,7 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def _DAssign(self, t):
         if t.value._class == 'Call':
-            t.targets = self.ddispatch(t.targets) + self.dispatch(t.targets)
+            t.targets = [Tuple(self.ddispatch(t.targets) + self.dispatch(t.targets))]
         else:
             t.targets = self.ddispatch(t.targets)
         t.value = self.ddispatch(t.value)
