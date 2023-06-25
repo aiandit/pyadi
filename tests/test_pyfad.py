@@ -6,17 +6,19 @@ import math
 import pyfad
 from .examples import fxyz, fx
 
-
-tolFD = 1e-6
-tolAD = 1e-13
+fdH = 1e-8
+tolFD = fdH * 10
+tolAD = 1e-14
 
 
 def almostEqFD(r1, r2):
-    return relNormMax(r1, r2) < tolFD
+    return almostEq(r1, r2, tolFD)
 
 
-def almostEq(r1, r2):
-    return relNormMax(r1, r2) < tolAD
+def almostEq(r1, r2, tol=tolAD):
+    d = relNormMax(r1, r2)
+    print('rel error', d)
+    return d < tol
 
 
 def sqsum(r1):
@@ -46,10 +48,13 @@ def f3(x,y,z):
     r = x*f1(x*z*17,y*z*17,y*x*17)
     return r
 
-def checkDer(func, args, dx, seed=1, active=[]):
-    (der, r) = DiffFD(func, args, seed=seed)
-
 class Pyfad(unittest.TestCase):
+
+    def checkDer(self, func, args, dx, seed=1, active=[]):
+        (der, r) = pyfad.DiffFD(func, *args, dict(seed=seed, active=active, h=fdH))
+        print('cd', (der, dx))
+        self.assertTrue(almostEqFD(der, dx))
+
     def test_D_f1(self):
         df = pyfad.D(f1)
         print('test f1', df)
@@ -74,6 +79,12 @@ class Pyfad(unittest.TestCase):
         dydx, y = df(*([1, 0, 0] + args))
         dydy, y = df(*([0, 1, 0] + args))
         dydz, y = df(*([0, 0, 1] + args))
+        self.checkDer(func, args, dydx, active='x')
+        self.checkDer(func, args, dydy, active='y')
+        self.checkDer(func, args, dydz, active='z')
+        self.checkDer(func, args, dydx, seed=[1, 0, 0])
+        self.checkDer(func, args, dydy, seed=[0, 1, 0])
+        self.checkDer(func, args, dydz, seed=[0, 0, 1])
 
     def test_D_f1_call(self):
         self.do_call_xyz(f1, [1,2,3])
@@ -88,8 +99,7 @@ class Pyfad(unittest.TestCase):
         if args is None:
             args = [1,2,3]
         (d_r, r) = pyfad.DiffFor(func, args)
-        print('r', r)
-        [print('dr', i, d_r[i]) for i in range(len(d_r))]
+        self.checkDer(func, args, d_r)
 
     def test_sD_f1_call(self):
         self.do_sourceDiff_f_xyz(fxyz.f1)
@@ -153,4 +163,19 @@ class Pyfad(unittest.TestCase):
         self.assertTrue(almostEq(dr[0], dr_x))
         self.assertTrue(almostEq(dr[1], dr_y))
         self.assertTrue(almostEq(dr[2], dr_z))
+
+        dr_y2, r = pyfad.DiffFD(f, x, y, z, seed=[0,1,0])
+        self.assertTrue(almostEq(dr_y2, dr_y))
+
+        with self.assertRaises(IndexError):
+            dr_y2, r = pyfad.DiffFD(f, x, y, z, seed=[0,1])
+
+        dr_z, r = pyfad.DiffFD(f, x, y, z, active='fz2')
+        self.assertTrue(len(dr_z) == 0)
+
+    def test_sD_f4(self):
+        self.do_sourceDiff_f_xyz(fxyz.f4)
+
+#    def test_sD_f5(self):
+#        self.do_sourceDiff_f_xyz(fxyz.f5)
 
