@@ -15,17 +15,33 @@ def getmodule(func):
     modfile = getattr(sys.modules[mod], '__file__', None)
     return mod, modfile
 
-
+astcache = {}
 def getast(func):
+    ta0 = time.time()
     mod, modfile = getmodule(func)
     if modfile is None:
         raise(NoSource(f'No source for {mod}.{func.__name__}'))
-    with open(modfile) as f:
-        csrc = f.read()
-    tree = loadastpy(csrc)
-    imports, modules = ASTVisitorImports()(tree)
+    load = modfile not in astcache
+    mtm = os.stat(modfile).st_mtime
+    if not load:
+        centry = astcache[modfile]
+        if mtm > centry['mtime']:
+            load = True
+        else:
+            tree, imports, modules = centry["data"]
+    if load:
+        t0 = time.time()
+        with open(modfile) as f:
+            csrc = f.read()
+        tree = loadastpy(csrc)
+        imports, modules = ASTVisitorImports()(tree.clone())
+        astcache[modfile] = {"file": modfile, "mtime": mtm, "data": (tree, imports, modules)}
+        t1 = time.time()
+        print(f'Load and parse module {mod} source from {modfile}: {1e3*(t1-t0):.1f} ms')
+    tree = tree.clone()
     tree = filterFunctions(tree, [func.__name__])
-    print(f'Load source for {mod}.{func.__name__}', modules, imports, tree)
+    ta1 = time.time()
+    print(f'Got AST of {mod}.{func.__name__}: {1e3*(ta1-ta0):.1f} ms')
     return tree, imports, modules
 
 
