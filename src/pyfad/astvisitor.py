@@ -31,10 +31,11 @@ def getast(func):
 
 def py(func, info=False):
     tree, imports, modules = getast(func)
+    src = unparse(tree).strip()
     if info:
-        return unparse(tree), imports, modules
+        return src, imports, modules
     else:
-        return unparse(tree)
+        return src
 
 
 class ASTVisitor:
