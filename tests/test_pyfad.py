@@ -264,16 +264,19 @@ class Pyfad(unittest.TestCase):
         self.assertEqual(mods, ['math'])
         print(src, imps, mods)
 
-    def _test_py_meth(self, module=None):
+    def test_py_meth(self, module=None):
         src, imps, mods = pyfad.py(fx.Plane.__init__, True)
         self.assertEqual(src[0:10], "def __init")
-        self.assertIn('self.consumption', src)
-        self.assertNotIn('pass', src)
+        self.assertIn('pass', src)
+        self.assertNotIn('self.consumption', src)
         print(src, imps, mods)
 
-    def _test_py_meth2(self, module=None):
+    def test_py_meth2(self, module=None):
         src, imps, mods = pyfad.py(fx.Plane2.__init__, True)
         self.assertEqual(src[0:10], "def __init")
         self.assertIn('self.consumption', src)
         self.assertNotIn('pass', src)
         print(src, imps, mods)
+
+    def test_ast_clearcache(self, module=None):
+        pyfad.clear()
