@@ -183,6 +183,13 @@ class ASTCanonicalizer:
             if getattr(tree, 'body', None) is not None and tree._class != "Module":
                 nbody = []
                 for stmt in tree.body:
+                    if stmt._class == "For":
+                        self._list = []
+                        self.active = True
+                        stmt.iter = self.dispatch(stmt.iter)
+                        nbody += self._list
+                        self.active = False
+
                     if getattr(stmt, 'body', None) is None:
                         self._list = []
                         self.active = True
@@ -193,6 +200,7 @@ class ASTCanonicalizer:
                     else:
                         nbody += [self.dispatch(stmt)]
                 tree.body = nbody
+
                 return tree
             elif tree._class == "DictComp" or tree._class == "ListComp":
                 return tree
