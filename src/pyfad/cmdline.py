@@ -8,7 +8,7 @@ def pycanon():
         prog="pycanon", description="Canonicalize Python source code")
 
 def pydiff():
-    run(lambda x, y, **kw: unparse(differentiate(loadastpy(x, **kw), **kw)),
+    run(lambda x, y, **kw: unparse(differentiate(loadastpy(x, **kw), filter=True, **kw)),
         prog="pydiff", description="Differentiate Python source code")
 
 def run(parsefun, prog, description='What the program does'):
@@ -16,7 +16,7 @@ def run(parsefun, prog, description='What the program does'):
                     prog=prog,
                     description=description)
     parser.add_argument('filename', nargs='?')
-    parser.add_argument('-F', '--functions', type=str, dest='activef', nargs='*')
+    parser.add_argument('-F', '--function', type=str, dest='activef')
     parser.add_argument('-I', '--independents', type=str, dest='active', nargs='*')
     parser.add_argument('-i', '--indent', type=int, default=0, const=1, nargs='?')
     parser.add_argument('-o', '--output', type=str,

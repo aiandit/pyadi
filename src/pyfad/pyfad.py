@@ -278,7 +278,7 @@ def diff2pys(intree, visitor, *kw):
     return outtree
 
 
-def differentiate(intree, activef=None, active=None, modules=None, **kw):
+def differentiate(intree, activef=None, active=None, modules=None, filter=False, **kw):
     fmadtrans = ASTVisitorFMAD()
 
     fmadtrans.imports = modules
@@ -290,7 +290,8 @@ def differentiate(intree, activef=None, active=None, modules=None, **kw):
         fmadtrans.active_methods = [fname]
     else:
         fmadtrans.active_methods = varspec(activef)
-        # intree = filterFunctions(intree, activef)
+        if filter:
+            intree = filterFunctions(intree, activef)
 
     if active is None or len(active) == 0:
         fname, sig = infoSignature(intree)
