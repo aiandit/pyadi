@@ -123,7 +123,7 @@ class Pyfad(unittest.TestCase):
 
     def test_sD_f1_call(self):
         self.do_sourceDiff_f_xyz(fxyz.f1)
-        
+
     def test_sD_f2_call(self):
         self.do_sourceDiff_f_xyz(fxyz.f2)
 
@@ -172,7 +172,7 @@ class Pyfad(unittest.TestCase):
         x = 2
         dr, r = pyfad.DiffFD(f, x)
         self.assertTrue(self.assertEqFD(f, dr, -math.sin(x)))
-        
+
     def test_DiffFD_partial(self):
         f = fxyz.f1
         x,y,z = 1,2,3
@@ -214,7 +214,7 @@ class Pyfad(unittest.TestCase):
         with self.assertRaises(pyfad.NoRule):
             self.do_sourceDiff_f_x(fx.ftan)
         pyfad.restorerule(math.tan)
- 
+
     def test_sD_ftan_2(self):
         adf = lambda r, dx, x: 0
         pyfad.setrule(math.tan, adf)
@@ -253,3 +253,27 @@ class Pyfad(unittest.TestCase):
 
     def test_fx(self, module=None):
         self.test_fxyz(module=fx, args=[0.234])
+
+    def test_py(self, module=None):
+        src = pyfad.py(fx.f1)
+        self.assertEqual(src[0:10], "def f1(x):")
+
+    def test_py2(self, module=None):
+        src, imps, mods = pyfad.py(fx.f1, True)
+        self.assertEqual(src[0:10], "def f1(x):")
+        self.assertEqual(mods, ['math'])
+        print(src, imps, mods)
+
+    def _test_py_meth(self, module=None):
+        src, imps, mods = pyfad.py(fx.Plane.__init__, True)
+        self.assertEqual(src[0:10], "def __init")
+        self.assertIn('self.consumption', src)
+        self.assertNotIn('pass', src)
+        print(src, imps, mods)
+
+    def _test_py_meth2(self, module=None):
+        src, imps, mods = pyfad.py(fx.Plane2.__init__, True)
+        self.assertEqual(src[0:10], "def __init")
+        self.assertIn('self.consumption', src)
+        self.assertNotIn('pass', src)
+        print(src, imps, mods)

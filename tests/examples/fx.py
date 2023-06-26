@@ -95,3 +95,42 @@ def fobj(x):
     o.drive(x)
     r = o.distance
     return r
+
+class Plane:
+    distance = 0
+    velocity = 100
+    gas = 1e4
+    consumption = 10
+
+    def __init__(self):
+        pass
+
+    def fly(self, t):
+        dist = self.velocity * t
+        self.distance += dist
+        self.gas -= self.consumption * dist
+
+def _fplane(x):
+    o = Plane()
+    o.fly(x)
+    r = o.distance + o.gas
+    return r
+
+class Plane2:
+    distance = 0
+    velocity = 100
+    gas = 1e4
+    consumption = 10
+    def __init__(self, c):
+        self.consumption = c
+    def fly(self, t):
+        dist = self.velocity * t
+        self.distance += dist
+        self.gas -= self.consumption * dist
+
+def _fplane2(x):
+    y = x*x
+    o = Plane2(x)
+    o.fly(y)
+    r = o.distance + o.gas
+    return r
