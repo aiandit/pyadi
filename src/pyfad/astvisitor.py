@@ -8,6 +8,9 @@ import astunparse
 from astunparse import loadastpy, unparse, unparse2j
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, fields
 
+class NotFound(BaseException):
+    pass
+
 def getmodule(func):
     mod = getattr(func, '__module__', None)
     if mod is None:
@@ -38,9 +41,10 @@ def getast(func):
         astcache[modfile] = {"file": modfile, "mtime": mtm, "data": (tree, imports, modules)}
         t1 = time.time()
         print(f'Load and parse module {mod} source from {modfile}: {1e3*(t1-t0):.1f} ms')
-    tree = filterFunctions(tree, [func.__name__])
+    tree = filterFunctions(tree, func.__qualname__)
     ta1 = time.time()
     print(f'Got AST of {mod}.{func.__name__}: {1e3*(ta1-ta0):.1f} ms')
+    # print(f'{unparse(tree)}')
     return tree, imports, modules
 
 
@@ -293,18 +297,38 @@ def filterLastFunction(intree):
 
 class ASTVisitorFilterFunctions(ASTLocalAction):
     def __init__(self, names):
+        if isinstance(names, str):
+            names = names.split('.')
         self.names = names
 
     def Begin(self, tree):
         self.seen = []
+        self.index = 0
+        self.pos = 0
 
     def Before(self, tree):
-        if tree._class == "FunctionDef":
-            if tree.name in self.names:
-                self.seen.append(tree.clone())
+        # found, or to deep in tree, prune
+        if self.pos > self.index or self.index >= len(self.names):
             return (tree, True)
+        # print(f'XSearch {tree._class} for {self.names[self.index]}')
+        if tree._class == "FunctionDef" or tree._class == "ClassDef":
+            self.pos += 1
+            if tree.name == self.names[self.index]:
+                # print(f'XFound {tree._class[:-3]} with name {tree.name} at level {self.index}')
+                if self.index == len(self.names) -1:
+                    self.seen.append(tree.clone())
+                    self.index += 1
+                    return (tree, True)
+                else:
+                    self.index += 1
+
+    def After(self, tree):
+        if tree._class == "FunctionDef" or tree._class == "ClassDef":
+            self.pos -= 1
 
     def End(self, tree):
+        if len(self.seen) == 0:
+            raise(NotFound('Class or function not found: ' + '.'.join(self.names)))
         return Module(self.seen)
 
 
