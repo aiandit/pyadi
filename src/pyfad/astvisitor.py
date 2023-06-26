@@ -140,12 +140,15 @@ class ASTCanonicalizer:
         pass
 
     def __call__(self, tree):
+        self._list = []
+        self.active = False
         result = self.dispatch(tree)
         return result
 
     def edispatch(self, tree):
 #        print('edisp', tree)
         if type(tree) == type([]):
+            raise(BaseException('error'))
             res = list(map(self.edispatch, tree))
         elif isinstance(tree, ASTNode):
             tmpas = Assign()
@@ -159,22 +162,37 @@ class ASTCanonicalizer:
             res = tree
         return (res, tmpv)
 
+    def cdispatch(self, tree):
+        if type(tree) == type([]):
+            tree = list(map(self.cdispatch, tree))
+        elif isinstance(tree, ASTNode):
+            for k in fields(tree):
+                setattr(tree, k, self.dispatch(getattr(tree, k)))
+            if iscanon(tree):
+                (tl, tmpvar) = self.edispatch(tree)
+                return tmpvar
+
+        return tree
+
     def dispatch(self, tree):
         if type(tree) == type([]):
-            res = list(map(self.dispatch, tree))
+            res = list(map(self.cdispatch if self.active else self.dispatch, tree))
         elif isinstance(tree, ASTNode):
 #            print('visit', vars(tree))
 
-            if tree._class == "FunctionDef":
-#                print('canon', tree)
+            if getattr(tree, 'body', None) is not None and tree._class != "Module":
                 nbody = []
                 for stmt in tree.body:
-                    self._list = []
-                    pstmt = self.dispatch(stmt.clone())
-                    nbody += self._list
-                    nbody += [pstmt]
+                    if getattr(stmt, 'body', None) is None:
+                        self._list = []
+                        self.active = True
+                        pstmt = self.dispatch(stmt)
+                        nbody += self._list
+                        nbody += [pstmt]
+                        self.active = False
+                    else:
+                        nbody += [self.dispatch(stmt)]
                 tree.body = nbody
-#                print('nbody:', astunparse.unparse(nbody))
                 return tree
             elif tree._class == "DictComp" or tree._class == "ListComp":
                 return tree
