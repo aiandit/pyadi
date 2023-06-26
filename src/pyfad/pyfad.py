@@ -283,13 +283,14 @@ def differentiate(intree, activef=None, active=None, modules=None, **kw):
 
     fmadtrans.imports = modules
     print('imports', fmadtrans.imports)
+    # print('source', unparse(intree))
 
-    if activef is None or len(active) == 0:
+    if activef is None:
         intree, fname = filterLastFunction(intree)
         fmadtrans.active_methods = [fname]
     else:
         fmadtrans.active_methods = varspec(activef)
-        intree = filterFunctions(intree, fmadtrans.active_methods)
+        # intree = filterFunctions(intree, activef)
 
     if active is None or len(active) == 0:
         fname, sig = infoSignature(intree)
@@ -360,7 +361,7 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
 
 def Dpy(func, active=[]):
     csrc, imports, modules = getast(func)
-    dtree = differentiate(csrc, activef=[func.__name__, func.__qualname__], active=active, modules=modules)
+    dtree = differentiate(csrc, activef=func.__name__, active=active, modules=modules)
     return dtree
 
 
