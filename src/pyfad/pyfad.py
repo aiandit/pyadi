@@ -13,6 +13,7 @@ from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 
 from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast
 from .astvisitor import ASTVisitorID, Assign, List, Tuple, ASTVisitorImports
+from . import astvisitor
 
 from . import rules
 
@@ -489,10 +490,14 @@ def clear(search=None):
     global adc
     if search is None:
         adc = {}
+        astvisitor.astcache = {}
     elif isinstance(search, str):
         for k in adc:
             if search in k:
                 del adc[k]
+        for k in astvisitor.astcache:
+            if search in k:
+                del astvisitor.astcache[k]
     else:
         del adc[fid(search)]
 
