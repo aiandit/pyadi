@@ -134,3 +134,13 @@ def _fplane2(x):
     o.fly(y)
     r = o.distance + o.gas
     return r
+
+def gl_sum(x):
+    s = 0
+    for i in range(len(x)):
+        s += x[i]
+    return s
+
+def flist(x):
+    s = gl_sum([x, x*x, x*x*x])
+    return s
