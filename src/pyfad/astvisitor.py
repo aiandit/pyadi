@@ -5,12 +5,37 @@ import time
 import random
 
 import astunparse
-from astunparse import loadastpy, unparse2j
+from astunparse import loadastpy, unparse, unparse2j
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, fields
 
-def py(func):
-    csrc = inspect.getsource(func).strip()
-    return csrc
+def getmodule(func):
+    mod = getattr(func, '__module__', None)
+    if mod is None:
+        mod = func.__class__.__module__
+    modfile = getattr(sys.modules[mod], '__file__', None)
+    return mod, modfile
+
+
+def getast(func):
+    mod, modfile = getmodule(func)
+    if modfile is None:
+        raise(NoSource(f'No source for {mod}.{func.__name__}'))
+    with open(modfile) as f:
+        csrc = f.read()
+    tree = loadastpy(csrc)
+    imports, modules = ASTVisitorImports()(tree)
+    tree = filterFunctions(tree, [func.__name__])
+    print(f'Load source for {mod}.{func.__name__}', modules, imports, tree)
+    return tree, imports, modules
+
+
+def py(func, info=False):
+    tree, imports, modules = getast(func)
+    if info:
+        return unparse(tree), imports, modules
+    else:
+        return unparse(tree)
+
 
 class ASTVisitor:
 
@@ -290,6 +315,32 @@ class ASTVisitorLastFunctionSig(ASTLocalAction):
 def infoSignature(intree):
     trans = ASTVisitorLastFunctionSig()
     return trans(intree)
+
+
+class ASTVisitorImports(ASTLocalAction):
+    def Begin(self, tree):
+        self.imports = {}
+        self.modules = []
+
+    def Before(self, tree):
+        if tree._class == "ImportFrom":
+            for f in tree.names:
+                if f.asname:
+                    self.imports[f.asname] = f'{tree.module}.{f.name}'
+                else:
+                    self.imports[f.name] = f'{tree.module}.{f.name}'
+
+        elif tree._class == "Import":
+            for f in tree.names:
+                if f.asname:
+                    self.imports[f.asname] = f.name
+                    self.modules.append(f.asname)
+                else:
+                    self.imports[f.name] = f.name
+                    self.modules.append(f.name)
+
+    def End(self, tree):
+        return self.imports, self.modules
 
 
 def normalize(tree, **kw):

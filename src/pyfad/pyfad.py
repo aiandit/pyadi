@@ -9,10 +9,10 @@ import tempfile
 from itertools import chain
 
 from astunparse import loadast, unparse2j, unparse
-from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric
+from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 
-from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py
-from .astvisitor import ASTVisitorID, Assign, List, Tuple
+from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast
+from .astvisitor import ASTVisitorID, Assign, List, Tuple, ASTVisitorImports
 
 from . import rules
 
@@ -170,6 +170,12 @@ class ASTVisitorFMAD(ASTVisitorID):
         res = Call(dcall)
         curargs = t.args
         dargs = self.ddispatch([t.clone() for t in curargs])
+        if t.func._class == "Attribute":
+            print('ATTR', t.func.attr)
+            attrstr = unparse(t.func.value).strip()
+            if attrstr not in self.imports:
+                dargs = [self.ddispatch(t.func.value)] + dargs
+                curargs = [t.func.value] + curargs
         res.args = list(czip(dargs, curargs))
         res.keywords = self.ddispatch(t.keywords) + self.dispatch(t.keywords)
         return res
@@ -202,15 +208,8 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _DAttribute(self, t):
-        print(f'Diff Attribute {t.attr} of {vars(t.value)}')
-        if not getattr(t.value, 'id', None):
-            t.value = self.ddispatch(t.value.clone())
-        else:
-            if t.value.id in self.active_objects and t.attr in self.active_fields:
-                t = t.clone()
-                t.value.id = 'd_' + t.value.id
-            else:
-                t = Constant(0)
+        print(f'Diff Attribute {t.attr} of {vars(t.value)} {self.imports}')
+        t.value = self.ddispatch(t.value.clone())
         return t
 
     def _DConstant(self, t):
@@ -278,8 +277,12 @@ def diff2pys(intree, visitor, *kw):
     return outtree
 
 
-def differentiate(intree, activef=None, active=None, **kw):
+def differentiate(intree, activef=None, active=None, modules=None, **kw):
     fmadtrans = ASTVisitorFMAD()
+
+    fmadtrans.imports = modules
+    print('imports', fmadtrans.imports)
+
     if activef is None or len(active) == 0:
         intree, fname = filterLastFunction(intree)
         fmadtrans.active_methods = [fname]
@@ -294,6 +297,7 @@ def differentiate(intree, activef=None, active=None, **kw):
     else:
         fmadtrans.active_fields = varspec(active)
     fmadtrans.active_objects = ['self', 'dself', 'dt'] + fmadtrans.active_fields
+
     dtree = diff2pys(intree, fmadtrans)
     return dtree
 
@@ -323,7 +327,7 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
     dsrc = f"{source}\n{collectstr}"
     print(f"{source}")
     sfname = ""
-    if Debug:
+    if Debug or True:
         tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
         sfname = f'{tmpsdir}/diff.py'
         with open(sfname, 'w') as f:
@@ -354,8 +358,8 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
 
 
 def Dpy(func, active=[]):
-    csrc = py(func)
-    dtree = differentiate(loadast(csrc), activef=[func.__name__, func.__qualname__], active=active)
+    csrc, imports, modules = getast(func)
+    dtree = differentiate(csrc, activef=[func.__name__, func.__qualname__], active=active, modules=modules)
     return dtree
 
 
@@ -363,6 +367,7 @@ def difffunction(func, active=[]):
     dsrc = Dpy(func, active)
     try:
         fkey = 'd_' + func.__name__
+        # globals = func.__globals__ if not isinstance(func, type) else func.__init__.__globals__
         dfunc = execompile(dsrc, vars=[fkey], fglobals=func.__globals__)
         dfunc = dfunc[fkey]
     except BaseException as ex:
@@ -407,20 +412,26 @@ Result:
 
 
 def fid(func, active):
-    fmod = func.__module__
-    if fmod is None:
-        fmod = func.__class__.__module__
-    modfile = getattr(sys.modules[fmod], '__file__', fmod)
+    mod, modfile = getmodule(func)
+    if modfile is None:
+        modfile = mod
     fid = f'{func.__qualname__}:{modfile}:{repr(active)}'
     print('FID', func, fid)
     return fid
 
 
+def is_instance_userdefined_and_newclass(inst):
+    cls = inst.__class__
+    if hasattr(cls, '__class__'):
+        return ('__dict__' in dir(cls) or hasattr(cls, '__slots__'))
+    return False
+
+
 def isbuiltin(func):
-    fmod = func.__module__
-    if fmod is None:
-        fmod = func.__class__.__module__
-    return getattr(sys.modules[fmod], '__file__', None) is None
+    mod, modfile = getmodule(func)
+    res = modfile is None
+    print('isbuiltin', func, res)
+    return res
 
 
 def setrule(func, adfunc):
@@ -453,10 +464,8 @@ def getrules():
 
 
 def rid(func):
-    fmod = func.__module__
-    if fmod is None:
-        fmod = func.__class__.__module__
-    fid = f'{func.__qualname__}_{fmod}'.replace('.', '_')
+    mod, _ = getmodule(func)
+    fid = f'{func.__qualname__}_{mod}'.replace('.', '_')
     print('Rule ID', func, fid)
     return fid
 
@@ -497,6 +506,7 @@ def DiffFunction(function, **opts):
 
     id = 'D_' + rid(function)
     adfun = getattr(rules, id, None)
+    _class = None
 
     if isbuiltin(function) and adfun is None:
         fname = function.__name__
@@ -505,19 +515,42 @@ def DiffFunction(function, **opts):
 
     if adfun is None:
 
-        # Try source diff
+        if isinstance(function, type):
+            if not isbuiltin(function.__init__):
+                _class = function
+                function = function.__init__
+            else:
+                def initDObj():
+                    do, o = function(), function()
+                    do = dzeros(do)
+                    print('dobj', do.velocity)
+                    return do, o
+                adfun = lambda: initDObj()
+                return adfun
 
+        # Try source diff
         active = opts.get('active', [])
         print('DDD', active)
-        findex = fid(function, active)
-        if findex in adc:
-            print(f'Found diff function {function.__name__}')
-            (adfun, actind) = adc[findex]
+        if _class:
+            adfun = getattr(function, id, None)
+
+        if adfun is not None:
+            print(f'Diff function {function.__name__} found as class attr')
         else:
-            print(f'Diff function {function.__name__}')
-            (adfun, actind) = difffunction(function, active=active)
-            adc[findex] = (adfun, actind)
-            print(f'Diff function {function.__name__} cached => {findex}')
+            findex = fid(function, active)
+            if findex in adc:
+                print(f'Found diff function {function.__name__}')
+                (adfun, actind) = adc[findex]
+            else:
+                print(f'Diff function {function.__name__}')
+                (adfun, actind) = difffunction(function, active=active)
+                adc[findex] = (adfun, actind)
+                print(f'Diff function {function.__name__} cached => {findex}')
+
+            if _class:
+                setattr(function, id, adfun)
+                print(f'Diff function {function.__name__} saved as attr')
+
 
         adfun.issource = True
 
@@ -563,6 +596,11 @@ def dzeros(args):
         return {f: dzeros(v) for f, v in args.items()}
     elif isgeneric(args):
         return 0.0
+    elif isinstance(args, object):
+        # we assume the object is already allocated
+        for a in fields(args, True):
+            setattr(args, a, dzeros(getattr(args, a)))
+        return args
 
 
 class FillHelper:
