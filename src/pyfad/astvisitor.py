@@ -34,11 +34,10 @@ def getast(func):
         with open(modfile) as f:
             csrc = f.read()
         tree = loadastpy(csrc)
-        imports, modules = ASTVisitorImports()(tree.clone())
+        imports, modules = ASTVisitorImports()(tree)
         astcache[modfile] = {"file": modfile, "mtime": mtm, "data": (tree, imports, modules)}
         t1 = time.time()
         print(f'Load and parse module {mod} source from {modfile}: {1e3*(t1-t0):.1f} ms')
-    tree = tree.clone()
     tree = filterFunctions(tree, [func.__name__])
     ta1 = time.time()
     print(f'Got AST of {mod}.{func.__name__}: {1e3*(ta1-ta0):.1f} ms')
@@ -126,6 +125,11 @@ class TmpVar(ASTNode):
         self._class = 'TmpVar'
         self.id = random.random()
         self.kind = kind
+
+class Module(ASTNode):
+    def __init__(self, body):
+        self._class = 'Module'
+        self.body = body
 
 class ASTCanonicalizer:
     def __init__(self):
@@ -300,12 +304,11 @@ class ASTVisitorFilterFunctions(ASTLocalAction):
     def Before(self, tree):
         if tree._class == "FunctionDef":
             if tree.name in self.names:
-                self.seen.append(tree)
+                self.seen.append(tree.clone())
             return (tree, True)
 
-    def After(self, tree):
-        if tree._class == "Module":
-              tree.body = self.seen
+    def End(self, tree):
+        return Module(self.seen)
 
 
 def filterFunctions(intree, names):
