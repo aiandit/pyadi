@@ -7,6 +7,7 @@ from itertools import chain
 import pyfad
 from .examples import fxyz, fx
 
+pyfad.Debug = True
 
 fdH = 1e-8
 tolFD = fdH * 10
@@ -54,6 +55,7 @@ def f3(x,y,z):
     r = x*f1(x*z*17,y*z*17,y*x*17)
     return r
 
+
 class Pyfad(unittest.TestCase):
 
     def assertEqFD(self, f, r1, r2):
@@ -65,7 +67,7 @@ class Pyfad(unittest.TestCase):
     def checkDer(self, func, args, dx, seed=1, active=[]):
         (der, r) = pyfad.DiffFD(func, *args, seed=seed, active=active, h=fdH)
         print('cd', (der, dx))
-        self.assertTrue(self.assertEqFD(func, der, dx))
+        self.assertTrue(self.assertEqFD(func, dx, der))
 
     def test_D_f1(self):
         df = pyfad.D(f1)

@@ -1,5 +1,7 @@
 from math import sin, cos, tan, asin, acos, atan, log, sqrt
 
+import math
+
 def f1(x):
     z = fsin(x)
     return z
@@ -88,7 +90,7 @@ class Car:
     def drive(self, t):
         self.distance += self.velocity * t
 
-def _fobj(x):
+def fobj(x):
     o = Car()
     o.drive(x)
     r = o.distance
