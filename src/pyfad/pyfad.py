@@ -548,8 +548,9 @@ def DiffFunction(function, **opts):
                 print(f'Diff function {function.__name__} cached => {findex}')
 
             if _class:
-                setattr(function, id, adfun)
-                print(f'Diff function {function.__name__} saved as attr')
+                dfname = f'd_{function.__name__}'
+                setattr(_class, dfname, adfun)
+                print(f'Diff function {function.__name__} saved as attr {dfname} in type {_class.__qualname__}')
 
 
         adfun.issource = True
