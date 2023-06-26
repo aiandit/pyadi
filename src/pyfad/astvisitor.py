@@ -275,23 +275,20 @@ class ASTVisitorLastFunction(ASTLocalAction):
 
     def Begin(self, tree):
         self.seen = []
-        self.name = ''
 
     def Before(self, tree):
         if tree._class == "FunctionDef":
             self.seen.append((tree.name, tree))
             return (tree, True)
 
-    def After(self, tree):
-        if tree._class == "Module":
-            lname, lfunc = self.seen[-1]
-            self.name = lname
-            tree.body = [lfunc]
+    def End(self, tree):
+        lname, lfunc = self.seen[-1]
+        return Module([lfunc]), lname
 
 
 def filterLastFunction(intree):
     trans = ASTVisitorLastFunction()
-    return trans(intree), trans.name
+    return trans(intree)
 
 
 class ASTVisitorFilterFunctions(ASTLocalAction):
