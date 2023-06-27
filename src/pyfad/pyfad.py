@@ -276,6 +276,55 @@ class ASTVisitorFMAD(ASTVisitorID):
             elif isdiff(t.left):
                 t.left = left
 
+        elif t.op == '%':
+            if isdiff(t.right):
+                right_ = BinOp('/')
+                right_.left = t.left
+                right_.right = t.right
+                rfact_ = BinOp('*')
+                rfact_.left = UnaryOp('-', right)
+                rfact_.right = Call('int', [right_])
+
+                if isdiff(t.left):
+                    t = BinOp('+')
+                    t.left = left
+                    t.right = rfact_
+                else:
+                    t = rfact_
+            elif isdiff(t.left):
+                t.left = left
+
+        elif t.op == '**':
+            fact = BinOp('**')
+            fact.left = t.left
+            fact.right = t.right
+
+            if isdiff(t.left):
+                quot = BinOp('/')
+                quot.left = t.right
+                quot.right = t.left
+                lder = BinOp('*')
+                lder.left = quot
+                lder.right = left
+
+            if isdiff(t.right):
+                rder = BinOp('*')
+                rder.left = Call('log', [t.left])
+                rder.right = right
+
+                if isdiff(t.left):
+                    term = BinOp('+')
+                    term.left = lder
+                    term.right = rder
+                else:
+                    term = rder
+            elif isdiff(t.left):
+                term = lder
+
+            t = BinOp('*')
+            t.left = fact
+            t.right = term
+
         elif t.op == '+' or t.op == '-':
             t.left = left
             t.right = right
