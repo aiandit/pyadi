@@ -48,6 +48,20 @@ def fdiv(x):
     z = 2 / t
     return z
 
+def fmod(x):
+    r = sin(x)
+    s = r % x
+    t = s % 2
+    z = 2 % t
+    return z
+
+def fpow(x):
+    r = sin(x)
+    s = r ** x
+    t = s ** 2
+    z = 2 ** t
+    return z
+
 def gbabylonian(x, y=1):
     if abs(y**2 - x) < 1e-7:
         return y
