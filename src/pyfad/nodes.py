@@ -2,8 +2,12 @@ from astunparse.astnode import ASTNode, Constant, Name
 import random
 
 class Assign(ASTNode):
-    def __init__(self):
+    def __init__(self, l, r):
         self._class = 'Assign'
+        if not isinstance(l, list):
+            l = [l]
+        self.targets = l
+        self.value = r
 
 class List(ASTNode):
     def __init__(self, elts):

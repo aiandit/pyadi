@@ -69,7 +69,14 @@ class ASTVisitorFMAD(ASTVisitorID):
         nbody = []
         for item in body:
             if item._class == "Assign":
+                if item.value._class == "BinOp" and item.value.op == "**":
+                    self.tmpval = TmpVar('s')
+                    nbody += [Assign(self.tmpval, self.mkOpPartialC("**", None, None, item.value.left, item.value.right))]
                 nbody += [self.ddispatch(item.clone())]
+                if item.value._class == "BinOp" and item.value.op == "**":
+                    nbody += [Assign(item.targets, self.tmpval)]
+                    self.tmpval = None
+                    continue
                 if item.value._class not in ['Call', 'List', 'ListComp']:
                     nbody += [self.dispatch(item)]
             elif item._class == "AugAssign":
@@ -246,9 +253,7 @@ class ASTVisitorFMAD(ASTVisitorID):
             t = UnaryOp('-', BinOp('/', right_, sq))
         elif op == '%':
             quot = BinOp('/', x, y)
-            t = BinOp('*')
-            t.left = UnaryOp('-', dy)
-            t.right = Call('int', [quot])
+            t = BinOp('*', Call('int', [quot]), UnaryOp('-', dy))
         elif op == '**':
             t = BinOp('*', Call('log', [x]), dy)
         return t
@@ -303,7 +308,7 @@ class ASTVisitorFMAD(ASTVisitorID):
                 t.left = left
 
         elif t.op == '**':
-            fact = self.mkOpPartialC('**', None, None, t.left, t.right)
+            fact = self.mkOpPartialC('**', self.tmpval, None, t.left, t.right)
 
             if isdiff(t.left):
                 lder = self.mkOpPartialL('**', None, left, t.left, t.right)
@@ -340,7 +345,7 @@ class ASTVisitorFMAD(ASTVisitorID):
 def diff2pys(intree, visitor, *kw):
     print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
     intree = canonicalize(intree)
-    intree = resolvetmpvars(intree.clone())
+    intree = resolvetmpvars(intree)
     print('canon', unparse2j(intree, indent=1), file=open('canon.json', 'w'))
     print('canon', unparse(intree), file=open('canon.py', 'w'))
     print('canon', unparse(intree))
@@ -350,6 +355,8 @@ def diff2pys(intree, visitor, *kw):
     print('canon', unparse(intree))
     outtree = visitor(intree)
     print('outtree', unparse2j(outtree, indent=1), file=open('outtree.json', 'w'))
+    outtree = resolvetmpvars(outtree)
+    print('outtree', unparse2j(outtree, indent=1), file=open('outtree2.json', 'w'))
     return outtree
 
 
