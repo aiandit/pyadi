@@ -42,8 +42,10 @@ def fatan(x):
     return z
 
 def fdiv(x):
-    s = sin(x)
-    z = s / x
+    r = sin(x)
+    s = r / x
+    t = s / 2
+    z = 2 / t
     return z
 
 def gbabylonian(x, y=1):
@@ -220,7 +222,7 @@ def gl_mul2(x):
 def flist11(x):
     l = [f1(x), 2*x, 3*x]
     m = [(v,2*v) for v in l]
-    n = [[x, 2*x, 3*3], [f1(v) for v in l]]
+    n = [[x, 2*x, x*3], [f1(v) for v in l]]
     o = [[x, 2*x, 3*3], [f1(v) for v in gl_mul2(l)]]
     q = [[f1(v),f2(w)] for v,w in m]
     s = gl_sum2([l, m, n, o, q])
