@@ -6,7 +6,8 @@ import random
 
 import astunparse
 from astunparse import loadastpy, unparse, unparse2j
-from astunparse.astnode import ASTNode, BinOp, Constant, Name, fields
+from astunparse.astnode import fields
+from .nodes import *
 
 class NotFound(BaseException):
     pass
@@ -109,31 +110,6 @@ def iscall(cn):
 
 def iscanon(cn):
     return isop(cn) or iscall(cn)
-
-class Assign(ASTNode):
-    def __init__(self):
-        self._class = 'Assign'
-
-class List(ASTNode):
-    def __init__(self, elts):
-        self._class = 'List'
-        self.elts = elts
-
-class Tuple(ASTNode):
-    def __init__(self, elts):
-        self._class = 'Tuple'
-        self.elts = elts
-
-class TmpVar(ASTNode):
-    def __init__(self, kind='t'):
-        self._class = 'TmpVar'
-        self.id = random.random()
-        self.kind = kind
-
-class Module(ASTNode):
-    def __init__(self, body):
-        self._class = 'Module'
-        self.body = body
 
 class ASTCanonicalizer:
     def __init__(self):

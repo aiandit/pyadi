@@ -12,7 +12,9 @@ from astunparse import loadast, unparse2j, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 
 from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast
-from .astvisitor import ASTVisitorID, Assign, List, Tuple, ASTVisitorImports
+from .astvisitor import ASTVisitorID
+from .nodes import *
+
 from . import astvisitor
 
 from . import rules
