@@ -70,7 +70,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         for item in body:
             if item._class == "Assign":
                 if item.value._class == "BinOp" and item.value.op == "**":
-                    self.tmpval = TmpVar('s')
+                    self.tmpval = mkTmp('s')
                     nbody += [Assign(self.tmpval, self.mkOpPartialC("**", None, None, item.value.left, item.value.right))]
                 nbody += [self.ddispatch(item.clone())]
                 if item.value._class == "BinOp" and item.value.op == "**":
@@ -343,19 +343,19 @@ class ASTVisitorFMAD(ASTVisitorID):
 
 
 def diff2pys(intree, visitor, *kw):
-    print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
+#   print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
     intree = canonicalize(intree)
-    intree = resolvetmpvars(intree)
-    print('canon', unparse2j(intree, indent=1), file=open('canon.json', 'w'))
-    print('canon', unparse(intree), file=open('canon.py', 'w'))
+#    intree = resolvetmpvars(intree)
+#    print('canon', unparse2j(intree, indent=1), file=open('canon.json', 'w'))
+#    print('canon', unparse(intree), file=open('canon.py', 'w'))
     print('canon', unparse(intree))
     intree = normalize(intree.clone())
-    print('canon', unparse2j(intree, indent=1), file=open('norm.json', 'w'))
-    print('canon', unparse(intree), file=open('norm.py', 'w'))
-    print('canon', unparse(intree))
+#    print('canon', unparse2j(intree, indent=1), file=open('norm.json', 'w'))
+#    print('canon', unparse(intree), file=open('norm.py', 'w'))
+#    print('canon', unparse(intree))
     outtree = visitor(intree)
-    print('outtree', unparse2j(outtree, indent=1), file=open('outtree.json', 'w'))
-    outtree = resolvetmpvars(outtree)
+#    print('outtree', unparse2j(outtree, indent=1), file=open('outtree.json', 'w'))
+#    outtree = resolvetmpvars(outtree)
     print('outtree', unparse2j(outtree, indent=1), file=open('outtree2.json', 'w'))
     return outtree
 
