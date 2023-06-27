@@ -30,35 +30,12 @@ class NoRule(BaseException):
     pass
 
 
-class Subscript(ASTNode):
-    def __init__(self, v, ind):
-        self._class = "Subscript"
-        self.value = v
-        self.slice = Constant(ind)
+def nodiff(tree):
+    return tree._class == "Constant"
 
 
-class Call(ASTNode):
-    def __init__(self, func, args=[], kw=[]):
-        self._class = "Call"
-        if isinstance(func, str):
-            self.func = Name(func)
-        else:
-            self.func = func
-        self.args = args
-        self.keywords = kw
-
-
-class Keyword(ASTNode):
-    def __init__(self, arg, value):
-        self._class = "Keyword"
-        self.arg = arg
-        self.value = value
-
-
-class Starred(ASTNode):
-    def __init__(self, value):
-        self._class = "Starred"
-        self.value = value
+def isdiff(tree):
+    return not nodiff(tree)
 
 
 class ASTVisitorFMAD(ASTVisitorID):
@@ -248,35 +225,61 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def _DBinOp(self, t):
         print(f'Diff BinOp {t} left {vars(t.left)}')
+        if nodiff(t.left) and nodiff(t.right):
+            return Constant(0.0)
+
+        if nodiff(t.left):
+            left = self.dispatch(t.left)
+        else:
+            left = self.ddispatch(t.left.clone())
+        if nodiff(t.right):
+            right = self.dispatch(t.right)
+        else:
+            right = self.ddispatch(t.right.clone())
+
         if t.op == '*':
-            left = BinOp('*')
-            left.left = self.ddispatch(t.left.clone())
-            left.right = self.dispatch(t.right.clone())
-            right = BinOp('*')
-            right.left = self.dispatch(t.left.clone())
-            right.right = self.ddispatch(t.right.clone())
-            t = BinOp('+')
+
+            if isdiff(t.left) and isdiff(t.right):
+                left_ = BinOp('*')
+                left_.left = left
+                left_.right = t.right
+                right_ = BinOp('*')
+                right_.left = t.left
+                right_.right = right
+                t = BinOp('+')
+                t.left = left_
+                t.right = right_
+            else:
+                t.left = left
+                t.right = right
+
+        elif t.op == '/':
+            if isdiff(t.right):
+                sq = BinOp('**')
+                sq.left = t.right
+                sq.right = Constant(2)
+                right_ = BinOp('*')
+                right_.left = t.left
+                right_.right = right
+                if isdiff(t.left):
+                    left_ = BinOp('*')
+                    left_.left = left
+                    left_.right = t.right
+                    denom = BinOp('-')
+                    denom.left = left_
+                    denom.right = right_
+                else:
+                    denom = UnaryOp('-', right_)
+                t = BinOp('/')
+                t.left = denom
+                t.right = sq
+            elif isdiff(t.left):
+                t.left = left
+
+        elif t.op == '+' or t.op == '-':
             t.left = left
             t.right = right
-        elif t.op == '/':
-            left = BinOp('*')
-            left.left = self.ddispatch(t.left.clone())
-            left.right = self.dispatch(t.right.clone())
-            right = BinOp('*')
-            right.left = self.dispatch(t.left.clone())
-            right.right = self.ddispatch(t.right.clone())
-            denom = BinOp('-')
-            denom.left = left
-            denom.right = right
-            sq = BinOp('**')
-            sq.left = t.right.clone()
-            sq.right = Constant(2)
-            t = BinOp('/')
-            t.left = denom
-            t.right = sq
-        elif t.op == '+' or t.op == '-':
-            t.left = self.ddispatch(t.left)
-            t.right = self.ddispatch(t.right)
+
         else:
             t.left = self.dispatch(t.left)
             t.right = self.dispatch(t.right)
