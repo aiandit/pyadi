@@ -91,7 +91,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         for item in body:
             if item._class == "Assign":
                 nbody += [self.ddispatch(item.clone())]
-                if item.value._class not in ['Call', 'List']:
+                if item.value._class not in ['Call', 'List', 'ListComp']:
                     nbody += [self.dispatch(item)]
             elif item._class == "AugAssign":
                 nbody += [self.ddispatch(item.clone())]
@@ -117,9 +117,15 @@ class ASTVisitorFMAD(ASTVisitorID):
         node.value = self.ddispatch(node.value)
         return node
 
+    def diffUnlessIsTupleDiff(self, t):
+        if t._class == "Call" or t._class == "List" or t._class == "ListComp":
+            return self.ddispatch(t.clone())
+        else:
+            return Tuple([self.ddispatch(t.clone()),t])
+
     def _DList(self, node):
-        dargs = [self.ddispatch(t.clone()) if t._class == "Call" or t._class == "List" else Tuple([self.ddispatch(t.clone()),t]) for t in node.elts]
-        return Tuple([Starred(Call('zip', dargs))])
+        dargs = [self.diffUnlessIsTupleDiff(t) for t in node.elts]
+        return List([Starred(Call('zip', dargs))])
 
     def _DDict(self, node):
         node.values = self.ddispatch(node.values)
@@ -130,11 +136,12 @@ class ASTVisitorFMAD(ASTVisitorID):
         return node
 
     def _DListComp(self, node):
-        node.elt = self.ddispatch(node.elt)
-        return node
+        node.elt = self.diffUnlessIsTupleDiff(node.elt)
+        node.generators = self.ddispatch(node.generators)
+        return Call('zip', [Starred(node)])
 
     def _Dcomprehension(self, node):
-        node.target = self.ddispatch(node.target)
+        self._DForCommon(node)
         return node
 
     def _DIf(self, node):
@@ -146,8 +153,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         node.body = self.diffStmtList(node.body)
         return node
 
-    def _DFor(self, node):
-        node.body = self.diffStmtList(node.body)
+    def _DForCommon(self, node):
         tnode = Tuple([self.ddispatch(node.target), node.target])
         if node.iter._class == "Call":
             itnode = Call('zip', [Starred(self.ddispatch(node.iter))])
@@ -155,6 +161,10 @@ class ASTVisitorFMAD(ASTVisitorID):
             itnode = Call('zip', [self.ddispatch(node.iter), self.dispatch(node.iter)])
         node.target = tnode
         node.iter = itnode
+
+    def _DFor(self, node):
+        node.body = self.diffStmtList(node.body)
+        self._DForCommon(node)
         return node
 
     def _Darguments(self, node):
@@ -188,7 +198,7 @@ class ASTVisitorFMAD(ASTVisitorID):
             if attrstr not in self.imports:
                 curargs = [t.func.value] + curargs
 
-        dargs = [self.ddispatch(t.clone()) if t._class == "Call" or t._class == "List" else Tuple([self.ddispatch(t.clone()),t]) for t in curargs]
+        dargs = [self.diffUnlessIsTupleDiff(t) for t in curargs]
         res.args = dargs
         res.keywords = self.ddispatch(t.keywords) + self.dispatch(t.keywords)
         return res
@@ -207,7 +217,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _DAssign(self, t):
-        if t.value._class == 'Call' or t.value._class == "List":
+        if t.value._class == 'Call' or t.value._class == "List" or t.value._class == "ListComp":
             t.targets = [Tuple(self.ddispatch(t.targets) + self.dispatch(t.targets))]
         else:
             t.targets = self.ddispatch(t.targets)
