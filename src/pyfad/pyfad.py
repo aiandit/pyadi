@@ -28,6 +28,13 @@ class NoRule(BaseException):
     pass
 
 
+class Subscript(ASTNode):
+    def __init__(self, v, ind):
+        self._class = "Subscript"
+        self.value = v
+        self.slice = Constant(ind)
+
+
 class Call(ASTNode):
     def __init__(self, func, args=[], kw=[]):
         self._class = "Call"
@@ -84,7 +91,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         for item in body:
             if item._class == "Assign":
                 nbody += [self.ddispatch(item.clone())]
-                if item.value._class not in ['Call']:
+                if item.value._class not in ['Call', 'List']:
                     nbody += [self.dispatch(item)]
             elif item._class == "AugAssign":
                 nbody += [self.ddispatch(item.clone())]
@@ -109,6 +116,11 @@ class ASTVisitorFMAD(ASTVisitorID):
     def _DSubscript(self, node):
         node.value = self.ddispatch(node.value)
         return node
+
+    def _DList(self, node):
+        dargs = [self.ddispatch(t.clone()) if t._class == "Call" or t._class == "List" else Tuple([self.ddispatch(t.clone()),t]) for t in node.elts]
+        node.elts = dargs
+        return Tuple([Starred(Call('zip', dargs))])
 
     def _DDict(self, node):
         node.values = self.ddispatch(node.values)
@@ -141,7 +153,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         if node.iter._class == "Call":
             itnode = Call('zip', [Starred(self.ddispatch(node.iter))])
         else:
-            itnode = Call('zip', [self.ddispatch(node.iter), node.iter])
+            itnode = Call('zip', [self.ddispatch(node.iter), self.dispatch(node.iter)])
         node.target = tnode
         node.iter = itnode
         return node
@@ -170,14 +182,15 @@ class ASTVisitorFMAD(ASTVisitorID):
 
         res = Call(dcall)
         curargs = t.args
-        dargs = self.ddispatch([t.clone() for t in curargs])
+
         if t.func._class == "Attribute":
             print('ATTR', t.func.attr)
             attrstr = unparse(t.func.value).strip()
             if attrstr not in self.imports:
-                dargs = [self.ddispatch(t.func.value)] + dargs
                 curargs = [t.func.value] + curargs
-        res.args = list(czip(dargs, curargs))
+
+        dargs = [self.ddispatch(t.clone()) if t._class == "Call" or t._class == "List" else Tuple([self.ddispatch(t.clone()),t]) for t in curargs]
+        res.args = dargs
         res.keywords = self.ddispatch(t.keywords) + self.dispatch(t.keywords)
         return res
 
@@ -195,11 +208,14 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _DAssign(self, t):
-        if t.value._class == 'Call':
+        if t.value._class == 'Call' or t.value._class == "List":
             t.targets = [Tuple(self.ddispatch(t.targets) + self.dispatch(t.targets))]
         else:
             t.targets = self.ddispatch(t.targets)
+        isList = t.value._class == "List"
         t.value = self.ddispatch(t.value)
+        if isList:
+            t.value = t.value.elts[0].value
         return t
 
     def _DName(self, t):
@@ -571,7 +587,12 @@ def DiffFunction(function, **opts):
             return runRule(adfunOrig, function, args)
         adfun = inner
 
-    return adfun
+    def inner2(*args, **kw):
+        assert len(args) == 0 or len(list(args[0])) == 2
+        args = chain(*args)
+        return adfun(*args, **kw)
+
+    return inner2
 
 
 D = DiffFunction
@@ -674,7 +695,7 @@ def DiffFor(function, *args, **opts):
     else:
         if seed == 1:
             dargsList = createFullGradients(args)
-            dresult = [adfun(*czip(dargs, args)) for dargs in dargsList]
+            dresult = [adfun(*zip(dargs, args)) for dargs in dargsList]
             result = dresult[0][1]
             dresult = [d for d, r in dresult]
         elif isinstance(arg, list):
