@@ -15,6 +15,8 @@ from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunct
 from .astvisitor import ASTVisitorID, mkTmp
 from .nodes import *
 
+from .timer import Timer
+
 from . import astvisitor
 
 from . import rules
@@ -667,8 +669,9 @@ def DiffFunction(function, **opts):
 
     def inner2(*args, **kw):
         # assert len(args) == 0 or len(list(args[0])) == 2
-        args = chain(*args)
-        return adfun(*args, **kw)
+        with Timer(function.__qualname__, 'adrun') as t:
+            args = chain(*args)
+            return adfun(*args, **kw)
 
     return inner2
 
@@ -762,7 +765,8 @@ def createFullGradients(args):
 
 
 def DiffFor(function, *args, **opts):
-    result = function(*args)
+    with Timer(function.__qualname__, 'run') as t:
+        result = function(*args)
 
     adfun = D(function, **opts)
 
