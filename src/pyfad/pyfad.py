@@ -223,13 +223,20 @@ class ASTVisitorFMAD(ASTVisitorID):
         t.value = 0
         return t
 
+    def mkOpPartialC(self, op, r, dx, x, y):
+        if op == '**':
+            if r is None:
+                t = BinOp(op, x, y)
+            else:
+                t = r
+        return t
+
     def mkOpPartialL(self, op, r, dx, x, y):
         if op == '/':
             t = BinOp('/', dx, y)
         elif op == '**':
             quot = BinOp('/', y, x)
-            lder = BinOp('*', quot, dx)
-            t = BinOp('*', r, lder)
+            t = BinOp('*', quot, dx)
         return t
 
     def mkOpPartialR(self, op, r, dy, x, y):
@@ -243,8 +250,7 @@ class ASTVisitorFMAD(ASTVisitorID):
             t.left = UnaryOp('-', dy)
             t.right = Call('int', [quot])
         elif op == '**':
-            fact = BinOp('*', r, Call('log', [x]))
-            t = BinOp('*', fact, dy)
+            t = BinOp('*', Call('log', [x]), dy)
         return t
 
     def _DBinOp(self, t):
@@ -297,24 +303,22 @@ class ASTVisitorFMAD(ASTVisitorID):
                 t.left = left
 
         elif t.op == '**':
-            fact = BinOp('**', t.left, t.right)
+            fact = self.mkOpPartialC('**', None, None, t.left, t.right)
 
             if isdiff(t.left):
-                lder = self.mkOpPartialL('**', fact, left, t.left, t.right)
+                lder = self.mkOpPartialL('**', None, left, t.left, t.right)
 
             if isdiff(t.right):
-                rder = self.mkOpPartialR('**', fact, right, t.left, t.right)
+                rder = self.mkOpPartialR('**', None, right, t.left, t.right)
 
                 if isdiff(t.left):
-                    term = BinOp('+')
-                    term.left = lder
-                    term.right = rder
+                    term = BinOp('+', lder, rder)
                 else:
                     term = rder
             elif isdiff(t.left):
                 term = lder
 
-            t = term
+            t = BinOp('*', fact, term)
 
         elif t.op == '+' or t.op == '-':
             t.left = left
