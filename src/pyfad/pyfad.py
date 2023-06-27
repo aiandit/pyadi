@@ -119,7 +119,6 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def _DList(self, node):
         dargs = [self.ddispatch(t.clone()) if t._class == "Call" or t._class == "List" else Tuple([self.ddispatch(t.clone()),t]) for t in node.elts]
-        node.elts = dargs
         return Tuple([Starred(Call('zip', dargs))])
 
     def _DDict(self, node):
@@ -215,6 +214,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         isList = t.value._class == "List"
         t.value = self.ddispatch(t.value)
         if isList:
+            assert t.value.elts[0]._class == "Starred"
             t.value = t.value.elts[0].value
         return t
 

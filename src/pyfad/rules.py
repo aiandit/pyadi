@@ -9,10 +9,10 @@ def D_dict_items_builtins(r, dx, x):
     return dx.items()
 
 def D_range_builtins(r, dx, x):
-    return r
+    return [0]*len(r)
 
 def D_len_builtins(r, dx, x):
-    return r
+    return 0
 
 def D_enumerate_builtins(r, dx, x):
     return zip([0]*len(x), dx)
