@@ -65,7 +65,7 @@ class UnaryOp(ASTNode):
 
 class BinOp(ASTNode):
     def __init__(self, op, left=None, right=None):
-        self._class = "UnaryOp"
+        self._class = "BinOp"
         self.op = op
         self.left = left
         self.right = right
