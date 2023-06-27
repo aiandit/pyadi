@@ -127,7 +127,7 @@ class ASTCanonicalizer:
             raise(BaseException('error'))
             res = list(map(self.edispatch, tree))
         elif isinstance(tree, ASTNode):
-            tmpv = mkTmp()
+            tmpv = mkTmp('c')
             tmpas = Assign(tmpv, self.dispatch(tree.clone()))
             self._list.append(tmpas)
 #            print('new tmp', repr(tmpas))
