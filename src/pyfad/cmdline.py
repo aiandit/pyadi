@@ -17,6 +17,7 @@ def run(parsefun, prog, description='What the program does'):
                     description=description)
     parser.add_argument('filename', nargs='?')
     parser.add_argument('-F', '--function', type=str, dest='activef')
+    parser.add_argument('-p', '--prefix', type=str, nargs='*')
     parser.add_argument('-I', '--independents', type=str, dest='active', nargs='*')
     parser.add_argument('-i', '--indent', type=int, default=0, const=1, nargs='?')
     parser.add_argument('-o', '--output', type=str,

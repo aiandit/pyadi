@@ -9,6 +9,29 @@ from astunparse import loadastpy, unparse, unparse2j
 from astunparse.astnode import fields
 from .nodes import *
 
+tpref_ = 't_'
+
+def setprefix(t):
+    global tpref_
+    tpref_ = t
+
+tmpseen = {}
+class TmpVar(Name):
+    def __init__(self, kind='t'):
+        super().__init__(mkTmpName(kind))
+
+def mkTmpName(kind='t'):
+    for i in range(3):
+        id = random.random()
+        if id not in tmpseen:
+            break
+    short = f'{tpref_}{kind}{len(tmpseen):d}'
+    tmpseen[id] = short
+    return short
+
+def mkTmp(kind='t'):
+    return Name(mkTmpName(kind))
+
 class NotFound(BaseException):
     pass
 

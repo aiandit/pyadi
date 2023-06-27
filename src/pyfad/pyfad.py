@@ -12,7 +12,7 @@ from astunparse import loadast, unparse2j, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 
 from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast
-from .astvisitor import ASTVisitorID
+from .astvisitor import ASTVisitorID, mkTmp
 from .nodes import *
 
 from . import astvisitor
@@ -20,6 +20,13 @@ from . import astvisitor
 from . import rules
 
 Debug = False
+
+dpref_ = 'd_'
+
+def setprefix(diff, tmp, common=''):
+    global dpref_
+    dpref_ = common + diff
+    astvisitor.setprefix(common + tmp)
 
 
 def czip(a, b):
@@ -90,7 +97,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         if t.name in self.active_methods:
             t = t.clone()
             print(f'Catch Active FunctionDef {t.name} {vars(t)}')
-            t.name = 'd_' + t.name
+            t.name = dpref_ + t.name
             t.args = self.ddispatch(t.args)
             t.body = self.diffStmtList(t.body)
             t.decorator_list = []
@@ -192,13 +199,13 @@ class ASTVisitorFMAD(ASTVisitorID):
     def _Darg(self, t):
         if t.arg in self.active_objects:
             t = t.clone()
-            t.arg = 'd_' + t.arg
+            t.arg = dpref_ + t.arg
             print('   * active arg', t.arg)
         return t
 
     def _Dkeyword(self, t):
         t = t.clone()
-        t.arg = 'd_' + t.arg
+        t.arg = dpref_ + t.arg
         t.value = self.ddispatch(t.value)
         return t
 
@@ -217,7 +224,7 @@ class ASTVisitorFMAD(ASTVisitorID):
     def _DName(self, t):
         print(f'Diff Name {t.id}')
         t = t.clone()
-        t.id = 'd_' + t.id
+        t.id = dpref_ + t.id
         return t
 
     def _DAttribute(self, t):
@@ -360,8 +367,13 @@ def diff2pys(intree, visitor, *kw):
     return outtree
 
 
-def differentiate(intree, activef=None, active=None, modules=None, filter=False, **kw):
+def differentiate(intree, activef=None, active=None, modules=None, filter=False, prefix=None, **kw):
     fmadtrans = ASTVisitorFMAD()
+
+    if prefix:
+        while len(prefix) < 3:
+            prefix.append('')
+        setprefix(*prefix)
 
     fmadtrans.imports = modules
     print('imports', fmadtrans.imports)
@@ -451,7 +463,7 @@ def Dpy(func, active=[]):
 def difffunction(func, active=[]):
     dsrc = Dpy(func, active)
     try:
-        fkey = 'd_' + func.__name__
+        fkey = dpref_ + func.__name__
         # globals = func.__globals__ if not isinstance(func, type) else func.__init__.__globals__
         dfunc = execompile(dsrc, vars=[fkey], fglobals=func.__globals__)
         dfunc = dfunc[fkey]

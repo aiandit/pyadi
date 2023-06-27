@@ -19,30 +19,6 @@ class Tuple(ASTNode):
         self._class = 'Tuple'
         self.elts = elts
 
-c_ = ''
-d_ = 'd_'
-t_ = 't_'
-
-def setprefix(d, t='t_', c=''):
-    global c_, d_, t_
-    c_ = c
-    d_ = c + d
-    t_ = c + t
-
-tmpseen = {}
-class TmpVar(Name):
-    def __init__(self, kind='t'):
-        for i in range(3):
-            id = random.random()
-            if id not in tmpseen:
-                break
-        short = f'{t_}{kind}{len(tmpseen):d}'
-        tmpseen[id] = short
-        super().__init__(short)
-
-def mkTmp(kind='t'):
-    t = TmpVar(kind)
-    return Name(t.id)
 
 class Module(ASTNode):
     def __init__(self, body):
