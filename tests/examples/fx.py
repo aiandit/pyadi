@@ -144,3 +144,7 @@ def gl_sum(x):
 def flist(x):
     s = gl_sum([x, x*x, x*x*x])
     return s
+
+def flist2(x):
+    s = gl_sum([f1(x)])
+    return s
