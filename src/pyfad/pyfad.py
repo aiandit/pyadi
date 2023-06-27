@@ -633,7 +633,7 @@ def DiffFunction(function, **opts):
         active = opts.get('active', [])
 #        print('DDD', active)
         if _class:
-            adfun = getattr(function, id, None)
+            adfun = getattr(_class, id, None)
 
         if adfun is not None:
             print(f'Diff function {function.__name__} found as class attr')
