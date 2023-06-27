@@ -655,7 +655,12 @@ def DiffFunction(function, **opts):
                 setattr(_class, dfname, adfun)
                 print(f'Diff function {function.__name__} saved as attr {dfname} in type {_class.__qualname__}')
 
+        adfunSrc = adfun
+        def TimeIt(*args, **kw):
+            with Timer(function.__qualname__, 'adrun') as t:
+                return adfunSrc(*args, **kw)
 
+        adfun = TimeIt
         adfun.issource = True
 
     else:
@@ -669,9 +674,8 @@ def DiffFunction(function, **opts):
 
     def inner2(*args, **kw):
         # assert len(args) == 0 or len(list(args[0])) == 2
-        with Timer(function.__qualname__, 'adrun') as t:
-            args = chain(*args)
-            return adfun(*args, **kw)
+        args = chain(*args)
+        return adfun(*args, **kw)
 
     return inner2
 
