@@ -162,21 +162,9 @@ class ASTCanonicalizer:
             res = tree
         return (res, tmpv)
 
-    def cdispatch(self, tree):
-        if type(tree) == type([]):
-            tree = list(map(self.cdispatch, tree))
-        elif isinstance(tree, ASTNode):
-            for k in fields(tree):
-                setattr(tree, k, self.dispatch(getattr(tree, k)))
-            if iscanon(tree):
-                (tl, tmpvar) = self.edispatch(tree)
-                return tmpvar
-
-        return tree
-
     def dispatch(self, tree):
         if type(tree) == type([]):
-            res = list(map(self.cdispatch if self.active else self.dispatch, tree))
+            res = list(map(self.dispatch, tree))
         elif isinstance(tree, ASTNode):
 #            print('visit', vars(tree))
 
@@ -221,15 +209,8 @@ class ASTCanonicalizer:
                     (tl, tmpvar) = self.edispatch(tree.value)
                     tree.value = tmpvar
 
-            elif tree._class == "Call":
-                nargs = []
-                for arg in tree.args:
-                    if iscanon(arg):
-                        nargs += [self.edispatch(arg.clone())[1]]
-                    else:
-                        nargs += [arg]
-                print('nargs', nargs)
-                tree.args = nargs
+            elif tree._class == "List":
+                tree.elts = [ self.edispatch(e)[1] if isop(e) else self.dispatch(e) for e in tree.elts ]
 
             res = tree
         else:
