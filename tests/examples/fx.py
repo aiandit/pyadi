@@ -6,6 +6,10 @@ def f1(x):
     z = fsin(x)
     return z
 
+def f2(x):
+    z = 2*x
+    return z
+
 def fsin(x):
     z = sin(x)
     return z
@@ -141,10 +145,68 @@ def gl_sum(x):
         s += x[i]
     return s
 
+def gl_sum2(x):
+    s = 0
+    for i in range(len(x)):
+        v = x[i]
+        if isinstance(v, list) or isinstance(v, tuple):
+            s += gl_sum2(v)
+        else:
+            s += v
+    return s
+
 def flist(x):
     s = gl_sum([x, x*x, x*x*x])
     return s
 
 def flist2(x):
     s = gl_sum([f1(x)])
+    return s
+
+def flist3(x):
+    l = [x, x*x, x*x*x]
+    m = [f1(x) for x in l]
+    s = gl_sum(m)
+    return s
+
+def flist4(x):
+    s = gl_sum([x, x*x, x*x*x])
+    return s
+
+def flist5(x):
+    l = [x, 2*x]
+    m = [l, [3*x,4*x]]
+    s = gl_sum(m[0]) + gl_sum(m[1])
+    return s
+
+def flist6(x):
+    l = [f1(x), 2*x]
+    m = [l, [3*x,f2(4*x)]]
+    s = gl_sum(m[0]) + gl_sum(m[1])
+    return s
+
+def _flist7(x):
+    l = [f1(x), 2*x]
+    m = [l, [3*x,f2(4*x)]]
+    s = gl_sum2(m)
+    return s
+
+def flist8(x):
+    l = [f1(x), 2*x]
+    m = [3*x,f2(4*x)]
+    s = gl_sum2([l, m])
+    return s
+
+def flist9(x):
+    l = [f1(x), 2*x]
+    s = gl_sum2([l, [3*x,f1(x)]])
+    return s
+
+def flist10(x):
+    l = [f1(x), 2*x, 3*x]
+    m = [(v,2*v) for v in l]
+    n = [f1(v[0]) for v in m]
+    o = [f1(v[1]) for v in m]
+    q = [[f1(v),f2(w)] for v,w in m]
+    s = gl_sum2([l, m, n, o, q])
     return s
