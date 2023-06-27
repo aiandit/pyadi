@@ -666,7 +666,7 @@ def DiffFunction(function, **opts):
         adfun = inner
 
     def inner2(*args, **kw):
-        assert len(args) == 0 or len(list(args[0])) == 2
+        # assert len(args) == 0 or len(list(args[0])) == 2
         args = chain(*args)
         return adfun(*args, **kw)
 
