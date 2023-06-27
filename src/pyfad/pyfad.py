@@ -223,6 +223,30 @@ class ASTVisitorFMAD(ASTVisitorID):
         t.value = 0
         return t
 
+    def mkOpPartialL(self, op, r, dx, x, y):
+        if op == '/':
+            t = BinOp('/', dx, y)
+        elif op == '**':
+            quot = BinOp('/', y, x)
+            lder = BinOp('*', quot, dx)
+            t = BinOp('*', r, lder)
+        return t
+
+    def mkOpPartialR(self, op, r, dy, x, y):
+        if op == '/':
+            sq = BinOp('**', y, Constant(2))
+            right_ = BinOp('*', x, dy)
+            t = UnaryOp('-', BinOp('/', right_, sq))
+        elif op == '%':
+            quot = BinOp('/', x, y)
+            t = BinOp('*')
+            t.left = UnaryOp('-', dy)
+            t.right = Call('int', [quot])
+        elif op == '**':
+            fact = BinOp('*', r, Call('log', [x]))
+            t = BinOp('*', fact, dy)
+        return t
+
     def _DBinOp(self, t):
         print(f'Diff BinOp {t} left {vars(t.left)}')
         if nodiff(t.left) and nodiff(t.right):
@@ -240,51 +264,29 @@ class ASTVisitorFMAD(ASTVisitorID):
         if t.op == '*':
 
             if isdiff(t.left) and isdiff(t.right):
-                left_ = BinOp('*')
-                left_.left = left
-                left_.right = t.right
-                right_ = BinOp('*')
-                right_.left = t.left
-                right_.right = right
-                t = BinOp('+')
-                t.left = left_
-                t.right = right_
+                left_ = BinOp('*', left, t.right)
+                right_ = BinOp('*', t.left, right)
+                t = BinOp('+', left_, right_)
             else:
                 t.left = left
                 t.right = right
 
         elif t.op == '/':
             if isdiff(t.right):
-                sq = BinOp('**')
-                sq.left = t.right
-                sq.right = Constant(2)
-                right_ = BinOp('*')
-                right_.left = t.left
-                right_.right = right
+                right_ = self.mkOpPartialR('/', None, right, t.left, t.right)
                 if isdiff(t.left):
-                    left_ = BinOp('*')
-                    left_.left = left
-                    left_.right = t.right
-                    denom = BinOp('-')
-                    denom.left = left_
-                    denom.right = right_
+                    left_ = self.mkOpPartialL('/', None, left, t.left, t.right)
+                    t = BinOp('-')
+                    t.left = left_
+                    t.right = right_.operand
                 else:
-                    denom = UnaryOp('-', right_)
-                t = BinOp('/')
-                t.left = denom
-                t.right = sq
+                    t = right_
             elif isdiff(t.left):
                 t.left = left
 
         elif t.op == '%':
             if isdiff(t.right):
-                right_ = BinOp('/')
-                right_.left = t.left
-                right_.right = t.right
-                rfact_ = BinOp('*')
-                rfact_.left = UnaryOp('-', right)
-                rfact_.right = Call('int', [right_])
-
+                rfact_ = self.mkOpPartialR('%', None, right, t.left, t.right)
                 if isdiff(t.left):
                     t = BinOp('+')
                     t.left = left
@@ -295,22 +297,13 @@ class ASTVisitorFMAD(ASTVisitorID):
                 t.left = left
 
         elif t.op == '**':
-            fact = BinOp('**')
-            fact.left = t.left
-            fact.right = t.right
+            fact = BinOp('**', t.left, t.right)
 
             if isdiff(t.left):
-                quot = BinOp('/')
-                quot.left = t.right
-                quot.right = t.left
-                lder = BinOp('*')
-                lder.left = quot
-                lder.right = left
+                lder = self.mkOpPartialL('**', fact, left, t.left, t.right)
 
             if isdiff(t.right):
-                rder = BinOp('*')
-                rder.left = Call('log', [t.left])
-                rder.right = right
+                rder = self.mkOpPartialR('**', fact, right, t.left, t.right)
 
                 if isdiff(t.left):
                     term = BinOp('+')
@@ -321,9 +314,7 @@ class ASTVisitorFMAD(ASTVisitorID):
             elif isdiff(t.left):
                 term = lder
 
-            t = BinOp('*')
-            t.left = fact
-            t.right = term
+            t = term
 
         elif t.op == '+' or t.op == '-':
             t.left = left

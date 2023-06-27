@@ -1,4 +1,4 @@
-from astunparse.astnode import ASTNode, BinOp, Constant, Name
+from astunparse.astnode import ASTNode, Constant, Name
 import random
 
 class Assign(ASTNode):
@@ -62,3 +62,17 @@ class UnaryOp(ASTNode):
         self._class = "UnaryOp"
         self.op = op
         self.operand = value
+
+class BinOp(ASTNode):
+    def __init__(self, op, left=None, right=None):
+        self._class = "UnaryOp"
+        self.op = op
+        self.left = left
+        self.right = right
+
+class AugAssign(ASTNode):
+    def __init__(self, op, target=None, value=None):
+        self._class = "AugAssign"
+        self.op = op
+        self.target = target
+        self.value = value
