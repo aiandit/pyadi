@@ -501,7 +501,7 @@ def fid(func, active):
     if modfile is None:
         modfile = mod
     fid = f'{func.__qualname__}:{modfile}:{repr(active)}'
-    print('FID', func, fid)
+#    print('FID', func, fid)
     return fid
 
 
@@ -515,7 +515,7 @@ def is_instance_userdefined_and_newclass(inst):
 def isbuiltin(func):
     mod, modfile = getmodule(func)
     res = modfile is None
-    print('isbuiltin', func, res)
+#    print('isbuiltin', func, res)
     return res
 
 
@@ -551,7 +551,7 @@ def getrules():
 def rid(func):
     mod, _ = getmodule(func)
     fid = f'{func.__qualname__}_{mod}'.replace('.', '_')
-    print('Rule ID', func, fid)
+#    print('Rule ID', func, fid)
     return fid
 
 
@@ -619,7 +619,7 @@ def DiffFunction(function, **opts):
 
         # Try source diff
         active = opts.get('active', [])
-        print('DDD', active)
+#        print('DDD', active)
         if _class:
             adfun = getattr(function, id, None)
 
