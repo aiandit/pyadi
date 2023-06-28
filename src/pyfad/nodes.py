@@ -1,5 +1,32 @@
 from astunparse.astnode import ASTNode, Constant, Name
-import random
+
+
+class arguments(ASTNode):
+    def __init__(self, args):
+        self._class = 'arguments'
+        self.args = args
+        self.defaults = []
+        self.vararg = None
+        self.kwarg = None
+
+class arg(ASTNode):
+    def __init__(self, arg):
+        self._class = 'arg'
+        self.arg = arg
+        self.annotation = None
+
+class FunctionDef(ASTNode):
+    def __init__(self, name, args, l):
+        self._class = 'FunctionDef'
+        self.name = name
+        self.args = arguments([arg(n) for n in args])
+        self.body = l
+        self.decorator_list = []
+
+class Return(ASTNode):
+    def __init__(self, val):
+        self._class = 'Return'
+        self.value = val
 
 class Assign(ASTNode):
     def __init__(self, l, r):
@@ -39,6 +66,8 @@ class Call(ASTNode):
             self.func = Name(func)
         else:
             self.func = func
+        if not isinstance(args, list):
+            args = [args]
         self.args = args
         self.keywords = kw
 
