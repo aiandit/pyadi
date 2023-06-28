@@ -20,6 +20,19 @@ def D_enumerate_builtins(r, dx, x):
 def D_list_builtins(r, dx, x):
     return list(dx)
 
+def D_Random_random_builtins(r):
+    return 0
+
+def D_min_builtins(r, dx, x, dy, y):
+    return dx if x < y else dy
+
+def D_max_builtins(r, dx, x, dy, y):
+    return dx if not(x < y) else dy
+
+
+def D_abs_builtins(r, dx, x):
+    return 1 if not(x < 0) else -1
+
 
 def D_sin_math(r, dx, x):
     print('dsin', r, dx, x)
