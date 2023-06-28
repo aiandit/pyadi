@@ -646,7 +646,8 @@ def DiffFunction(function, **opts):
                 (adfun, actind) = adc[findex]
             else:
                 print(f'Diff function {function.__name__}')
-                (adfun, actind) = difffunction(function, active=active)
+                with Timer(function.__qualname__, 'diff') as t:
+                    (adfun, actind) = difffunction(function, active=active)
                 adc[findex] = (adfun, actind)
                 print(f'Diff function {function.__name__} cached => {findex}')
 
