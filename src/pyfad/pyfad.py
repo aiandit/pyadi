@@ -74,6 +74,20 @@ class ASTVisitorFMAD(ASTVisitorID):
                 setattr(res, name, delem)
             return res
 
+    nodiffFunctions = ["print", "open"]
+    nodiffExpr = ["Raise", "Assert"]
+    def isnodiffExpr(self, item):
+        res = False
+        if item._class == "Expr":
+            v = item.value
+            if v._class == "Call":
+                if getattr(v.func, 'id', False):
+                    res = v.func.id in self.nodiffFunctions
+        elif item._class in self.nodiffExpr:
+            res = True
+        return res
+
+
     def diffStmtList(self, body):
         nbody = []
         for item in body:
@@ -90,6 +104,8 @@ class ASTVisitorFMAD(ASTVisitorID):
                     nbody += [self.dispatch(item)]
             elif item._class == "AugAssign":
                 nbody += [self.ddispatch(item.clone())]
+                nbody += [self.dispatch(item)]
+            elif self.isnodiffExpr(item):
                 nbody += [self.dispatch(item)]
             else:
                 nbody += [self.ddispatch(item)]
