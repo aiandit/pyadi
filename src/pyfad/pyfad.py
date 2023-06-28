@@ -250,6 +250,8 @@ class ASTVisitorFMAD(ASTVisitorID):
     def mkOpPartialL(self, op, r, dx, x, y):
         if op == '/':
             t = BinOp('/', dx, y)
+        elif op == '%':
+            t = dx
         elif op == '**':
             quot = BinOp('/', y, x)
             t = BinOp('*', quot, dx)
@@ -262,7 +264,7 @@ class ASTVisitorFMAD(ASTVisitorID):
             t = UnaryOp('-', BinOp('/', right_, sq))
         elif op == '%':
             quot = BinOp('/', x, y)
-            t = BinOp('*', Call('int', [quot]), UnaryOp('-', dy))
+            t = BinOp('*', BinOp('*', Call('math.floor', [quot]), Constant(-1)), dy)
         elif op == '**':
             t = BinOp('*', Call('log', [x]), dy)
         return t
@@ -305,16 +307,18 @@ class ASTVisitorFMAD(ASTVisitorID):
                 t.left = left
 
         elif t.op == '%':
+            if isdiff(t.left):
+                lfact_ = self.mkOpPartialL('%', None, left, t.left, t.right)
             if isdiff(t.right):
                 rfact_ = self.mkOpPartialR('%', None, right, t.left, t.right)
                 if isdiff(t.left):
                     t = BinOp('+')
-                    t.left = left
+                    t.left = lfact_
                     t.right = rfact_
                 else:
                     t = rfact_
             elif isdiff(t.left):
-                t.left = left
+                t = lfact_
 
         elif t.op == '**':
             fact = self.mkOpPartialC('**', self.tmpval, None, t.left, t.right)
