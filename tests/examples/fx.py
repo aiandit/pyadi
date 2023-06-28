@@ -261,3 +261,11 @@ def flist11(x):
     q = [[f1(v),f2(w)] for v,w in m]
     s = gl_sum2([l, m, n, o, q])
     return s
+
+def fprint(x):
+    l = [f1(x), 2*x, 3*x]
+    print(l)
+    assert len(l) == 3
+    if x == 0:
+        raise(ValueError())
+    return gl_sum2(l)
