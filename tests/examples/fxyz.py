@@ -1,4 +1,6 @@
-from math import sin, cos, tan, asin, acos, atan, log, sqrt
+from math import sin, cos, tan, asin, acos, atan, log, sqrt, pi
+import random, math
+from pyfad import d_math
 
 def f1(x,y,z):
     r = x*2*x*y*z

@@ -26,10 +26,14 @@ def ftrig(x):
     return asin(acos(atan(tan(cos(sin(x))))))
 
 def fsqrt(x):
+    if x < 0:
+        x = -x
     z = sqrt(x)
     return z
 
 def flog(x):
+    if x < 0:
+        x = -x
     z = log(x)
     return z
 
@@ -39,6 +43,15 @@ def fasin(x):
 
 def fatan(x):
     z = atan(x)
+    return z
+
+def fneg(x):
+    z = -atan(x)
+    return z
+
+def fneg2(x):
+    y = x*x
+    z = (x + (- y))
     return z
 
 def fdiv(x):
@@ -55,7 +68,14 @@ def fmod(x):
     z = 2 % t
     return z
 
+def fmod2(x):
+    r = -sin(x)
+    s = r % 3
+    return s
+
 def fpow(x):
+    if x < 0:
+        x = -x
     r = sin(x)
     s = r ** x
     t = s ** 2
@@ -70,7 +90,7 @@ def gbabylonian(x, y=1):
         return r
 
 def fbabylonian(x):
-    r = gbabylonian(x)
+    r = gbabylonian(abs(x))
     return r
 
 def gbabylonian2(x, y=1):
@@ -80,7 +100,7 @@ def gbabylonian2(x, y=1):
         return gbabylonian(x, (y + x / y) / 2)
 
 def fbabylonian2(x):
-    return gbabylonian2(x)
+    return gbabylonian2(abs(x))
 
 def ffor(x):
     l = [x, x*x, x*x*x]

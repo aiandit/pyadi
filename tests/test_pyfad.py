@@ -5,7 +5,7 @@ import math
 from itertools import chain
 
 import pyfad
-from .examples import fxyz, fx
+from .examples import fxyz, fx, fgen
 
 pyfad.Debug = True
 
@@ -251,8 +251,26 @@ class Pyfad(unittest.TestCase):
             print(f'Test function {fn.__name__} from {module.__name__}')
             self.do_sourceDiff_f_xyz(fn, args=args)
 
-    def test_fx(self, module=None):
+    def test_fxyz2(self):
+        self.test_fxyz(module=fxyz, args=[-1,2,3])
+
+    def test_fxyz3(self):
+        self.test_fxyz(module=fxyz, args=[1,-2,3])
+
+    def test_fxyz4(self):
+        self.test_fxyz(module=fxyz, args=[-1,-2,3])
+
+    def test_fxyz5(self):
+        self.test_fxyz(module=fxyz, args=[-1,-2,-3])
+
+    def test_fx(self):
         self.test_fxyz(module=fx, args=[0.234])
+
+    def test_fx2(self):
+        self.test_fxyz(module=fx, args=[-0.234])
+
+    def test_gen(self):
+        self.test_fxyz(module=fgen, args=[1,2,3])
 
     def test_py(self, module=None):
         src = pyfad.py(fx.f1)
