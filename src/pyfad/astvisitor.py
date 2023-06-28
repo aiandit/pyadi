@@ -198,6 +198,11 @@ class ASTCanonicalizer:
                     (tl, tmpvar) = self.edispatch(tree.value)
                     tree.value = tmpvar
 
+            elif tree._class == "UnaryOp":
+                if iscanon(tree.operand):
+                    (tl, tmpvar) = self.edispatch(tree.operand)
+                    tree.operand = tmpvar
+
             elif tree._class == "BinOp":
                 if iscanon(tree.left):
                     (tl, tmpvar) = self.edispatch(tree.left)
