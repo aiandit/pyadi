@@ -34,8 +34,11 @@ def D_abs_builtins(r, dx, x):
     return 1 if not(x < 0) else -1
 
 
+def D_sum_builtins(r, dx, x):
+    return sum(dx)
+
+
 def D_sin_math(r, dx, x):
-    print('dsin', r, dx, x)
     return dx * cos(x)
 
 def D_cos_math(r, dx, x):
