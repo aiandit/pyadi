@@ -124,6 +124,11 @@ class ASTVisitorFMAD(ASTVisitorID):
             t.body = self.dispatch(t.body)
         return t
 
+    def _DIfExp(self, node):
+        node.body = self.ddispatch(node.body)
+        node.orelse = self.ddispatch(node.orelse)
+        return node
+
     def _DSubscript(self, node):
         node.value = self.ddispatch(node.value)
         return node
