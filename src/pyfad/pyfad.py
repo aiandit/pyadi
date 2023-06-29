@@ -373,10 +373,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _DReturn(self, t):
-        if t.value._class == "Call":
-            t.value = self.ddispatch(t.value)
-        else:
-            t.value = Tuple([self.ddispatch(t.value.clone()), self.dispatch(t.value)])
+        t.value = self.diffUnlessIsTupleDiff(t.value)
         return t
 
 
