@@ -298,3 +298,9 @@ class Pyfad(unittest.TestCase):
 
     def test_ast_clearcache(self, module=None):
         pyfad.clear()
+
+    def test_fcalll(self):
+        self.do_sourceDiff_f_xyz(fx.fcalll, args=[0.234])
+
+    def test_fcalll2(self):
+        self.do_sourceDiff_f_xyz(fx.fcalll2, args=[0.234])

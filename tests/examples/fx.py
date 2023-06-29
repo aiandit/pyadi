@@ -262,6 +262,15 @@ def flist11(x):
     s = gl_sum2([l, m, n, o, q])
     return s
 
+def flist12(x):
+    l = [f1(x), 2*x, 3*x]
+    m = [(v,2*v) for v in l]
+    n = gl_sum2([[x, 2*x, x*3], [f1(v) for v in l]])
+    o = gl_sum2([[x, 2*x, 3*3], [f1(v) for v in gl_mul2(l)]])
+    q = gl_sum2([[f1(v),f2(w)] for v,w in m])
+    s = gl_sum2([l, m])
+    return s + n + o + q
+
 def fprint(x):
     l = [f1(x), 2*x, 3*x]
     print(l)
@@ -269,3 +278,59 @@ def fprint(x):
     if x == 0:
         raise(ValueError())
     return gl_sum2(l)
+
+def g2(x,y): return x*y
+def g2l(x,y): return x*sum(y)
+
+def fcall(x):
+    z = g2(x, x*x)
+    return z
+
+def fcallf(x):
+    z = g2(x, f1(x*2))
+    return z
+
+def fcalll(x):
+    z = g2l(x, [x,2*x,3,3*x])
+    return z
+
+def fcalll2(x):
+    z = g2l(x, [x,2*x,f1(f2(3*x))])
+    return z
+
+def fcalll3(x):
+    l = [x, x*x, x*x*x]
+    A = [ [ l[i] if i == j else 0 for j in range(3) ] for i in range(3) ]
+    z = g2l(gl_sum2(A), l)
+    return z
+
+def fcalll3(x):
+    l = [x, x*x, x*x*x]
+    A = [ [ l[i] if i == j else 0 for j in range(3) ] for i in range(3) ]
+    z = g2l(gl_sum2(A), l)
+    return z
+
+def gdiag(l):
+    if isinstance(l[0], list) or  isinstance(l[0], tuple):
+        # is list of list == matrix, get diagonal
+        return [ l[i][i] for i in range(3) ]
+    # else: is list == vector, get build diagonal matrix
+    return [ [ l[i] if i == j else 0 for j in range(3) ] for i in range(3) ]
+
+def gdiag2(l):
+    return [ [ l[i] for j in range(3) if i == j ] for i in range(3) ]
+
+def fcalll3(x):
+    l = [x, x*x, x*x*x]
+    A = [ [ l[i] if i == j else 0 for j in range(3) ] for i in range(3) ]
+    z = g2l(gl_sum2(A), l)
+    return z
+
+def fcalll4(x):
+    l = [x, x*x, x*x*x]
+    A = gdiag(l)
+    v = gdiag(A)
+    assert gl_sum2(A) == gl_sum2(v)
+    assert gl_sum2(A) == gl_sum2(l)
+    z = g2l(gl_sum2(A), v)
+    return z
