@@ -21,6 +21,8 @@ from . import astvisitor
 
 from . import rules
 
+rules.initRules()
+
 Debug = False
 
 dpref_ = 'd_'
@@ -33,10 +35,6 @@ def setprefix(diff, tmp, common=''):
 
 def czip(a, b):
     return chain(*zip(a, b))
-
-
-class NoRule(BaseException):
-    pass
 
 
 def nodiff(tree):
@@ -60,13 +58,13 @@ class ASTVisitorFMAD(ASTVisitorID):
             return tree
         cname = tree._class
         meth = getattr(self, "_D"+cname, None)
-        print('ddispatch?', cname, vars(tree))
+#        print('ddispatch?', cname, vars(tree))
         if meth:
             print('Found method', cname)
             return meth(tree)
         else:
-            print('start dispatch', vars(tree).keys())
-            print('start dispatch', dir(tree))
+#            print('start dispatch', vars(tree).keys())
+#            print('start dispatch', dir(tree))
             res = ASTNode()
             for name in vars(tree).keys():
                 delem = self.ddispatch(getattr(tree, name))
@@ -158,7 +156,7 @@ class ASTVisitorFMAD(ASTVisitorID):
     def _DListComp(self, node):
         node.elt = self.diffUnlessIsTupleDiff(node.elt)
         node.generators = self.ddispatch(node.generators)
-        return Call('zip', [Starred(node)])
+        return Call('zip', [Starred(node)]) #???
 
     def _Dcomprehension(self, node):
         self._DForCommon(node)
@@ -559,42 +557,6 @@ def isbuiltin(func):
     return res
 
 
-def setrule(func, adfunc):
-    id = 'D_' + rid(func)
-    print(f'set AD rule for {func.__name__}, key {id}')
-    setattr(rules, id, adfunc)
-    rules.dict[id] = adfunc
-
-
-def delrule(func):
-    id = 'D_' + rid(func)
-    print(f'clear AD rule for {func.__name__}, key {id}')
-    if id in rules.dict:
-        del rules.dict[id]
-    else:
-        rules.hidden[id] = getattr(rules, id)
-    delattr(rules, id)
-
-
-def restorerule(func):
-    id = 'D_' + rid(func)
-    print(f'restore AD rule for {func.__name__}, key {id}')
-    if id in rules.hidden:
-        setattr(rules, id, rules.hidden[id])
-        del rules.hidden[id]
-
-
-def getrules():
-    return rules.dict
-
-
-def rid(func):
-    mod, _ = getmodule(func)
-    fid = f'{func.__qualname__}_{mod}'.replace('.', '_')
-#    print('Rule ID', func, fid)
-    return fid
-
-
 def getsig(f):
     x = inspect.signature(f)
     x = [f for f in x.parameters]
@@ -631,78 +593,84 @@ def runRule(adfun, function, args):
     return (adfun(res, *args), res)
 
 
-def DiffFunction(function, **opts):
+def DiffFunction(f, **opts):
 
-    id = 'D_' + rid(function)
-    adfun = getattr(rules, id, None)
-    _class = None
+    def theADFun(dargs, args, **kw):
+        function = f
+        _class = None
 
-    if isbuiltin(function) and adfun is None:
-        fname = function.__name__
-        msg = f'No rule for buitin {fname}, function {id} not found'
-        raise (NoRule(msg))
+        dres, res = rules.processRules(function, dargs, args, **kw)
 
-    if adfun is None:
+        if isbuiltin(function) and dres is None:
+            fname = function.__name__
+            id = rules.rid(function)
+            msg = f'No rule for buitin {fname}, function {id} not found'
+            raise (rules.NoRule(msg))
 
-        if isinstance(function, type):
-            if not isbuiltin(function.__init__):
-                _class = function
-                function = function.__init__
-            else:
-                def initDObj():
-                    do, o = function(), function()
-                    do = dzeros(do)
-                    print('dobj', do.velocity)
-                    return do, o
-                adfun = lambda: initDObj()
-                return adfun
+        if dres is None:
 
-        # Try source diff
-        active = opts.get('active', [])
-#        print('DDD', active)
-        if _class:
-            adfun = getattr(_class, id, None)
+            adfun = None
+            # Try source diff
+            if isinstance(function, type):
+                if not isbuiltin(function.__init__):
+                    _class = function
+                    function = function.__init__
+                else:
+                    def initDObj():
+                        do, o = function(), function()
+                        do = dzeros(do)
+                        print('dobj', do.velocity)
+                        return do, o
+                    adfun = lambda: initDObj()
+                    return adfun
 
-        if adfun is not None:
-            print(f'Diff function {function.__name__} found as class attr')
-        else:
-            findex = fid(function, active)
-            if findex in adc:
-                print(f'Found diff function {function.__name__}')
-                (adfun, actind) = adc[findex]
-            else:
-                print(f'Diff function {function.__name__}')
-                with Timer(function.__qualname__, 'diff') as t:
-                    (adfun, actind) = difffunction(function, active=active)
-                adc[findex] = (adfun, actind)
-                print(f'Diff function {function.__name__} cached => {findex}')
-
+            active = opts.get('active', [])
+    #        print('DDD', active)
             if _class:
-                dfname = f'd_{function.__name__}'
-                setattr(_class, dfname, adfun)
-                print(f'Diff function {function.__name__} saved as attr {dfname} in type {_class.__qualname__}')
+                adfun = getattr(_class, id, None)
 
-        adfunSrc = adfun
-        def TimeIt(*args, **kw):
-            with Timer(function.__qualname__, 'adrun') as t:
-                return adfunSrc(*args, **kw)
+            if adfun is not None:
+                print(f'Diff function {function.__name__} found as class attr')
+            else:
+                findex = fid(function, active)
+                if findex in adc:
+                    print(f'Found diff function {function.__name__}')
+                    (adfun, actind) = adc[findex]
+                else:
+                    print(f'Diff function {function.__name__}')
+                    with Timer(function.__qualname__, 'diff') as t:
+                        (adfun, actind) = difffunction(function, active=active)
+                    adc[findex] = (adfun, actind)
+                    print(f'Diff function {function.__name__} cached => {findex}')
 
-        adfun = TimeIt
-        adfun.issource = True
+                if _class:
+                    dfname = f'd_{function.__name__}'
+                    setattr(_class, dfname, adfun)
+                    print(f'Diff function {function.__name__} saved as attr {dfname} in type {_class.__qualname__}')
 
-    else:
+            adfunSrc = adfun
+            def TimeIt(dargs, args, **kw):
+                with Timer(function.__qualname__, 'adrun') as t:
+                    margs = czip(dargs, args)
+                    return adfunSrc(*margs, **kw)
 
-        adfun.issource = False
-        adfunOrig = adfun
+            adfun = TimeIt
 
-        def inner(*args):
-            return runRule(adfunOrig, function, args)
-        adfun = inner
+            (dres, res) = adfun(dargs, args, **kw)
+            adfun.issource = True
+
+        else:
+
+            pass
+
+        return dres, res
 
     def inner2(*args, **kw):
         # assert len(args) == 0 or len(list(args[0])) == 2
-        args = chain(*args)
-        return adfun(*args, **kw)
+        dargs, fargs = [], []
+        if len(args) > 0:
+            dargs, fargs = zip(*args)
+        return theADFun(dargs, fargs, **kw)
 
     return inner2
 

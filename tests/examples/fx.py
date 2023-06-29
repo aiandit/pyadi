@@ -130,7 +130,7 @@ class Car:
     def drive(self, t):
         self.distance += self.velocity * t
 
-def fobj(x):
+def _fobj(x):
     o = Car()
     o.drive(x)
     r = o.distance
