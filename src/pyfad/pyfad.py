@@ -128,9 +128,13 @@ class ASTVisitorFMAD(ASTVisitorID):
         node.value = self.ddispatch(node.value)
         return node
 
-    def diffUnlessIsTupleDiff(self, t):
+    def diffUnlessIsTupleDiff(self, t, src=None):
         if t._class == "Call" or t._class == "List" or t._class == "ListComp":
-            return self.ddispatch(t.clone())
+            res = self.ddispatch(t.clone())
+            if src and src._class == 'Call':
+                if t._class == "List":
+                    res = res.elts[0].value
+            return res
         else:
             return Tuple([self.ddispatch(t.clone()),t])
 
@@ -209,7 +213,7 @@ class ASTVisitorFMAD(ASTVisitorID):
             if attrstr not in self.imports:
                 curargs = [t.func.value] + curargs
 
-        dargs = [self.diffUnlessIsTupleDiff(t) for t in curargs]
+        dargs = [self.diffUnlessIsTupleDiff(a, t) for a in curargs]
         res.args = dargs
         res.keywords = self.ddispatch(t.keywords) + self.dispatch(t.keywords)
         return res
