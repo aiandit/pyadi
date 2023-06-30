@@ -14,7 +14,7 @@ def rid(func):
 
 def decorator(done):
 
-    def inner(f, dargs, args, **kw):
+    def inner(f, *args, **kw):
         res = done()
 
         id = 'D_' + rid(f)
@@ -22,9 +22,9 @@ def decorator(done):
 
         dres = None
         if rule:
-            res = f(*args)
-            margs = czip(dargs, args)
-            dres = rule(res, *margs)
+            res = f(*args[1::2], **kw)
+            margs = chain(*args)
+            dres = rule(res, *margs, **kw)
 
         return dres, res
 

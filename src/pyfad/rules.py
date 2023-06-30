@@ -31,7 +31,7 @@ def initRules(rules='ad'):
         elif i == 'dummy2':
             addrulemodule(dummy2)
 
-def processRules(function, *args, **kw):
+def processRules(function, args, kw):
     state = [0]
     mkeys = list(rulemodules.keys())
 
@@ -42,9 +42,9 @@ def processRules(function, *args, **kw):
             return None
         else:
             ind = state[0]
-#            print('process ', ind, mkeys[ind])
-#            print('args', args)
-
+            print(f'process {function.__name__} ', ind, mkeys[ind])
+            print('args', args)
+            assert len(args) == 0 or all([len(list(a)) == 2 for a in list(args)])
             state[0] += 1
 
             deco = rulemodules[mkeys[ind]].decorator(nextStep)
