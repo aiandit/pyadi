@@ -35,6 +35,9 @@ def mkTmp(kind='t'):
 class NotFound(BaseException):
     pass
 
+class NoSource(BaseException):
+    pass
+
 def getmodule(func):
     mod = getattr(func, '__module__', None)
     if mod is None:
