@@ -279,6 +279,14 @@ def fprint(x):
         raise(ValueError())
     return gl_sum2(l)
 
+def fprint2(x):
+    l = [x, x*x, x*x*x]
+    print(l)
+    print(f'The first element of l is {l[0]}')
+    for i in range(len(l)):
+        print(f'The {i}-th element of l is {l[i]}')
+    return sum(l)
+
 def g2(x,y): return x*y
 def g2l(x,y): return x*sum(y)
 
