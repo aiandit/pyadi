@@ -10,20 +10,12 @@ def decorator(done):
 
     def inner(f, dargs, args, **kw):
 
-        print(f'D1 {f.__name__} before')
+        print(f'D2 {f.__name__} before')
 
         res = done()
 
-        assert res == None
+        print(f'D2 {f.__name__} after {res}')
 
-        if isbuiltin(f):
-            print('Call f')
-            r = f(*args, **kw)
-            res = r, r
-        else:
-            res = None, None
-
-        print(f'D1 {f.__name__} after {res}')
         return res
 
     return inner

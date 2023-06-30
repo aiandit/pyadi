@@ -3,7 +3,7 @@ from itertools import chain
 from .astvisitor import getmodule
 from . import forwardad
 from . import trace
-from . import dummy
+from . import dummy, dummy2
 
 
 class NoRule(BaseException):
@@ -28,6 +28,8 @@ def initRules(rules='ad'):
             addrulemodule(forwardad)
         elif i == 'dummy':
             addrulemodule(dummy)
+        elif i == 'dummy2':
+            addrulemodule(dummy2)
 
 def processRules(function, *args, **kw):
     state = [0]
@@ -37,7 +39,7 @@ def processRules(function, *args, **kw):
         if state[0] >= len(mkeys):
             lenkw = len(kw)
 #            print('kw', kw)
-            return function(*args[1], **{f: kw[f] for i, f in enumerate(kw) if i >= lenkw/2 })
+            return None
         else:
             ind = state[0]
 #            print('process ', ind, mkeys[ind])

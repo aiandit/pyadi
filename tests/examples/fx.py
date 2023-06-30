@@ -335,7 +335,7 @@ def fcalll4(x):
     z = g2l(gl_sum2(A), v)
     return z
 
-def fcalll4(x):
+def fcalll5(x):
     l = [x, x*x, x*x*x]
     A = gdiag(gdiag(gdiag(l)))
     v = gdiag(A)

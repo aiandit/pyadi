@@ -316,3 +316,5 @@ class TestPyTracer(unittest.TestCase):
 
     def test_tr_calll4(self):
         self.do_sourceDiff_f_xyz(fx.fcalll4, args=[0.234])
+    def test_tr_calll5(self):
+        self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234])

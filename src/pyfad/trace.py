@@ -21,7 +21,9 @@ def decorator(next):
     def inner(f, *args, **kw):
 
         print(f'call to {f.__name__}{(*args,)}) starts {time.time()} s')
+
         res = next()
+
         print(f'call to {f.__name__}{(*args,)}) = {res} ends {time.time()} s')
 
         return res

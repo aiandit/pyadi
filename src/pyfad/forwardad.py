@@ -22,6 +22,7 @@ def decorator(done):
 
         dres = None
         if rule:
+            res = f(*args)
             margs = czip(dargs, args)
             dres = rule(res, *margs)
 
