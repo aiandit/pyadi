@@ -24,6 +24,6 @@ def decorator(next):
         res = next()
         print(f'call to {f.__name__}{(*args,)}) = {res} ends {time.time()} s')
 
-        return None, res
+        return res
 
     return inner
