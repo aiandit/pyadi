@@ -132,8 +132,8 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _DIfExp(self, node):
-        node.body = self.ddispatch(node.body)
-        node.orelse = self.ddispatch(node.orelse)
+        node.body = self.diffUnlessIsTupleDiff(node.body)
+        node.orelse = self.diffUnlessIsTupleDiff(node.orelse)
         return node
 
     def _DSubscript(self, node):
@@ -141,7 +141,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         return node
 
     def diffUnlessIsTupleDiff(self, t, src=None):
-        if t._class == "Call" or t._class == "List" or t._class == "ListComp":
+        if t._class == "Call" or t._class == "List" or t._class == "ListComp" or t._class == "IfExp":
             res = self.ddispatch(t.clone())
             if src and src._class == 'Call':
                 if t._class == "List":
