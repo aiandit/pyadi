@@ -21,7 +21,8 @@ from . import astvisitor
 
 from . import rules
 
-rules.initRules('trace,ad,trace')
+#rules.initRules('trace,ad,trace')
+rules.initRules('ad')
 
 Debug = False
 
@@ -635,7 +636,7 @@ def DiffFunction(f, **opts):
             else:
                 findex = fid(function, active)
                 if findex in adc:
-                    print(f'Found diff function {function.__name__}')
+                    #print(f'Found diff function {function.__name__}')
                     (adfun, actind) = adc[findex]
                 else:
                     print(f'Diff function {function.__name__}')

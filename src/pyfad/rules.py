@@ -4,26 +4,6 @@ from .astvisitor import getmodule
 from . import forwardad
 from . import trace
 
-def czip(a, b):
-    return chain(*zip(a, b))
-
-def callmapDefault(res, f, dargs, args, **kw):
-    return (res, f, dargs, args)
-
-def callmapAD(rule, f, dargs, args, **kw):
-    return rule(f, czip(dargs, args), **kw)
-
-def selectDefault(mode, module, f):
-    id = ('C_' if mode == 'before' else 'D_') + rid(f)
-    res = getattr(module, id, None)
-#    print(f' **** select: {mode}, {module.__name__}, {f.__name__} => {id} {res}')
-    return res
-
-def selectMode(module, f, mode):
-    id = 'D_' + mode
-    res = getattr(module, id, None)
-#    print(f'select: {mode}, {module.__name__}, {f.__name__} => {id} {res}')
-    return res
 
 class NoRule(BaseException):
     pass
