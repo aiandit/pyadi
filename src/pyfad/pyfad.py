@@ -73,7 +73,7 @@ class ASTVisitorFMAD(ASTVisitorID):
                 setattr(res, name, delem)
             return res
 
-    nodiffFunctions = ["print", "open"]
+    nodiffFunctions = []
     nodiffExpr = ["Raise", "Assert"]
     def isnodiffExpr(self, item):
         res = False

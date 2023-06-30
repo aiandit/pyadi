@@ -39,6 +39,10 @@ dict = {}
 hidden = {}
 
 
+def D_print_builtins(r, *args):
+    print('D ', *args[0::2])
+    return 0
+
 def D_dict_items_builtins(r, dx, x):
     return dx.items()
 
