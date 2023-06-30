@@ -23,8 +23,7 @@ def decorator(done):
         dres = None
         if rule:
             res = f(*args[1::2], **kw)
-            margs = chain(*args)
-            dres = rule(res, *margs, **kw)
+            dres = rule(res, *args, **kw)
 
         return dres, res
 

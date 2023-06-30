@@ -8,7 +8,7 @@ def isbuiltin(func):
 
 def decorator(done):
 
-    def inner(f, dargs, args, **kw):
+    def inner(f, *args, **kw):
 
         print(f'D1 {f.__name__} before')
 
@@ -18,7 +18,7 @@ def decorator(done):
 
         if isbuiltin(f):
             print('Call f')
-            r = f(*args, **kw)
+            r = f(*args[1::2], **kw)
             res = r, r
         else:
             res = None, None

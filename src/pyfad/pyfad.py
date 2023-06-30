@@ -596,11 +596,15 @@ def runRule(adfun, function, args):
 
 def DiffFunction(f, **opts):
 
-    def theADFun(*args, **kw):
+    def theADFun(*theADargs, **kw):
         function = f
         _class = None
 
-        dres, res = rules.processRules(function, args, kw)
+        args = list(chain(*theADargs))
+        # print(f'Call ad fun {f.__name__}, args ', theADargs, '=', args, len(args))
+        # print(f'Call ad fun {f.__name__}, args ', args, '=', len(args))
+
+        dres, res = rules.processRules(function, *args, **kw)
 
         if isbuiltin(function) and dres is None:
             fname = function.__name__
@@ -651,19 +655,13 @@ def DiffFunction(f, **opts):
                     print(f'Diff function {function.__name__} saved as attr {dfname} in type {_class.__qualname__}')
 
             adfunSrc = adfun
-            def TimeIt(args, **kw):
+            def TimeIt(*args, **kw):
                 with Timer(function.__qualname__, 'adrun') as t:
-                    if len(args):
-                        dargs, fargs = zip(*args)
-                        margs = list(czip(dargs, fargs))
-                    else:
-                        margs = []
-                        print(f'Call ad src fun {adfunSrc.__name__} ({list(args)}) => ({list(margs)})')
-                    return adfunSrc(*margs, **kw)
+                    return adfunSrc(*args, **kw)
 
             adfun = TimeIt
 
-            (dres, res) = adfun(args, **kw)
+            (dres, res) = adfun(*args, **kw)
             adfun.issource = True
 
         else:
