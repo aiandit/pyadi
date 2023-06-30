@@ -15,14 +15,13 @@ from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunct
 from .astvisitor import ASTVisitorID, mkTmp
 from .nodes import *
 
+
 from .timer import Timer
 
 from . import astvisitor
 
 from . import rules
-
-#rules.initRules('trace,ad,trace')
-rules.initRules('ad')
+from . import forwardad, trace, dummy, dummy2
 
 Debug = False
 
@@ -597,10 +596,46 @@ def clear(search=None):
         del adc[fid(search)]
 
 
-def runRule(adfun, function, args):
-    res = function(*args[1::2])
-    return (adfun(res, *args), res)
+rulemodules = {'ad': forwardad}
+def clearrulemodules(name=None):
+    global rulemodules
+    rulemodules = {}
+def addrulemodule(module, **kw):
+    rulemodules[module.__file__] = module
+def initRules(rules='ad'):
+    clearrulemodules()
+    rules = rules.split(',')
+    for i in rules:
+        if i == 'trace':
+            addrulemodule(trace)
+        elif i == 'ad':
+            addrulemodule(forwardad)
+        elif i == 'dummy':
+            addrulemodule(dummy)
+        elif i == 'dummy2':
+            addrulemodule(dummy2)
 
+#rules.initRules('trace,ad,trace')
+initRules('ad')
+
+
+class NoRule(BaseException):
+    pass
+
+def processRules(function, *args, **kw):
+    state = [0]
+    mkeys = list(rulemodules.keys())
+
+    def nextStep():
+        if state[0] >= len(mkeys):
+            return None
+        else:
+            ind = state[0]
+            state[0] += 1
+            deco = rulemodules[mkeys[ind]].decorator(nextStep)
+            dres = deco(function, *args, **kw)
+            return dres
+    return nextStep()
 
 def DiffFunction(f, **opts):
 
@@ -612,13 +647,13 @@ def DiffFunction(f, **opts):
         # print(f'Call ad fun {f.__name__}, args ', theADargs, '=', args, len(args))
         # print(f'Call ad fun {f.__name__}, args ', args, '=', len(args))
 
-        dres, res = rules.processRules(function, *args, **kw)
+        dres, res = processRules(function, *args, **kw)
 
         if isbuiltin(function) and dres is None:
             fname = function.__name__
             id = rules.rid(function)
             msg = f'No rule for buitin {fname}, function {id} not found'
-            raise (rules.NoRule(msg))
+            raise (NoRule(msg))
             # dres = res
 
         if dres is None:
@@ -778,7 +813,7 @@ def DiffFor(function, *args, **opts):
     seed = opts.get('seed', 1)
     rdef = opts.get('rules', None)
     if rdef:
-        rules.initRules(rdef)
+        initRules(rdef)
 
     if 'dx' in opts:
         dargs = dx
