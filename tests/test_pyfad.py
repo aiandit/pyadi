@@ -309,10 +309,10 @@ class TestPyTracer(unittest.TestCase):
     def do_sourceDiff_f_xyz(self, func, args=None):
         if args is None:
             args = [1,2,3]
-        (d_r, r) = pyfad.DiffFor(func, *args, rules='trace')
+        (d_r, r) = pyfad.DiffFor(func, *args, rules='trace,dummy')
 
-    def _test_fcalll2(self):
+    def test_tr_calll2(self):
         self.do_sourceDiff_f_xyz(fx.fcalll2, args=[0.234])
 
-    def _test_fcalll4(self):
+    def test_tr_calll4(self):
         self.do_sourceDiff_f_xyz(fx.fcalll4, args=[0.234])

@@ -3,6 +3,7 @@ from itertools import chain
 from .astvisitor import getmodule
 from . import forwardad
 from . import trace
+from . import dummy
 
 
 class NoRule(BaseException):
@@ -25,6 +26,8 @@ def initRules(rules='ad'):
             addrulemodule(trace)
         elif i == 'ad':
             addrulemodule(forwardad)
+        elif i == 'dummy':
+            addrulemodule(dummy)
 
 def processRules(function, *args, **kw):
     state = [0]
