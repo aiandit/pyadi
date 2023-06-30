@@ -28,42 +28,6 @@ def selectMode(module, f, mode):
 class NoRule(BaseException):
     pass
 
-class RuleModule:
-
-    def __init__(self, module, before=None, after=None, callmap=None, silent=False, select=None, replace=False):
-        self.module = module
-        self.callmap = callmap if callmap is not None else getattr(module, 'callmap', callmapDefault)
-        self.select = select if select is not None else getattr(module, 'select', selectDefault)
-        self.before = before if before is not None else getattr(module, 'before', False)
-        self.after = after if after is not None else getattr(module, 'after', True)
-        self.silent = silent
-        self.replace = replace if replace is not None else getattr(module, 'replace', False)
-#        print('RM init', vars(self))
-
-    def call(self, done, f, dargs, args, **kw):
-#        print(f'call: {self.module.__name__}, {f.__name__}')
-        if self.before:
-#            print(f'call.before: {self.module.__name__}, {f.__name__}')
-            bfun = self.select('before', self.module, f)
-            if bfun:
-                bres = bfun(*self.callmap(None, f, dargs, args), **kw)
-#        print(f'call.function: {self.module.__name__}, {f.__name__}')
-        (dres, res) = done()
-        print(f'call.function: {self.module.__name__}, {f.__name__} res: {dres, res}')
-        if self.replace:
-            res = bres
-        if self.after:
-#            print(f'check.after: {self.module.__name__}, {f.__name__} {self.select.__module__}.{self.select.__qualname__}')
-            afun = self.select('after', self.module, f)
-            if afun:
-#                print(f'call.after: {self.module.__name__}, {f.__name__} => {afun.__name__}')
-                ares = afun(*self.callmap(res, f, dargs, args), **kw)
-#                print(f'call.dres: {ares}')
-                if ares is not None:
-                    dres = ares
-#        print(f'return from: {self.module.__name__}, {f.__name__} {(dres, res)}')
-        return (dres, res)
-
 rulemodules = {}
 
 def clearrulemodules(name=None):
@@ -71,8 +35,7 @@ def clearrulemodules(name=None):
     rulemodules = {}
 
 def addrulemodule(module, **kw):
-    r = RuleModule(module, **kw)
-    rulemodules[module.__file__] = r
+    rulemodules[module.__file__] = module
 
 def initRules(rules='ad'):
     clearrulemodules()
@@ -99,7 +62,7 @@ def processRules(function, *args, **kw):
 
             state[0] += 1
 
-            deco = rulemodules[mkeys[ind]].module.decorator(nextStep)
+            deco = rulemodules[mkeys[ind]].decorator(nextStep)
 
             dres = deco(function, *args, **kw)
 #            print('process rules ', ind, 'res', dres)
