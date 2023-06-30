@@ -21,7 +21,7 @@ from . import astvisitor
 
 from . import rules
 
-rules.initRules('ad')
+rules.initRules('trace,ad,trace')
 
 Debug = False
 
