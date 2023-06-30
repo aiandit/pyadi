@@ -8,7 +8,7 @@ from io import StringIO
 import tempfile
 from itertools import chain
 
-from astunparse import loadast, unparse2j, unparse
+from astunparse import loadast, unparse2j, unparse2x, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 
 from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast
@@ -398,7 +398,7 @@ def diff2pys(intree, visitor, *kw):
     outtree = visitor(intree)
 #    print('outtree', unparse2j(outtree, indent=1), file=open('outtree.json', 'w'))
 #    outtree = resolvetmpvars(outtree)
-    print('outtree', unparse2j(outtree, indent=1), file=open('outtree2.json', 'w'))
+    print('outtree', unparse2x(outtree, indent=1), file=open('outtree.xml', 'w'))
     return outtree
 
 
