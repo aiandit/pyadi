@@ -18,14 +18,11 @@ def D_after(res, f, dargs, args, **kw):
 
 def decorator():
 
-    def inner(done, f, *args, **kw):
+    def inner(done, key, f, *args, **kw):
 
         print(f'call to {f.__name__}{(*args,)}) starts {time.time()} s')
 
-        if done is not None:
-            res = done()
-        else:
-            res = None
+        res = done(key)
 
         print(f'call to {f.__name__}{(*args,)}) = {res} ends {time.time()} s')
 

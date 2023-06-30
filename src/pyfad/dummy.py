@@ -8,7 +8,7 @@ def isbuiltin(func):
 
 def decorator():
 
-    def inner(done, f, *args, **kw):
+    def inner(done, key, f, *args, **kw):
 
         print(f'D1 {f.__name__} before')
 
@@ -17,7 +17,7 @@ def decorator():
             r = f(*args[1::2], **kw)
             return r, r
 
-        res = done()
+        res = done(key)
 
         print(f'D2 {f.__name__} after')
 

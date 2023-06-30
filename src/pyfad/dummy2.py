@@ -8,11 +8,11 @@ def isbuiltin(func):
 
 def decorator():
 
-    def inner(done, f, dargs, args, **kw):
+    def inner(done, key, f, dargs, args, **kw):
 
         print(f'D2 {f.__name__} before')
 
-        res = done()
+        res = done(key)
 
         print(f'D2 {f.__name__} after {res}')
 

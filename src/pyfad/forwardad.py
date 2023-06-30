@@ -3,12 +3,13 @@ from math import sin, cos, tan, asin, acos, atan, log, sqrt
 from .astvisitor import getmodule
 import sys
 
+
 me = sys.modules[__name__]
+
 
 def rid(func):
     mod, _ = getmodule(func)
     fid = f'{func.__qualname__}_{mod}'.replace('.', '_')
-#    print('Rule ID', func, fid)
     return fid
 
 
@@ -19,20 +20,16 @@ def decorator():
         id = 'D_' + rid(f)
         rule = getattr(me, id, None)
 
-        if rule:
+        if rule is not None:
             res = f(*args[1::2], **kw)
             dres = rule(res, *args, **kw)
             return dres, res
 
+        # try source diff
         return done(key)
 
     return inner
 
-def czip(a, b):
-    return chain(*zip(a, b))
-
-def callmap(r, f, dargs, args):
-    return [r] + list(czip(dargs,args))
 
 dict = {}
 hidden = {}
