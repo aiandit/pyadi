@@ -6,24 +6,21 @@ def isbuiltin(func):
 #    print('isbuiltin', func, res)
     return res
 
-def decorator(done):
+def decorator():
 
-    def inner(f, *args, **kw):
+    def inner(done, f, *args, **kw):
 
         print(f'D1 {f.__name__} before')
-
-        res = done()
-
-        assert res == None
 
         if isbuiltin(f):
             print('Call f')
             r = f(*args[1::2], **kw)
-            res = r, r
-        else:
-            res = None, None
+            return r, r
 
-        print(f'D1 {f.__name__} after {res}')
+        res = done()
+
+        print(f'D2 {f.__name__} after')
+
         return res
 
     return inner

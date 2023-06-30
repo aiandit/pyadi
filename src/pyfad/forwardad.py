@@ -12,20 +12,19 @@ def rid(func):
     return fid
 
 
-def decorator(done):
+def decorator():
 
-    def inner(f, *args, **kw):
-        res = done()
+    def inner(done, key, f, *args, **kw):
 
         id = 'D_' + rid(f)
         rule = getattr(me, id, None)
 
-        dres = None
         if rule:
             res = f(*args[1::2], **kw)
             dres = rule(res, *args, **kw)
+            return dres, res
 
-        return dres, res
+        return done(key)
 
     return inner
 

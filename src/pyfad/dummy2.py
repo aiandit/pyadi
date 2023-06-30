@@ -6,9 +6,9 @@ def isbuiltin(func):
 #    print('isbuiltin', func, res)
     return res
 
-def decorator(done):
+def decorator():
 
-    def inner(f, dargs, args, **kw):
+    def inner(done, f, dargs, args, **kw):
 
         print(f'D2 {f.__name__} before')
 

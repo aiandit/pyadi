@@ -596,12 +596,70 @@ def clear(search=None):
         del adc[fid(search)]
 
 
+def doSourceDiff(function, opts, *args, **kw):
+
+    # Try source diff
+    adfun = None
+    _class = None
+
+    if isbuiltin(function):
+        return None, None
+
+    if isinstance(function, type):
+        if not isbuiltin(function.__init__):
+            _class = function
+            function = function.__init__
+        else:
+            def initDObj():
+                do, o = function(), function()
+                do = dzeros(do)
+                print('dobj', do.velocity)
+                return do, o
+            adfun = lambda: initDObj()
+            return adfun
+
+    active = opts.get('active', [])
+#        print('DDD', active)
+    if _class:
+        adfun = getattr(_class, id, None)
+
+    if adfun is not None:
+        print(f'Diff function {function.__name__} found as class attr')
+    else:
+        findex = fid(function, active)
+        if findex in adc:
+            #print(f'Found diff function {function.__name__}')
+            (adfun, actind) = adc[findex]
+        else:
+            print(f'Diff function {function.__name__}')
+            with Timer(function.__qualname__, 'diff') as t:
+                (adfun, actind) = difffunction(function, active=active)
+            adc[findex] = (adfun, actind)
+            print(f'Diff function {function.__name__} cached => {findex}')
+
+        if _class:
+            dfname = f'd_{function.__name__}'
+            setattr(_class, dfname, adfun)
+            print(f'Diff function {function.__name__} saved as attr {dfname} in type {_class.__qualname__}')
+
+    adfunSrc = adfun
+    def TimeIt(*args, **kw):
+        with Timer(function.__qualname__, 'adrun') as t:
+            return adfunSrc(*args, **kw)
+
+    adfun = TimeIt
+
+    (dres, res) = adfun(*args, **kw)
+    print('call AD fun', dres, res)
+
+    return dres, res
+
 rulemodules = {'ad': forwardad}
 def clearrulemodules(name=None):
     global rulemodules
     rulemodules = {}
 def addrulemodule(module, **kw):
-    rulemodules[module.__file__] = module
+    rulemodules[module.__file__] = module, module.decorator()
 def initRules(rules='ad'):
     clearrulemodules()
     rules = rules.split(',')
@@ -618,98 +676,36 @@ def initRules(rules='ad'):
 #rules.initRules('trace,ad,trace')
 initRules('ad')
 
-
 class NoRule(BaseException):
     pass
 
-def processRules(function, *args, **kw):
-    state = [0]
+def processRules(function, opts, *args, **kw):
     mkeys = list(rulemodules.keys())
 
-    def nextStep():
-        if state[0] >= len(mkeys):
-            return None
+    def nextStep(ind=0):
+        if ind >= len(mkeys):
+            dres = doSourceDiff(function, opts, *args, **kw)
         else:
-            ind = state[0]
-            state[0] += 1
-            deco = rulemodules[mkeys[ind]].decorator(nextStep)
-            dres = deco(function, *args, **kw)
-            return dres
+            deco = rulemodules[mkeys[ind]][1]
+            dres = deco(nextStep, ind+1, function, *args, **kw)
+        return dres
     return nextStep()
 
-def DiffFunction(f, **opts):
+def DiffFunction(function, **opts):
 
-    def theADFun(*theADargs, **kw):
-        function = f
-        _class = None
+    def theADFun(*ADargs, **kw):
 
-        args = list(chain(*theADargs))
+        args = list(chain(*ADargs))
         # print(f'Call ad fun {f.__name__}, args ', theADargs, '=', args, len(args))
         # print(f'Call ad fun {f.__name__}, args ', args, '=', len(args))
 
-        dres, res = processRules(function, *args, **kw)
+        dres, res = processRules(function, opts, *args, **kw)
 
-        if isbuiltin(function) and dres is None:
+        if dres is None:
             fname = function.__name__
             id = rules.rid(function)
             msg = f'No rule for buitin {fname}, function {id} not found'
             raise (NoRule(msg))
-            # dres = res
-
-        if dres is None:
-
-            adfun = None
-            # Try source diff
-            if isinstance(function, type):
-                if not isbuiltin(function.__init__):
-                    _class = function
-                    function = function.__init__
-                else:
-                    def initDObj():
-                        do, o = function(), function()
-                        do = dzeros(do)
-                        print('dobj', do.velocity)
-                        return do, o
-                    adfun = lambda: initDObj()
-                    return adfun
-
-            active = opts.get('active', [])
-    #        print('DDD', active)
-            if _class:
-                adfun = getattr(_class, id, None)
-
-            if adfun is not None:
-                print(f'Diff function {function.__name__} found as class attr')
-            else:
-                findex = fid(function, active)
-                if findex in adc:
-                    #print(f'Found diff function {function.__name__}')
-                    (adfun, actind) = adc[findex]
-                else:
-                    print(f'Diff function {function.__name__}')
-                    with Timer(function.__qualname__, 'diff') as t:
-                        (adfun, actind) = difffunction(function, active=active)
-                    adc[findex] = (adfun, actind)
-                    print(f'Diff function {function.__name__} cached => {findex}')
-
-                if _class:
-                    dfname = f'd_{function.__name__}'
-                    setattr(_class, dfname, adfun)
-                    print(f'Diff function {function.__name__} saved as attr {dfname} in type {_class.__qualname__}')
-
-            adfunSrc = adfun
-            def TimeIt(*args, **kw):
-                with Timer(function.__qualname__, 'adrun') as t:
-                    return adfunSrc(*args, **kw)
-
-            adfun = TimeIt
-
-            (dres, res) = adfun(*args, **kw)
-            adfun.issource = True
-
-        else:
-
-            pass
 
         return dres, res
 
