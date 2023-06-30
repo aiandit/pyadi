@@ -56,7 +56,7 @@ def f3(x,y,z):
     return r
 
 
-class Pyfad(unittest.TestCase):
+class TestPyfad(unittest.TestCase):
 
     def assertEqFD(self, f, r1, r2):
         if not almostEqFD(r1, r2):
@@ -304,3 +304,15 @@ class Pyfad(unittest.TestCase):
 
     def test_fcalll2(self):
         self.do_sourceDiff_f_xyz(fx.fcalll2, args=[0.234])
+
+class TestPyTracer(unittest.TestCase):
+    def do_sourceDiff_f_xyz(self, func, args=None):
+        if args is None:
+            args = [1,2,3]
+        (d_r, r) = pyfad.DiffFor(func, *args, rules='trace')
+
+    def _test_fcalll2(self):
+        self.do_sourceDiff_f_xyz(fx.fcalll2, args=[0.234])
+
+    def _test_fcalll4(self):
+        self.do_sourceDiff_f_xyz(fx.fcalll4, args=[0.234])

@@ -15,3 +15,15 @@ def D_before(res, f, dargs, args, **kw):
 
 def D_after(res, f, dargs, args, **kw):
     print(f'call to {f.__name__}{(*args,)}) = {res} ends {time.time()} s')
+
+def decorator(next):
+
+    def inner(f, *args, **kw):
+
+        print(f'call to {f.__name__}{(*args,)}) starts {time.time()} s')
+        res = next()
+        print(f'call to {f.__name__}{(*args,)}) = {res} ends {time.time()} s')
+
+        return None, res
+
+    return inner

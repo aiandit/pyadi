@@ -334,3 +334,12 @@ def fcalll4(x):
     assert gl_sum2(A) == gl_sum2(l)
     z = g2l(gl_sum2(A), v)
     return z
+
+def fcalll4(x):
+    l = [x, x*x, x*x*x]
+    A = gdiag(l)
+    v = gdiag(A)
+    assert gl_sum2(A) == gl_sum2(v)
+    assert gl_sum2(A) == gl_sum2(l)
+    z = g2l(gl_sum2(A), v)
+    return z

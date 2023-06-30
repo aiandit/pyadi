@@ -49,7 +49,7 @@ class RuleModule:
                 bres = bfun(*self.callmap(None, f, dargs, args), **kw)
 #        print(f'call.function: {self.module.__name__}, {f.__name__}')
         (dres, res) = done()
-#        print(f'call.function: {self.module.__name__}, {f.__name__} res: {dres, res}')
+        print(f'call.function: {self.module.__name__}, {f.__name__} res: {dres, res}')
         if self.replace:
             res = bres
         if self.after:
@@ -74,25 +74,34 @@ def addrulemodule(module, **kw):
     r = RuleModule(module, **kw)
     rulemodules[module.__file__] = r
 
-def initRules():
-#    addrulemodule(trace)
-    addrulemodule(forwardad)
+def initRules(rules='ad'):
+    clearrulemodules()
+    rules = rules.split(',')
+    for i in rules:
+        if i == 'trace':
+            addrulemodule(trace)
+        elif i == 'ad':
+            addrulemodule(forwardad)
 
 def processRules(function, *args, **kw):
     state = [0]
     mkeys = list(rulemodules.keys())
+
     def nextStep():
         if state[0] >= len(mkeys):
             lenkw = len(kw)
 #            print('kw', kw)
-            return (None, function(*args[1], **{f: kw[f] for i, f in enumerate(kw) if i >= lenkw/2 }))
+            return function(*args[1], **{f: kw[f] for i, f in enumerate(kw) if i >= lenkw/2 })
         else:
             ind = state[0]
 #            print('process ', ind, mkeys[ind])
 #            print('args', args)
 
             state[0] += 1
-            dres = rulemodules[mkeys[ind]].call(nextStep, function, *args, **kw)
+
+            deco = rulemodules[mkeys[ind]].module.decorator(nextStep)
+
+            dres = deco(function, *args, **kw)
 #            print('process rules ', ind, 'res', dres)
 
             return dres

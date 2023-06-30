@@ -21,7 +21,7 @@ from . import astvisitor
 
 from . import rules
 
-rules.initRules()
+rules.initRules('ad')
 
 Debug = False
 
@@ -60,7 +60,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         meth = getattr(self, "_D"+cname, None)
 #        print('ddispatch?', cname, vars(tree))
         if meth:
-            print('Found method', cname)
+#            print('Found method', cname)
             return meth(tree)
         else:
 #            print('start dispatch', vars(tree).keys())
@@ -68,7 +68,7 @@ class ASTVisitorFMAD(ASTVisitorID):
             res = ASTNode()
             for name in vars(tree).keys():
                 delem = self.ddispatch(getattr(tree, name))
-                print(f'DDispatch {name} => {repr(delem)}')
+#                print(f'DDispatch {name} => {repr(delem)}')
                 setattr(res, name, delem)
             return res
 
@@ -112,7 +112,7 @@ class ASTVisitorFMAD(ASTVisitorID):
     def _FunctionDef(self, t):
         if t.name in self.active_methods:
             t = t.clone()
-            print(f'Catch Active FunctionDef {t.name} {vars(t)}')
+#            print(f'Catch Active FunctionDef {t.name} {vars(t)}')
             t.name = dpref_ + t.name
             t.args = self.ddispatch(t.args)
             t.body = self.diffStmtList(t.body)
@@ -202,7 +202,7 @@ class ASTVisitorFMAD(ASTVisitorID):
     nonder_builtins = ['len']
 
     def _DCall(self, t):
-        print(f'Diff Call {t.func} {vars(t)}')
+        #print(f'Diff Call {t.func} {vars(t)}')
         t = t.clone()
         dcall = Call(Name('D'))
         dcall.args = [t.func]
@@ -211,7 +211,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         curargs = t.args
 
         if t.func._class == "Attribute":
-            print('ATTR', t.func.attr)
+            #print('ATTR', t.func.attr)
             attrstr = unparse(t.func.value).strip()
             if attrstr not in self.imports:
                 curargs = [t.func.value] + curargs
@@ -225,7 +225,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         if t.arg in self.active_objects:
             t = t.clone()
             t.arg = dpref_ + t.arg
-            print('   * active arg', t.arg)
+            #print('   * active arg', t.arg)
         return t
 
     def _Dkeyword(self, t):
@@ -247,13 +247,13 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _DName(self, t):
-        print(f'Diff Name {t.id}')
+        #print(f'Diff Name {t.id}')
         t = t.clone()
         t.id = dpref_ + t.id
         return t
 
     def _DAttribute(self, t):
-        print(f'Diff Attribute {t.attr} of {vars(t.value)} {self.imports}')
+        #print(f'Diff Attribute {t.attr} of {vars(t.value)} {self.imports}')
         t.value = self.ddispatch(t.value.clone())
         return t
 
@@ -293,7 +293,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _DBinOp(self, t):
-        print(f'Diff BinOp {t} left {vars(t.left)}')
+        #print(f'Diff BinOp {t} left {vars(t.left)}')
         if nodiff(t.left) and nodiff(t.right):
             return Constant(0.0)
 
@@ -606,6 +606,7 @@ def DiffFunction(f, **opts):
             id = rules.rid(function)
             msg = f'No rule for buitin {fname}, function {id} not found'
             raise (rules.NoRule(msg))
+            # dres = res
 
         if dres is None:
 
@@ -770,6 +771,9 @@ def DiffFor(function, *args, **opts):
     adfun = D(function, **opts)
 
     seed = opts.get('seed', 1)
+    rdef = opts.get('rules', None)
+    if rdef:
+        rules.initRules(rdef)
 
     if 'dx' in opts:
         dargs = dx

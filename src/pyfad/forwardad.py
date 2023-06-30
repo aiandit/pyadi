@@ -1,8 +1,33 @@
 from itertools import chain
 from math import sin, cos, tan, asin, acos, atan, log, sqrt
+from .astvisitor import getmodule
+import sys
 
-def select_():
-    pass
+me = sys.modules[__name__]
+
+def rid(func):
+    mod, _ = getmodule(func)
+    fid = f'{func.__qualname__}_{mod}'.replace('.', '_')
+#    print('Rule ID', func, fid)
+    return fid
+
+
+def decorator(done):
+
+    def inner(f, dargs, args, **kw):
+        res = done()
+
+        id = 'D_' + rid(f)
+        rule = getattr(me, id, None)
+
+        dres = None
+        if rule:
+            margs = czip(dargs, args)
+            dres = rule(res, *margs)
+
+        return dres, res
+
+    return inner
 
 def czip(a, b):
     return chain(*zip(a, b))
