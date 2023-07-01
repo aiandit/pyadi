@@ -643,8 +643,7 @@ def doSourceDiff(function, opts, *args, **kw):
             (adfun, actind) = adc[findex]
         else:
             print(f'Diff function {function.__name__}')
-            with Timer(function.__qualname__, 'diff') as t:
-                (adfun, actind) = difffunction(function, active=active)
+            (adfun, actind) = difffunction(function, active=active)
             adc[findex] = (adfun, actind)
             print(f'Diff function {function.__name__} cached => {findex}')
 
@@ -653,15 +652,7 @@ def doSourceDiff(function, opts, *args, **kw):
             setattr(_class, dfname, adfun)
             print(f'Diff function {function.__name__} saved as attr {dfname} in type {_class.__qualname__}')
 
-    adfunSrc = adfun
-    def TimeIt(*args, **kw):
-        with Timer(function.__qualname__, 'adrun') as t:
-            return adfunSrc(*args, **kw)
-
-    adfun = TimeIt
-
     (dres, res) = adfun(*args, **kw)
-    print('call AD fun', dres, res)
 
     return dres, res
 
@@ -843,7 +834,19 @@ def DiffFor(function, *args, **opts):
         with Timer(function.__qualname__, 'run') as t:
             result = function(*args)
 
-    adfun = D(function, **opts)
+    if timings:
+
+        with Timer(function.__qualname__, 'diff') as t:
+            adfunOrig = D(function, **opts)
+
+        def TimeIt(*args, **kw):
+            with Timer(function.__qualname__, 'adrun') as t:
+                return adfunOrig(*args, **kw)
+        adfun = TimeIt
+
+    else:
+
+        adfun = D(function, **opts)
 
     seed = opts.get('seed', 1)
     rdef = opts.get('rules', None)
