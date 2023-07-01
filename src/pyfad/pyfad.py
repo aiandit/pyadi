@@ -108,7 +108,7 @@ class ASTVisitorFMAD(ASTVisitorID):
                     nbody += [Assign(item.targets, self.tmpval)]
                     self.tmpval = None
                     continue
-                if item.value._class not in ['Call', 'List', 'ListComp']:
+                if item.value._class not in self.tupleDiff:
                     nbody += [self.dispatch(item)]
             elif item._class == "AugAssign":
                 nbody += [self.ddispatch(item.clone())]
@@ -145,12 +145,18 @@ class ASTVisitorFMAD(ASTVisitorID):
         node.orelse = self.diffUnlessIsTupleDiff(node.orelse)
         return node
 
+    def _DGeneratorExp(self, t):
+        t.elt = self.diffUnlessIsTupleDiff(t.elt)
+        t.generators = self.ddispatch(t.generators)
+        return t
+
     def _DSubscript(self, node):
         node.value = self.ddispatch(node.value)
         return node
 
+    tupleDiff = ["Call", "List", "ListComp", "Dict", "DictComp", "DictComp", "IfExp", "GeneratorExp"]
     def diffUnlessIsTupleDiff(self, t, src=None):
-        if t._class == "Call" or t._class == "List" or t._class == "ListComp" or t._class == "IfExp":
+        if t._class in self.tupleDiff:
             res = self.ddispatch(t.clone())
             if src and src._class == 'Call':
                 if t._class == "List":
@@ -164,12 +170,13 @@ class ASTVisitorFMAD(ASTVisitorID):
         return List([Starred(Call('zip', dargs))])
 
     def _DDict(self, node):
-        node.values = self.ddispatch(node.values)
-        return node
+        node.values = [self.diffUnlessIsTupleDiff(t) for t in node.values]
+        return Tuple([Starred(Call('unzd', node))])
 
     def _DDictComp(self, node):
-        node.value = self.ddispatch(node.value)
-        return node
+        node.value = self.diffUnlessIsTupleDiff(node.value)
+        node.generators = self.ddispatch(node.generators)
+        return Call('unzd', [node])
 
     def _DListComp(self, node):
         node.elt = self.diffUnlessIsTupleDiff(node.elt)
@@ -256,11 +263,11 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _DAssign(self, t):
-        if t.value._class == 'Call' or t.value._class == "List" or t.value._class == "ListComp":
+        if t.value._class in self.tupleDiff:
             t.targets = [Tuple(self.ddispatch(t.targets) + self.dispatch(t.targets))]
         else:
             t.targets = self.ddispatch(t.targets)
-        isList = t.value._class == "List"
+        isList = t.value._class == "List" or t.value._class == "Dict"
         t.value = self.ddispatch(t.value)
         if isList:
             assert t.value.elts[0]._class == "Starred"
