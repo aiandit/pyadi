@@ -272,6 +272,37 @@ def flist12(x):
     s = gl_sum2([l, m])
     return s + n + o + q
 
+def fdict2(x):
+    d = {'a': x, 'b': x*x, 'c': x*x*x}
+    s = 0
+    for k, v in d.items():
+        s += v
+        s += d[k]
+    return s
+
+def fdict3(x):
+    d = {'a': x, 'b': x*x, 'c': x*x*x}
+    s = 0
+    for k in d.keys():
+        s += d[k]
+    return s
+
+def fdict4(x):
+    d = {'a': x, 'b': x*x, 'c': x*x*x}
+    d2 = {k: v*2 for k, v in d.items()}
+    s = 0
+    for k in d.keys():
+        s += d2[k]
+    return s
+
+def fdict5(x):
+    d = {'a': x, 'b': x*x, 'c': x*x*x}
+    d2 = {k: [v*2, f1(v*v*v)] for k, v in d.items()}
+    s = 0
+    for k in d.keys():
+        s += gl_sum(d2[k])
+    return s
+
 def fprint(x):
     l = [f1(x), 2*x, 3*x]
     print(l)
@@ -380,17 +411,7 @@ def fsin2(x):
 def fsin3(x):
     return m2.sin(x)
 
-def fdict2(x):
+def fnext(x):
     d = {'a': x, 'b': x*x, 'c': x*x*x}
-    s = 0
-    for k, v in d.items():
-        s += v
-        s += d[k]
-    return s
-
-def fdict3(x):
-    d = {'a': x, 'b': x*x, 'c': x*x*x}
-    s = 0
-    for k in d.keys():
-        s += d[k]
+    s = next(v for k,v in d.items() if k == 'b')
     return s
