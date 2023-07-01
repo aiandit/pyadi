@@ -411,6 +411,9 @@ def differentiate(intree, activef=None, active=None, modules=None, filter=False,
             prefix.append('')
         setprefix(*prefix)
 
+    if modules is None:
+        _, modules = ASTVisitorImports()(intree)
+
     fmadtrans.imports = modules
     print('imports', fmadtrans.imports)
     # print('source', unparse(intree))
