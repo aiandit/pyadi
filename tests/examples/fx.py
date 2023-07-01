@@ -365,3 +365,17 @@ def _fdict2(x):
     for k in d:
         s += d[k]
     return s
+
+def fa(x): return fsin(x)
+def fb(x): return fsin(x)
+def fc(x): return fsin(x)
+def fd(x): return fsin(x)
+def fe(x): return fsin(x)
+def ff(x): return fsin(x)
+
+def flong(x):
+    l = [x, x*x, x*x*x]
+    s = 0
+    for k in range(int(1e2)):
+        s += fa(fb(fc(fd(fe(ff(l[k % len(l)]))))))
+    return s
