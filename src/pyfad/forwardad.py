@@ -13,7 +13,7 @@ def rid(func):
     return fid
 
 
-def decorator():
+def decorator(**opts):
 
     def inner(done, key, f, *args, **kw):
 
