@@ -54,6 +54,10 @@ def D_enumerate_builtins(r, dx, x):
 def D_list_builtins(r, dx, x):
     return list(dx)
 
+def D_int_builtins(r, dx, x): return 0
+def D_float_builtins(r, dx, x): return float(dx)
+def D_complex_builtins(r, dx, x, dy, y): return complex(dx, dy)
+
 def D_Random_random_builtins(r):
     return 0
 
