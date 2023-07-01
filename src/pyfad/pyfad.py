@@ -224,7 +224,9 @@ class ASTVisitorFMAD(ASTVisitorID):
 #        node.args = dargs + curargs
         return node
 
-    nonder_builtins = ['len']
+    nonder_builtins = ['next']
+
+    nondercall_builtins = ['next']
 
     def _DCall(self, t):
 
@@ -242,7 +244,11 @@ class ASTVisitorFMAD(ASTVisitorID):
         dcall = Call(Name(dcallName))
         dcall.args = [t.func]
 
-        res = Call(dcall)
+        fcallname = getattr(t.func, 'id', '')
+        if fcallname in self.nondercall_builtins:
+            res = Call(fcallname)
+        else:
+            res = Call(dcall)
 
         dargs = [self.diffUnlessIsTupleDiff(a, t) for a in curargs]
         res.args = dargs
