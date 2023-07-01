@@ -58,6 +58,12 @@ def f3(x,y,z):
 
 class TestPyfad(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        # pyfad.initRules(rules='trace,ad', verbose=True)
+        # pyfad.initRules(rules='trace,ad')
+        pyfad.initRules(rules='ad')
+
     def assertEqFD(self, f, r1, r2):
         if not almostEqFD(r1, r2):
             raise(WrongDerivative(r1, r2))
