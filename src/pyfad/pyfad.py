@@ -654,7 +654,7 @@ def doSourceDiff(function, opts, *args, **kw):
 
     return dres, res
 
-rulemodules = {'ad': forwardad}
+rulemodules = {}
 def clearrulemodules(name=None):
     global rulemodules
     rulemodules = {}
@@ -663,28 +663,42 @@ def addrulemodule(module, **kw):
     handle = None
     if isinstance(deco, tuple):
         deco, handle = deco
-    rulemodules[module.__name__] = module, deco, handle
-    return handle
+    alias = kw.get('alias', module.__name__)
+    ind = 0
+    while f'{alias}{ind}' in rulemodules:
+        ind += 1
+    if ind == 0: ind = ''
+    rulemodules[f'{alias}{ind}'] = module, deco, handle
 
 def initRules(**opts):
     clearrulemodules()
     rules = opts.get('rules', 'ad')
     rules = rules.split(',')
-    for i in rules:
-        if i == 'trace':
-            addrulemodule(trace, **opts)
-        elif i == 'ad':
-            addrulemodule(forwardad, **opts)
-        elif i == 'dummy':
-            addrulemodule(dummy, **opts)
-        elif i == 'dummy2':
-            addrulemodule(dummy2, **opts)
-
-def getHandle(index, *args, **kw):
-    return rulemodules[index][2](*args, **kw)
-
+    for rule in rules:
+        add = {}
+        if '=' in rule:
+            (alias, rule) = rule.split('=')
+            add['alias'] = alias
+        if rule == 'trace':
+            addrulemodule(trace, **add, **opts)
+        elif rule == 'ad':
+            addrulemodule(forwardad, **add, **opts)
+        elif rule == 'dummy':
+            addrulemodule(dummy, **add, **opts)
+        elif rule == 'dummy2':
+            addrulemodule(dummy2, **add, **opts)
 
 initRules()
+
+
+def getHandle(index):
+    print('getHandle', index, rulemodules.keys())
+    return rulemodules[index][2]
+
+
+def getRuleModules(index):
+    return rulemodules
+
 
 class NoRule(BaseException):
     pass
@@ -833,7 +847,7 @@ def DiffFor(function, *args, **opts):
             dargs = fill(dzeros(args), seed)
             (dresult, result) = adfun(*czip(dargs, args))
 
-    return (dresult, result, getHandle)
+    return dresult, result
 
 
 def Diff(active='all'):
