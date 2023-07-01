@@ -1,6 +1,7 @@
 from math import sin, cos, tan, asin, acos, atan, log, sqrt
 
 import math
+import math as m2
 
 def f1(x):
     z = fsin(x)
@@ -352,20 +353,6 @@ def fcalll5(x):
     z = g2l(gl_sum2(A), v)
     return z
 
-def fdict(x):
-    d = {'a': x, 'b': x*x, 'c': x*x*x}
-    s = 0
-    for k in d:
-        s += d[k]
-    return s
-
-def _fdict2(x):
-    d = {'a': x, 'b': x*x, 'c': x*x*x}
-    s = 0
-    for k in d:
-        s += d[k]
-    return s
-
 def fa(x): return fsin(x)
 def fb(x): return fsin(x)
 def fc(x): return fsin(x)
@@ -378,4 +365,32 @@ def flong(x):
     s = 0
     for k in range(int(1e2)):
         s += fa(fb(fc(fd(fe(ff(l[k % len(l)]))))))
+    return s
+
+def fdict(x):
+    d = {'a': x, 'b': x*x, 'c': x*x*x}
+    s = 0
+    for k in d:
+        s += d[k]
+    return s
+
+def fsin2(x):
+    return math.sin(x)
+
+def fsin3(x):
+    return m2.sin(x)
+
+def fdict2(x):
+    d = {'a': x, 'b': x*x, 'c': x*x*x}
+    s = 0
+    for k, v in d.items():
+        s += v
+        s += d[k]
+    return s
+
+def fdict3(x):
+    d = {'a': x, 'b': x*x, 'c': x*x*x}
+    s = 0
+    for k in d.keys():
+        s += d[k]
     return s
