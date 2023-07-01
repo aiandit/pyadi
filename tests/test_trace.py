@@ -26,7 +26,7 @@ class TestPyTracer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print('SETUP Class')
-        pyfad.initRules(rules='trace,dummy,tr2=trace', tracecalls=True)
+        pyfad.initRules(rules='pyfad.trace,pyfad.dummyad,tr2=pyfad.trace', tracecalls=True)
         cls.handle_ = pyfad.getHandle('pyfad.trace')
         cls.handle = lambda x, *args, **kw: cls.handle_(*args, **kw)
 
