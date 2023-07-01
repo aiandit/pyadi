@@ -14,7 +14,7 @@ from astunparse import loadast, unparse2j, unparse2x, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 
 from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast
-from .astvisitor import ASTVisitorID, mkTmp
+from .astvisitor import ASTVisitorID, ASTVisitorImports, mkTmp
 from .nodes import *
 
 
@@ -212,19 +212,22 @@ class ASTVisitorFMAD(ASTVisitorID):
     nonder_builtins = ['len']
 
     def _DCall(self, t):
+
         #print(f'Diff Call {t.func} {vars(t)}')
-        t = t.clone()
-        dcall = Call(Name('D'))
-        dcall.args = [t.func]
-
-        res = Call(dcall)
+        dcallName = 'D'
         curargs = t.args
-
         if t.func._class == "Attribute":
             #print('ATTR', t.func.attr)
             attrstr = unparse(t.func.value).strip()
             if attrstr not in self.imports:
                 curargs = [t.func.value] + curargs
+                dcallName = 'Dc'
+
+        t = t.clone()
+        dcall = Call(Name(dcallName))
+        dcall.args = [t.func]
+
+        res = Call(dcall)
 
         dargs = [self.diffUnlessIsTupleDiff(a, t) for a in curargs]
         res.args = dargs
@@ -722,22 +725,30 @@ def processRules(function, opts, *args, **kw):
         return dres
     return nextStep()
 
+
 def DiffFunction(function, **opts):
 
     def theADFun(*ADargs, **kw):
 
         args = list(chain(*ADargs))
-        # print(f'Call ad fun {f.__name__}, args ', theADargs, '=', args, len(args))
-        # print(f'Call ad fun {f.__name__}, args ', args, '=', len(args))
-
         dres, res = processRules(function, opts, *args, **kw)
-
         return dres, res
 
     return theADFun
 
-
 D = DiffFunction
+
+
+def DiffFunctionObj(function, **opts):
+
+    self = getattr(function, '__self__', None)
+    if self is not None:
+        if self.__class__.__name__ != 'module':
+            function = getattr(self.__class__, function.__name__)
+
+    return DiffFunction(function, **opts)
+
+Dc = DiffFunctionObj
 
 
 def nvars(args):
