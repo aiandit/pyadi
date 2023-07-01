@@ -1,4 +1,5 @@
 import time
+import sys
 
 before = True
 after = True
@@ -24,34 +25,44 @@ def decorator(**opts):
     print('Create decorator: ', opts.items())
 
     tracecalls = opts.get('tracecalls', False)
-    timeout = opts.get('timeout', None)
 
     data = {}
-    x = 17
 
     if tracecalls:
-        data['hist'] = []
-        print(f'create hist in {data}')
-
-    if timeout is not None:
-        stop_t0 = time.time()
+        hist = []
+        print(f'create hist in {hist}')
 
 
     def inner(done, key, f, *args, **kw):
+        nonlocal hist
 
         print(f'call to {f.__name__}{(*args,)}) starts {time.time()} s')
 
         if tracecalls:
-            data['hist'] += [f.__qualname__]
-            print(f'add hist {data["hist"]} {[f.__qualname__]}')
+            data['cur'] = f.__qualname__
+            hist += [f.__qualname__]
 
-        if timeout is not None:
-            dt = time.time() - stop_t0
-            if dt > timeout:
-                raise Stop(f'Stopping because {dt} s have passed.')
-
-        if 'stop' in data:
-            raise Stop(f'Stopping because stop set.')
+        if 'cmd' in data:
+            while True:
+                cmd = data.get('cmd', '')
+                print(f'Command set: {cmd}')
+                if cmd == 'stop':
+                    raise Stop(f'Stopping because stop set: {data["msg"]}.')
+                elif cmd == 'raise':
+                    raise data['exception']
+                elif cmd == 'pause':
+                    print(f'condition wait on {data["condition"]}')
+                    sys.stdout.flush()
+                    data['condition'].wait()
+                    print('been notified')
+                    sys.stdout.flush()
+                else:
+                    if cmd == 'call':
+                        data['function'](data, hist, f, args, kw)
+                        del data['cmd']
+                    else:
+                        pass
+                    break
 
         res = done(key)
 
@@ -63,7 +74,9 @@ def decorator(**opts):
         for name in args:
             del data[name]
         data.update(kw)
-        if kw.get('get'):
+        if kw.get('get') == 'hist':
+            return hist
+        elif kw.get('get'):
             return data[kw.get('get')]
         return data
 
