@@ -45,6 +45,12 @@ def getmodule(func):
     modfile = getattr(sys.modules[mod], '__file__', None)
     return mod, modfile
 
+def isbuiltin(func):
+    mod, modfile = getmodule(func)
+    res = modfile is None
+    return res
+
+
 astcache = {}
 def getast(func):
     ta0 = time.time()

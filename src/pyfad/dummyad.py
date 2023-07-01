@@ -1,10 +1,4 @@
-from .astvisitor import getmodule
-
-def isbuiltin(func):
-    mod, modfile = getmodule(func)
-    res = modfile is None
-#    print('isbuiltin', func, res)
-    return res
+from .astvisitor import isbuiltin
 
 def decorator(**opts):
 
