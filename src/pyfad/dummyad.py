@@ -13,9 +13,9 @@ def decorator(**opts):
         print(f'D1 {f.__name__} before')
 
         if isbuiltin(f):
-            print('Call f')
-            r = f(*args[1::2], **kw)
-            return 0, r
+            print('Dummy call to builtin rule')
+            res = f(*args[1::2], **kw)
+            return res, res
 
         res = done(key)
 
