@@ -42,6 +42,9 @@ def D_print_builtins(r, *args):
 def D_dict_items_builtins(r, dx, x):
     return dx.items()
 
+def D_dict_keys_builtins(r, dx, x):
+    return r
+
 def D_range_builtins(r, dx, x):
     return [0]*len(r)
 
