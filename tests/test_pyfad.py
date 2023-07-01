@@ -113,7 +113,7 @@ class TestPyfad(unittest.TestCase):
     def do_sourceDiff_f_xyz(self, func, args=None):
         if args is None:
             args = [1,2,3]
-        (d_r, r, h) = pyfad.DiffFor(func, *args)
+        (d_r, r) = pyfad.DiffFor(func, *args)
         self.checkDer(func, args, d_r)
 
     def do_sourceDiff_f_x(self, func, args=None):

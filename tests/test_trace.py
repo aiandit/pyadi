@@ -23,11 +23,15 @@ def mkreq(x):
 
 class TestPyTracer(unittest.TestCase):
 
-    def setUp(self):
-        print('SETUP')
+    @classmethod
+    def setUpClass(cls):
+        print('SETUP Class')
         pyfad.initRules(rules='trace,dummy,tr2=trace', tracecalls=True)
-        self.handle = pyfad.getHandle('pyfad.trace')
-        handle2 = pyfad.getHandle('tr2')
+        cls.handle_ = pyfad.getHandle('pyfad.trace')
+        cls.handle = lambda x, *args, **kw: cls.handle_(*args, **kw)
+
+        cls.handle2_ = pyfad.getHandle('tr2')
+        cls.handle2 = lambda x, *args, **kw: cls.handle2_(*args, **kw)
 
     def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
@@ -47,8 +51,29 @@ class TestPyTracer(unittest.TestCase):
         self.do_sourceDiff_f_xyz(mkreq, args=[0.234])
 
     def test_tr_hist(self):
-        dres, res, handle = self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234], tracecalls=True)
-        hist = handle(get='hist')
+        dres, res = self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234], tracecalls=True)
+        hist = pyfad.getHandle('pyfad.trace')(get='hist')
+        hist2 = pyfad.getHandle('tr2')(get='hist')
+        h1a = [h for h in hist if h not in ['range', 'len', 'sum']]
+        self.assertEqual(h1a, hist2)
+
+    def test_tr_hist2(self):
+        dres, res = self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234], tracecalls=True)
+        hist1 = pyfad.getHandle('pyfad.trace')(get='hist')
+        hist2 = pyfad.getHandle('tr2')(get='hist')
+
+        dres, res = self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234], tracecalls=True)
+        hist1a = pyfad.getHandle('pyfad.trace')(get='hist')
+        hist2a = pyfad.getHandle('tr2')(get='hist')
+
+        self.assertEqual(hist1, hist1a)
+        self.assertEqual(hist2, hist2a)
+
+    def test_tr_verbose(self):
+        hist = pyfad.getHandle('pyfad.trace')(get='hist')
+        print('** Get trace history: ', hist)
+        dres, res = self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234], verbose=True)
+        hist = pyfad.getHandle('pyfad.trace')(get='hist')
         print('Get trace history: ', hist)
 
     def startStopExecution(self, handle, cvsleep, delay=1e-1):
@@ -82,12 +107,11 @@ class TestPyTracer(unittest.TestCase):
         cvsleep.acquire()
         self.handle(done=False)
         tr = threading.Thread(target=self.startStopExecution,
-                              args=(self.handle, cvsleep, 1e-1))
+                              args=(self.handle, cvsleep, 8e-3))
         tr.start()
         time.sleep(1)
-        dres, res = self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], tracecalls=True)
+        dres, res = self.do_sourceDiff_f_xyz(fx.flong, args=[0.234])
         hist = self.handle(get='hist')
-        print('Get trace history: ', hist)
         self.handle(done=True)
         cvsleep.release()
         tr.join()
