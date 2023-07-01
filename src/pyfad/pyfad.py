@@ -6,6 +6,8 @@ import json
 import shutil
 from io import StringIO
 import tempfile
+import importlib
+
 from itertools import chain
 
 from astunparse import loadast, unparse2j, unparse2x, unparse
@@ -21,7 +23,7 @@ from .timer import Timer
 from . import astvisitor
 
 from . import rules
-from . import forwardad, trace, dummy, dummy2
+
 
 Debug = False
 
@@ -672,21 +674,15 @@ def addrulemodule(module, **kw):
 
 def initRules(**opts):
     clearrulemodules()
-    rules = opts.get('rules', 'ad')
+    rules = opts.get('rules', 'ad=pyfad.forwardad')
     rules = rules.split(',')
     for rule in rules:
         add = {}
         if '=' in rule:
             (alias, rule) = rule.split('=')
             add['alias'] = alias
-        if rule == 'trace':
-            addrulemodule(trace, **add, **opts)
-        elif rule == 'ad':
-            addrulemodule(forwardad, **add, **opts)
-        elif rule == 'dummy':
-            addrulemodule(dummy, **add, **opts)
-        elif rule == 'dummy2':
-            addrulemodule(dummy2, **add, **opts)
+        rmod = importlib.import_module(rule)
+        addrulemodule(rmod, **add, **opts)
 
 initRules()
 
