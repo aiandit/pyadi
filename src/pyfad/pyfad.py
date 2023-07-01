@@ -605,7 +605,10 @@ def doSourceDiff(function, opts, *args, **kw):
     _class = None
 
     if isbuiltin(function):
-        return None, None
+        fname = function.__name__
+        id = rules.rid(function)
+        msg = f'No rule for buitin {fname}, function {id} not found'
+        raise (NoRule(msg))
 
     if isinstance(function, type):
         if not isbuiltin(function.__init__):
@@ -725,12 +728,6 @@ def DiffFunction(function, **opts):
         # print(f'Call ad fun {f.__name__}, args ', args, '=', len(args))
 
         dres, res = processRules(function, opts, *args, **kw)
-
-        if dres is None:
-            fname = function.__name__
-            id = rules.rid(function)
-            msg = f'No rule for buitin {fname}, function {id} not found'
-            raise (NoRule(msg))
 
         return dres, res
 
