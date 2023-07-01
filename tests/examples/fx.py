@@ -351,3 +351,17 @@ def fcalll5(x):
     assert gl_sum2(A) == gl_sum2(l)
     z = g2l(gl_sum2(A), v)
     return z
+
+def fdict(x):
+    d = {'a': x, 'b': x*x, 'c': x*x*x}
+    s = 0
+    for k in d:
+        s += d[k]
+    return s
+
+def _fdict2(x):
+    d = {'a': x, 'b': x*x, 'c': x*x*x}
+    s = 0
+    for k in d:
+        s += d[k]
+    return s
