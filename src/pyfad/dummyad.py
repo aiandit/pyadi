@@ -15,7 +15,7 @@ def decorator(**opts):
         if isbuiltin(f):
             print('Call f')
             r = f(*args[1::2], **kw)
-            return r, r
+            return 0, r
 
         res = done(key)
 
