@@ -6,7 +6,7 @@ def isbuiltin(func):
 #    print('isbuiltin', func, res)
     return res
 
-def decorator():
+def decorator(**opts):
 
     def inner(done, key, f, *args, **kw):
 

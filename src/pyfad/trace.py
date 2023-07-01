@@ -16,11 +16,42 @@ def D_before(res, f, dargs, args, **kw):
 def D_after(res, f, dargs, args, **kw):
     print(f'call to {f.__name__}{(*args,)}) = {res} ends {time.time()} s')
 
-def decorator():
+class Stop(BaseException):
+    pass
+
+def decorator(**opts):
+
+    print('Create decorator: ', opts.items())
+
+    tracecalls = opts.get('tracecalls', False)
+    timeout = opts.get('timeout', None)
+
+    data = {}
+    x = 17
+
+    if tracecalls:
+        data['hist'] = []
+        print(f'create hist in {data}')
+
+    if timeout is not None:
+        stop_t0 = time.time()
+
 
     def inner(done, key, f, *args, **kw):
 
         print(f'call to {f.__name__}{(*args,)}) starts {time.time()} s')
+
+        if tracecalls:
+            data['hist'] += [f.__qualname__]
+            print(f'add hist {data["hist"]} {[f.__qualname__]}')
+
+        if timeout is not None:
+            dt = time.time() - stop_t0
+            if dt > timeout:
+                raise Stop(f'Stopping because {dt} s have passed.')
+
+        if 'stop' in data:
+            raise Stop(f'Stopping because stop set.')
 
         res = done(key)
 
@@ -28,4 +59,12 @@ def decorator():
 
         return res
 
-    return inner
+    def get(*args, **kw):
+        for name in args:
+            del data[name]
+        data.update(kw)
+        if kw.get('get'):
+            return data[kw.get('get')]
+        return data
+
+    return inner, get

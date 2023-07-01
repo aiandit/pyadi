@@ -659,22 +659,32 @@ def clearrulemodules(name=None):
     global rulemodules
     rulemodules = {}
 def addrulemodule(module, **kw):
-    rulemodules[module.__file__] = module, module.decorator()
-def initRules(rules='ad'):
+    deco = module.decorator(**kw)
+    handle = None
+    if isinstance(deco, tuple):
+        deco, handle = deco
+    rulemodules[module.__name__] = module, deco, handle
+    return handle
+
+def initRules(**opts):
     clearrulemodules()
+    rules = opts.get('rules', 'ad')
     rules = rules.split(',')
     for i in rules:
         if i == 'trace':
-            addrulemodule(trace)
+            addrulemodule(trace, **opts)
         elif i == 'ad':
-            addrulemodule(forwardad)
+            addrulemodule(forwardad, **opts)
         elif i == 'dummy':
-            addrulemodule(dummy)
+            addrulemodule(dummy, **opts)
         elif i == 'dummy2':
-            addrulemodule(dummy2)
+            addrulemodule(dummy2, **opts)
 
-#rules.initRules('trace,ad,trace')
-initRules('ad')
+def getHandle(index, *args, **kw):
+    return rulemodules[index][2](*args, **kw)
+
+
+initRules()
 
 class NoRule(BaseException):
     pass
@@ -809,7 +819,7 @@ def DiffFor(function, *args, **opts):
     seed = opts.get('seed', 1)
     rdef = opts.get('rules', None)
     if rdef:
-        initRules(rdef)
+        initRules(**opts)
 
     if 'dx' in opts:
         dargs = dx
@@ -823,7 +833,7 @@ def DiffFor(function, *args, **opts):
             dargs = fill(dzeros(args), seed)
             (dresult, result) = adfun(*czip(dargs, args))
 
-    return (dresult, result)
+    return (dresult, result, getHandle)
 
 
 def Diff(active='all'):

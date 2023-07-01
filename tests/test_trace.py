@@ -20,10 +20,11 @@ def mkreq(x):
     return x+2
 
 class TestPyTracer(unittest.TestCase):
-    def do_sourceDiff_f_xyz(self, func, args=None):
+    def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
             args = [1,2,3]
-        (d_r, r) = pyfad.DiffFor(func, *args, rules='trace,dummy')
+        (d_r, r, handle) = pyfad.DiffFor(func, *args, rules='trace,dummy', **kw)
+        return (d_r, r, handle)
 
     def test_tr_calll2(self):
         self.do_sourceDiff_f_xyz(fx.fcalll2, args=[0.234])
@@ -35,3 +36,8 @@ class TestPyTracer(unittest.TestCase):
 
     def _test_tr_req(self):
         self.do_sourceDiff_f_xyz(mkreq, args=[0.234])
+
+    def test_tr_hist(self):
+        dres, res, handle = self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234], tracecalls=True)
+        hist = handle('pyfad.trace', get='hist')
+        print('Get trace history: ', hist)
