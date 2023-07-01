@@ -691,9 +691,14 @@ def initRules(**opts):
 initRules()
 
 
-def getHandle(index):
-    print('getHandle', index, rulemodules.keys())
-    return rulemodules[index][2]
+def getHandle(alias):
+    return rulemodules[alias][2]
+
+
+def callHandle(name, *args, **kw):
+    results = [mod[2](*args, **kw) for alias, mod in rulemodules.items()
+               if mod[0].__name__ == name]
+    return results
 
 
 def getRuleModules(index):
@@ -825,8 +830,11 @@ def createFullGradients(args):
 
 
 def DiffFor(function, *args, **opts):
-    with Timer(function.__qualname__, 'run') as t:
-        result = function(*args)
+
+    timings = opts.get('timings', True)
+    if timings:
+        with Timer(function.__qualname__, 'run') as t:
+            result = function(*args)
 
     adfun = D(function, **opts)
 
@@ -834,6 +842,10 @@ def DiffFor(function, *args, **opts):
     rdef = opts.get('rules', None)
     if rdef:
         initRules(**opts)
+
+    tracecalls = opts.get('tracecalls', False)
+    if tracecalls:
+        callHandle('pyfad.trace', clear='hist')
 
     if 'dx' in opts:
         dargs = dx

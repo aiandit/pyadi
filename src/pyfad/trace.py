@@ -22,21 +22,20 @@ class Stop(BaseException):
 
 def decorator(**opts):
 
-    print('Create decorator: ', opts.items())
-
     tracecalls = opts.get('tracecalls', False)
+    verbose = opts.get('verbose', False)
 
     data = {}
 
     if tracecalls:
         hist = []
-        print(f'create hist in {hist}')
 
 
     def inner(done, key, f, *args, **kw):
         nonlocal hist
 
-        print(f'call to {f.__name__}{(*args,)}) starts {time.time()} s')
+        if verbose:
+            print(f'call to {f.__name__}{(*args,)}) starts {time.time()} s')
 
         if tracecalls:
             data['cur'] = f.__qualname__
@@ -46,38 +45,43 @@ def decorator(**opts):
             while True:
                 cmd = data.get('cmd', '')
                 print(f'Command set: {cmd}')
-                if cmd == 'stop':
-                    raise Stop(f'Stopping because stop set: {data["msg"]}.')
-                elif cmd == 'raise':
-                    raise data['exception']
-                elif cmd == 'pause':
+                if cmd == 'pause':
                     print(f'condition wait on {data["condition"]}')
                     sys.stdout.flush()
                     data['condition'].wait()
                     print('been notified')
                     sys.stdout.flush()
+                elif cmd == 'sleep':
+                    time.sleep(data['timeout'])
                 else:
-                    if cmd == 'call':
-                        data['function'](data, hist, f, args, kw)
-                        del data['cmd']
+                    if cmd == 'stop':
+                        raise Stop(f'Stopping because stop set: {data["msg"]}.')
+                    elif cmd == 'raise':
+                        raise data['exception']
                     else:
-                        pass
+                        if cmd == 'call':
+                            data['function'](data, hist, f, args, kw)
                     break
 
         res = done(key)
 
-        print(f'call to {f.__name__}{(*args,)}) = {res} ends {time.time()} s')
+        if verbose:
+            print(f'call to {f.__name__}{(*args,)}) = {res} ends {time.time()} s')
 
         return res
 
     def get(*args, **kw):
+        nonlocal hist
         for name in args:
             del data[name]
-        data.update(kw)
         if kw.get('get') == 'hist':
             return hist
+        elif kw.get('clear') == 'hist':
+            hist = []
         elif kw.get('get'):
             return data[kw.get('get')]
+        else:
+            data.update(kw)
         return data
 
     return inner, get
