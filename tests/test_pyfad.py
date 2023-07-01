@@ -116,10 +116,10 @@ class TestPyfad(unittest.TestCase):
     def test_D_f3_call(self):
         self.do_call_xyz(f3, [1,2,3])
 
-    def do_sourceDiff_f_xyz(self, func, args=None):
+    def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
             args = [1,2,3]
-        (d_r, r) = pyfad.DiffFor(func, *args)
+        (d_r, r) = pyfad.DiffFor(func, *args, **kw)
         self.checkDer(func, args, d_r)
 
     def do_sourceDiff_f_x(self, func, args=None):
@@ -319,3 +319,5 @@ class TestPyfad(unittest.TestCase):
     def test_fprint2(self):
         self.do_sourceDiff_f_xyz(fx.fprint2, args=[0.234])
 
+    def test_timings(self):
+        self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], timings=True)
