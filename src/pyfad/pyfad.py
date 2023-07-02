@@ -721,7 +721,11 @@ def doSourceDiff(function, opts, *args, **kw):
             setattr(_class, dfname, adfun)
             print(f'Diff function {function.__name__} saved as attr {dfname} in type {_class.__qualname__}')
 
-    (dres, res) = adfun(*args, **kw)
+    adres = adfun(*args, **kw)
+    if adres is None:
+        (dres, res) = None, None
+    else:
+        (dres, res) = adres
 
     return dres, res
 
