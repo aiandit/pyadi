@@ -55,6 +55,7 @@ def joind(ddl, dl):
         res |= { k: v for k, v in d.items() }
     return res
 
+
 def unzd(d):
     print('unzd', d)
     keys = d.keys()
@@ -689,18 +690,6 @@ def doSourceDiff(function, opts, *args, **kw):
         msg = f'No rule for buitin {fname}, function {id} not found'
         raise (NoRule(msg))
 
-    if isinstance(function, type):
-        print(f'SD: is a type!')
-        do, o = function(*args[1::2], **kw), function(*args[1::2], **kw)
-        do = dzeros(do)
-        if not isbuiltin(function.__init__):
-            _class = function
-            function = function.__init__
-            args = [do, o] + list(args)
-        else:
-            print(f'SD: is a builtin type!')
-            return do, o
-
     active = opts.get('active', [])
 #        print('DDD', active)
     if _class:
@@ -725,17 +714,7 @@ def doSourceDiff(function, opts, *args, **kw):
             setattr(_class, dfname, adfun)
             print(f'Diff function {function.__name__} saved as attr {dfname} in type {_class.__qualname__}')
 
-    adres = adfun(*args, **kw)
-    if adres is None:
-        if _class:
-            # was constructor
-            dres, res = do, o
-        else:
-            dres, res = None, None
-    else:
-        dres, res = adres
-
-    return dres, res
+    return adfun
 
 rulemodules = {}
 def clearrulemodules(name=None):
@@ -799,12 +778,55 @@ def processRules(function, opts, *args, **kw):
     return nextStep()
 
 
+def initType(function, *args, **kw):
+    do, o = function(*args[1::2], **kw), function(*args[1::2], **kw)
+    do = dzeros(do)
+    return do, o
+
+def mkConstr(function):
+    def constr(*args, **kw):
+        args = list(chain(*args))
+        return initType(function, *args, **kw)
+    return constr
+
+
 def DiffFunction(function, **opts):
+
+    _class, constr = None, None
+    if isinstance(function, type):
+        print(f'SD: {function.__name__} is a type!')
+        _class = function
+        if not isbuiltin(function.__init__):
+            constr = function = function.__init__
+        else:
+            print(f'SD: type {function.__name__} has a builtin cosntructor !')
+
+    adfun = processRules(function, opts)
 
     def theADFun(*ADargs, **kw):
 
         args = list(chain(*ADargs))
-        dres, res = processRules(function, opts, *args, **kw)
+        print(f'adfun called for {function.__name__}: {adfun.__name__}')
+        if getattr(adfun, 'builtin', False):
+            return adfun(*args, **kw)
+
+        if _class is not None:
+            do, o = initType(_class, *args, **kw)
+            if constr is None:
+                return do, o
+
+            args = [do, o] + list(args)
+
+        adres = adfun(*args, **kw)
+        if adres is None:
+            if _class:
+                # was constructor
+                dres, res = do, o
+            else:
+                dres, res = None, None
+        else:
+            dres, res = adres
+
         return dres, res
 
     return theADFun
