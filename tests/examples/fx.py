@@ -405,6 +405,56 @@ def fdict(x):
         s += d[k]
     return s
 
+def gkw(a, b, **kw):
+    return a*b*kw['c']
+
+def gsumd(kw):
+    if isinstance(kw, dict):
+        return sum([ gsumd(v) for v in kw.values() ])
+    elif isinstance(kw, list) or isinstance(kw, tuple):
+        return sum([ gsumd(v) for v in kw ])
+    return kw
+
+def mkd(**kw):
+    return kw
+
+def gsumd2(a, b, **kw):
+    return a*b*sum([ v for v in kw.values() ])
+
+def fkeywords(x):
+    d = {'a': x, 'b': x*x, 'c': x*x*x}
+    s = gkw(**d)
+    return s
+
+def gmkd(x):
+    d = {'a': x, 'b': x*x, 'c': x*x*x}
+    return d
+
+def gmkdict(x):
+    d = {'a': x, 'b': x*x, 'c': x*x*x}
+    e = {'a1': x, 'b1': x*x, 'c1': x*x*x}
+    return d, e
+
+def fkeywords2(x):
+    d, e = gmkdict(x)
+    s = gsumd(mkd(**d, r=-x, **e))
+    return s
+
+def fkeywords3(x):
+    d, e = gmkdict(x)
+    s = gsumd(mkd(**d, r=f1(-x), **e))
+    return s
+
+def fkeywords3(x):
+    d, e = gmkdict(x)
+    s = gsumd(mkd(**d, r=f1(-x), **e))
+    return s
+
+def fkeywords4(x):
+    d, e = gmkdict(x)
+    s = gsumd(mkd(**d, r=gmkd(x), **e))
+    return s
+
 def fsin2(x):
     return math.sin(x)
 

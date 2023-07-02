@@ -86,7 +86,6 @@ class TestPyfad(unittest.TestCase):
     axyz = ['x', 'y', 'z']
     def test_D_f1_active(self):
         df = pyfad.D(f1, active=self.axyz)
-        print('LOCALS', pyfad.locals(f1))
         print('test f1', df)
         print('test f1 f', pyfad.py(f1))
         print('test f1 d/dx f', pyfad.Dpy(f1))
@@ -321,3 +320,27 @@ class TestPyfad(unittest.TestCase):
 
     def test_timings(self):
         self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], timings=True)
+
+    def test_unzd(self):
+        d = {'a': (1,2), 'b': (1,2), 'c': (1,2)}
+        dr = { k: d[k][0] for k in d }
+        r = { k: d[k][1] for k in d }
+        dr2, r2 = pyfad.unzd(d)
+        self.assertEqual(dr, dr2)
+        self.assertEqual(r, r2)
+
+    def test_joind(self):
+        d = {'a': (1,2), 'b': (1,2), 'c': (1,2)}
+
+        dr, r = pyfad.unzd(d)
+
+        res = pyfad.joind([dr], [r])
+
+        res2 = { 'd_' + k: v for k, v in dr.items() } | { k: v for k, v in r.items() }
+
+        self.assertEqual(res, res2)
+
+        dr2, r2 = pyfad.unjnd(res)
+
+        self.assertEqual(dr, dr2)
+        self.assertEqual(r, r2)

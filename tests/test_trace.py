@@ -9,7 +9,7 @@ import time
 import requests
 
 import pyfad
-from .examples import fxyz, fx, fgen
+from .examples import fxyz, fx, fgen, ftrace
 
 def mkreq(x):
 
@@ -116,3 +116,6 @@ class TestPyTracer(unittest.TestCase):
         cvsleep.release()
         tr.join()
         print('Start/Stop thread joined, finish.')
+
+    def _test_tr_loadast(self):
+        self.do_sourceDiff_f_xyz(ftrace.floadast, args=[0.234])
