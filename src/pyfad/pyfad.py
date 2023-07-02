@@ -676,7 +676,7 @@ def clear(search=None):
         del adc[fid(search)]
 
 
-def doSourceDiff(function, opts, *args, **kw):
+def doSourceDiff(function, opts):
 
     # Try source diff
     adfun = None
@@ -689,6 +689,10 @@ def doSourceDiff(function, opts, *args, **kw):
         id = rules.rid(function)
         msg = f'No rule for buitin {fname}, function {id} not found'
         raise (NoRule(msg))
+
+    elif isinstance(function, type):
+        print(f'Cannot diff. a type! {function.__name__}')
+        return mkConstr(function)
 
     active = opts.get('active', [])
 #        print('DDD', active)
@@ -807,14 +811,9 @@ def DiffFunction(function, **opts):
 
         args = list(chain(*ADargs))
         print(f'adfun called for {function.__name__}: {adfun.__name__}')
-        if getattr(adfun, 'builtin', False):
-            return adfun(*args, **kw)
 
-        if _class is not None:
+        if constr is not None:
             do, o = initType(_class, *args, **kw)
-            if constr is None:
-                return do, o
-
             args = [do, o] + list(args)
 
         adres = adfun(*args, **kw)

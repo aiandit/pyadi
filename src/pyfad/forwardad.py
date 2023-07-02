@@ -3,7 +3,6 @@ from math import sin, cos, tan, asin, acos, atan, log, sqrt
 from .astvisitor import getmodule
 import sys
 
-from .runtime import dzeros
 
 me = sys.modules[__name__]
 
@@ -35,11 +34,6 @@ def decorator(**opts):
 
         if rule is not None:
             return mkRule(f, rule)
-        elif isinstance(f, type):
-            def constr(*args, **kw):
-                return initType(f, *args, **kw)
-            constr.builtin = True
-            return constr
 
         # try source diff
         return done(key)

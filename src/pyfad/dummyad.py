@@ -1,5 +1,11 @@
 from .astvisitor import isbuiltin
 
+def mkCall(f):
+    def run(*args, **kw):
+        res = f(*args[1::2], **kw)
+        return res, res
+    return run
+
 def decorator(**opts):
 
     def inner(done, key, f, *args, **kw):
@@ -7,9 +13,7 @@ def decorator(**opts):
         print(f'D1 {f.__name__} before')
 
         if isbuiltin(f):
-            print('Dummy call to builtin rule')
-            res = f(*args[1::2], **kw)
-            return res, res
+            return mkCall(f)
 
         res = done(key)
 
