@@ -176,9 +176,6 @@ class ASTVisitorFMAD(ASTVisitorID):
         t.generators = self.ddispatch(t.generators)
         return t
 
-    def _DSubscript(self, node):
-        node.value = self.ddispatch(node.value)
-        return node
 
     tupleDiff = ["Call", "List", "ListComp", "Dict", "DictComp", "DictComp", "IfExp", "GeneratorExp"]
     def diffUnlessIsTupleDiff(self, t, src=None):
@@ -331,10 +328,15 @@ class ASTVisitorFMAD(ASTVisitorID):
     def isLocal(self, t):
         return self.getRoot(t).id in self.localvars
 
+    def _DSubscript(self, node):
+        if not self.isLocal(node):
+            return Constant(0)
+        node.value = self.ddispatch(node.value)
+        return node
+
     def _DAttribute(self, t):
         #print(f'Diff Attribute {t.attr} of {vars(t.value)} {self.imports}')
-        root = self.getRoot(t)
-        if root._class == "Name" and not root.id in self.localvars:
+        if not self.isLocal(t):
             return Constant(0)
         t.value = self.ddispatch(t.value.clone())
         return t
