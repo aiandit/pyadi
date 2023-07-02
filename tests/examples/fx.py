@@ -160,7 +160,7 @@ def fplane(x):
 class Plane2:
     distance = 0
     velocity = 100
-    gas = 1e4
+    gas = 1e2
     consumption = 10
     def __init__(self, c):
         self.consumption = c
@@ -169,9 +169,9 @@ class Plane2:
         self.distance += dist
         self.gas -= self.consumption * dist
 
-def _fplane2(x):
+def fplane2(x):
     y = x*x
-    o = Plane2(x)
+    o = Plane2(y)
     o.fly(y)
     r = o.distance + o.gas
     return r
