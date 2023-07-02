@@ -1,5 +1,10 @@
 from astunparse.astnode import ASTNode, Constant, Name
 
+class keyword(ASTNode):
+    def __init__(self, arg, value):
+        self._class = 'keyword'
+        self.arg = arg
+        self.value = value
 
 class arguments(ASTNode):
     def __init__(self, args):

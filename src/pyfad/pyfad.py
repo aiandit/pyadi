@@ -39,6 +39,22 @@ def czip(a, b):
     return chain(*zip(a, b))
 
 
+def unjnd(d):
+    names = list(d.keys())
+    values = list(d.values())
+    dd = dict(zip(names[len(names)//2:], values[0:len(names)//2]))
+    d = dict(zip(names[len(names)//2:], values[len(names)//2:]))
+    return dd, d
+
+
+def joind(ddl, dl):
+    res = {}
+    for dd in ddl:
+        res |= { 'd_' + k: v for k, v in dd.items() }
+    for d in dl:
+        res |= { k: v for k, v in d.items() }
+    return res
+
 def unzd(d):
     print('unzd', d)
     keys = d.keys()
@@ -134,6 +150,8 @@ class ASTVisitorFMAD(ASTVisitorID):
             t.name = dpref_ + t.name
             t.args = self.ddispatch(t.args)
             t.body = self.diffStmtList(t.body)
+            if t.args.kwarg:
+                t.body = [Assign(Tuple([Name('d_' + t.args.kwarg.arg), Name(t.args.kwarg.arg)]), Call('unjnd', Name(t.args.kwarg.arg)))] + t.body
             t.decorator_list = []
         else:
             t.args = self.dispatch(t.args)
@@ -256,8 +274,21 @@ class ASTVisitorFMAD(ASTVisitorID):
 
         dargs = [self.diffUnlessIsTupleDiff(a, t) for a in curargs]
         res.args = dargs
-        res.keywords = self.ddispatch(t.keywords) + self.dispatch(t.keywords)
+        res.keywords = self.diffKeywords(t.keywords)
         return res
+
+    def diffKeywords(self, keywords):
+        res = []
+        if len(keywords) == 0:
+            return res
+        for key in keywords:
+            if key.arg is None:
+                res += [ self.diffUnlessIsTupleDiff(key.value) ]
+            else:
+                res += [ Call('unzd', Call('dict', keyword(key.arg, self.diffUnlessIsTupleDiff(key.value)))) ]
+        print('keywords::', res)
+        zcall = Call('joind', Starred(Call('zip', res)))
+        return [keyword(None, zcall)]
 
     def _Darg(self, t):
         if t.arg in self.active_objects:
