@@ -45,6 +45,9 @@ def D_dict_items_builtins(r, dx, x):
 def D_dict_keys_builtins(r, dx, x):
     return r
 
+def D_dict_values_builtins(r, dx, x):
+    return dx.values()
+
 def D_range_builtins(r, dx, x):
     return [0]*len(r)
 
