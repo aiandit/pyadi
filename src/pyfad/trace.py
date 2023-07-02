@@ -31,44 +31,49 @@ def decorator(**opts):
         hist = []
 
 
-    def inner(done, key, f, *args, **kw):
-        nonlocal hist
+    def inner(done, key, f):
 
-        if verbose:
-            print(f'call to {f.__name__}{(*args,)}) starts {time.time()} s')
+        adfun = done(key)
 
-        if tracecalls:
-            data['cur'] = f.__qualname__
-            hist += [f.__qualname__]
+        def run(*args, **kw):
+            nonlocal hist
 
-        if 'cmd' in data:
-            while True:
-                cmd = data.get('cmd', '')
-                print(f'Command set: {cmd}')
-                if cmd == 'pause':
-                    print(f'condition wait on {data["condition"]}')
-                    sys.stdout.flush()
-                    data['condition'].wait()
-                    print('been notified')
-                    sys.stdout.flush()
-                elif cmd == 'sleep':
-                    time.sleep(data['timeout'])
-                else:
-                    if cmd == 'stop':
-                        raise Stop(f'Stopping because stop set: {data["msg"]}.')
-                    elif cmd == 'raise':
-                        raise data['exception']
+            if verbose:
+                print(f'call to {f.__name__}{(*args,)}) starts {time.time()} s')
+
+            if tracecalls:
+                data['cur'] = f.__qualname__
+                hist += [f.__qualname__]
+
+            if 'cmd' in data:
+                while True:
+                    cmd = data.get('cmd', '')
+                    print(f'Command set: {cmd}')
+                    if cmd == 'pause':
+                        print(f'condition wait on {data["condition"]}')
+                        sys.stdout.flush()
+                        data['condition'].wait()
+                        print('been notified')
+                        sys.stdout.flush()
+                    elif cmd == 'sleep':
+                        time.sleep(data['timeout'])
                     else:
-                        if cmd == 'call':
-                            data['function'](data, hist, f, args, kw)
-                    break
+                        if cmd == 'stop':
+                            raise Stop(f'Stopping because stop set: {data["msg"]}.')
+                        elif cmd == 'raise':
+                            raise data['exception']
+                        else:
+                            if cmd == 'call':
+                                data['function'](data, hist, f, args, kw)
+                        break
 
-        res = done(key)
+            res = adfun(*args, **kw)
+            if verbose:
+                print(f'call to {f.__name__}{(*args,)}) = {res} ends {time.time()} s')
 
-        if verbose:
-            print(f'call to {f.__name__}{(*args,)}) = {res} ends {time.time()} s')
+            return res
 
-        return res
+        return run
 
     def get(*args, **kw):
         nonlocal hist
