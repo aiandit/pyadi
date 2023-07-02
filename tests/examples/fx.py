@@ -174,7 +174,19 @@ def fplane2(x):
     o = Plane2(y)
     o.fly(y)
     r = o.distance + o.gas
+    print('Plane fly dist', o.distance)
     return r
+
+
+def fplane3(x):
+    y = x*2
+    l = [x, x*x, x*x*x ]
+    o = Plane2(y)
+    r = [ o.fly(t) for t in l ]
+    r = o.distance + o.gas
+    print('Plane fly dist', o.distance)
+    return r
+
 
 def gl_sum(x):
     s = 0
@@ -480,6 +492,18 @@ def fcalllocal(x):
 
 def fcalllocals(x):
     myf = f1 if x > 0 else f2
+    d = {'a': gcall(myf, x), 'b': gcall(myf, x*x)}
+    s = next(v for k,v in d.items() if k == 'b')
+    z = gcall(myf, s)
+    return z
+
+gdefs = {'sin': sin, 'lsum': gl_sum2, 'dsum': gsumd}
+def getf(name):
+    return gdefs[name]
+
+def fcallcall(x):
+    myf = f1 if x > 0 else f2
+    x = getf('sin')(x)
     d = {'a': gcall(myf, x), 'b': gcall(myf, x*x)}
     s = next(v for k,v in d.items() if k == 'b')
     z = gcall(myf, s)
