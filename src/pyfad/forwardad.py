@@ -3,6 +3,7 @@ from math import sin, cos, tan, asin, acos, atan, log, sqrt
 from .astvisitor import getmodule
 import sys
 
+from .runtime import dzeros
 
 me = sys.modules[__name__]
 
@@ -12,18 +13,33 @@ def rid(func):
     fid = f'{func.__qualname__}_{mod}'.replace('.', '_')
     return fid
 
+def mkRule(f, rule):
+    def runRule(*args, **kw):
+        res = f(*args[1::2], **kw)
+        dres = rule(res, *args, **kw)
+        return dres, res
+    runRule.builtin = True
+    return runRule
+
+def initType(function, *args, **kw):
+    do, o = function(*args[1::2], **kw), function(*args[1::2], **kw)
+    do = dzeros(do)
+    return do, o
 
 def decorator(**opts):
 
-    def inner(done, key, f, *args, **kw):
+    def inner(done, key, f):
 
         id = 'D_' + rid(f)
         rule = getattr(me, id, None)
 
         if rule is not None:
-            res = f(*args[1::2], **kw)
-            dres = rule(res, *args, **kw)
-            return dres, res
+            return mkRule(f, rule)
+        elif isinstance(f, type):
+            def constr(*args, **kw):
+                return initType(f, *args, **kw)
+            constr.builtin = True
+            return constr
 
         # try source diff
         return done(key)
