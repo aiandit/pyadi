@@ -14,7 +14,7 @@ from astunparse import loadast, unparse2j, unparse2x, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 
 from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast
-from .astvisitor import ASTVisitorID, ASTVisitorImports, mkTmp
+from .astvisitor import ASTVisitorID, ASTVisitorImports, ASTVisitorLocals, mkTmp
 from .nodes import *
 
 
@@ -60,6 +60,15 @@ class ASTVisitorFMAD(ASTVisitorID):
     active_objects = ['self', 'dself', 'dt']
     active_fields = ['acc', 'vel', 'pos', 'axis', 'x', 'y', 'z']
     active_methods = ['equations']
+    localvars = []
+
+    def __call__(self, tree):
+        self.localvars = ASTVisitorLocals()(tree)
+        print('LOCALS', self.localvars)
+
+        print('ASTVisitor.call()')
+        self.result = self.dispatch(tree)
+        return self.result
 
     def ddispatch(self, tree):
         if isinstance(tree, list):
@@ -282,12 +291,22 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def _DName(self, t):
         #print(f'Diff Name {t.id}')
-        t = t.clone()
-        t.id = dpref_ + t.id
+        if t.id in self.localvars:
+            t = t.clone()
+            t.id = dpref_ + t.id
+            return t
+        return Constant(0)
+
+    def getRoot(self, t):
+        if t._class == "Attribute" or t._class == "Subscript":
+            return self.getRoot(t.value)
         return t
 
     def _DAttribute(self, t):
         #print(f'Diff Attribute {t.attr} of {vars(t.value)} {self.imports}')
+        root = self.getRoot(t)
+        if root._class == "Name" and not root.id in self.localvars:
+            return Constant(0)
         t.value = self.ddispatch(t.value.clone())
         return t
 

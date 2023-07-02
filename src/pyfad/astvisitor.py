@@ -407,6 +407,40 @@ class ASTVisitorImports(ASTLocalAction):
         return self.imports, self.modules
 
 
+class ASTVisitorLocals(ASTLocalAction):
+    def getRoot(self, t):
+        if t._class == "Attribute" or t._class == "Subscript":
+            return self.getRoot(t.value)
+        return t
+
+    def getVars(self, t):
+        res = []
+        if t._class == "Tuple":
+            for e in t.elts:
+                res += self.getVars(e)
+        elif t._class == "Name":
+            res = [t.id]
+        elif t._class == "Attribute" or t._class == "Subscript":
+            res = [self.getRoot(t)]
+        return res
+
+    def Begin(self, tree):
+        self.locals = []
+
+    def Before(self, tree):
+        if tree._class == "FunctionDef":
+            self.locals += [ n.arg for n in tree.args.args ]
+
+        elif tree._class == "Assign":
+            self.locals += [ self.getRoot(n).id for n in tree.targets ]
+
+        elif tree._class == "For" or tree._class == "comprehension":
+            self.locals += self.getVars(tree.target)
+
+    def End(self, tree):
+        return self.locals
+
+
 def normalize(tree, **kw):
     tree = resolvetmpvars(tree)
     tree = astunparse.normalize(tree)
