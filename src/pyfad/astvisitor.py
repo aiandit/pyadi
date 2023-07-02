@@ -451,20 +451,6 @@ def normalize(tree, **kw):
     return tree
 
 
-class ASTFLocals(ASTLocalAction):
-    def Begin(self, tree):
-        self.locals = []
-    def End(self, tree):
-        return self.locals
-
-    def Before(self, tree):
-        if tree._class == "Name":
-            self.locals.append(tree.id)
-
-def locals(tree, **kw):
-    an = ASTFLocals()(tree)
-    return an
-
 def py2pys_check(jdict, visitor):
     if type(jdict) == type(''):
         jdict = json.loads(jdict)
