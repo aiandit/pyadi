@@ -175,7 +175,7 @@ class ASTCanonicalizer:
         elif isinstance(tree, ASTNode):
 #            print('visit', vars(tree))
 
-            if getattr(tree, 'body', None) is not None and tree._class != "Module":
+            if getattr(tree, 'body', None) is not None and tree._class != "Module" and tree._class != "IfExp":
                 nbody = []
                 for stmt in tree.body:
                     if stmt._class == "For":
