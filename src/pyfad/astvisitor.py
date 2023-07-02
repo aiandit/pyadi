@@ -431,9 +431,12 @@ class ASTVisitorLocals(ASTLocalAction):
     def Before(self, tree):
         if tree._class == "FunctionDef":
             self.locals += [ n.arg for n in tree.args.args ]
+            if tree.args.kwarg:
+                self.locals += [ tree.args.kwarg.arg ]
 
         elif tree._class == "Assign":
-            self.locals += [ self.getRoot(n).id for n in tree.targets ]
+            for n in tree.targets:
+                self.locals += self.getVars(n)
 
         elif tree._class == "For" or tree._class == "comprehension":
             self.locals += self.getVars(tree.target)
