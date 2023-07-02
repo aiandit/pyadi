@@ -242,16 +242,12 @@ class ASTVisitorFMAD(ASTVisitorID):
         #print(f'Diff Call {t.func} {vars(t)}')
         dcallName = 'D'
         curargs = t.args
-        if t.func._class == "Attribute":
-            #print('ATTR', t.func.attr)
-            attrstr = unparse(t.func.value).strip()
-            if attrstr not in self.imports:
-                curargs = [t.func.value] + curargs
-                dcallName = 'Dc'
-
-        t = t.clone()
-        dcall = Call(Name(dcallName))
-        dcall.args = [t.func]
+        if self.isLocal(t.func):
+            dcall = Call(Name('Dc'))
+            dcall.args = [self.ddispatch(t.func.clone()),t.func]
+        else:
+            dcall = Call(Name('D'))
+            dcall.args = [t.func]
 
         fcallname = getattr(t.func, 'id', '')
         if fcallname in self.nondercall_builtins:
@@ -301,6 +297,9 @@ class ASTVisitorFMAD(ASTVisitorID):
         if t._class == "Attribute" or t._class == "Subscript":
             return self.getRoot(t.value)
         return t
+
+    def isLocal(self, t):
+        return self.getRoot(t).id in self.localvars
 
     def _DAttribute(self, t):
         #print(f'Diff Attribute {t.attr} of {vars(t.value)} {self.imports}')
@@ -770,14 +769,23 @@ def DiffFunction(function, **opts):
 D = DiffFunction
 
 
-def DiffFunctionObj(function, **opts):
+def DiffFunctionObj(dfunc, function, **opts):
 
-    self = getattr(function, '__self__', None)
-    if self is not None:
+    dself, self = None, None
+
+    if dfunc != 0 and dfunc != function:
+        self = getattr(function, '__self__', None)
         if self.__class__.__name__ != 'module':
+            dself = dfunc.__self__
             function = getattr(self.__class__, function.__name__)
 
-    return DiffFunction(function, **opts)
+    adfun = DiffFunction(function, **opts)
+
+    def inner(*args, **kw):
+        # Prepend dself and self to method call
+        return adfun((dself, self), *args, **kw)
+
+    return inner if dself is not None else adfun
 
 Dc = DiffFunctionObj
 
