@@ -415,3 +415,22 @@ def fnext(x):
     d = {'a': x, 'b': x*x, 'c': x*x*x}
     s = next(v for k,v in d.items() if k == 'b')
     return s
+
+def gcall(f, x):
+    return f(x)
+
+def gmap(f, l):
+    return [f(v) for v in l]
+
+def fcalllocal(x):
+    d = {'a': gcall(f1, x), 'b': gcall(f1, x*x)}
+    s = next(v for k,v in d.items() if k == 'b')
+    z = gcall(f1, s)
+    return z
+
+def _fcalllocals(x):
+    myf = f1 if x > 0 else f2
+    d = {'a': gcall(myf, x), 'b': gcall(myf, x*x)}
+    s = next(v for k,v in d.items() if k == 'b')
+    z = gcall(myf, s)
+    return z
