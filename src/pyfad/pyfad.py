@@ -856,6 +856,7 @@ def dzeros(args):
         for a in fields(args, True):
             setattr(args, a, dzeros(getattr(args, a)))
         return args
+    return args
 
 
 class FillHelper:
