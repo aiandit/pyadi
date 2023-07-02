@@ -93,15 +93,16 @@ def py(func, info=False):
 class ASTVisitor:
 
     def __init__(self):
-        print('ASTVisitor()')
+        # print('ASTVisitor()')
+        pass
 
     def __call__(self, tree):
-        print('ASTVisitor.call()')
+        # print('ASTVisitor.call()')
         self.result = self.dispatch(tree)
         return self.result
 
     def dispatch(self, tree):
-        print('ASTVisitor.dispatch()')
+        # print('ASTVisitor.dispatch()')
         if isinstance(tree, list):
             for t in tree:
                 self.dispatch(t)
@@ -119,7 +120,7 @@ class ASTVisitorID(ASTVisitor):
             return tree
         cname = tree._class
         meth = getattr(self, "_"+cname, None)
-        print(cname, vars(tree))
+        # print(cname, vars(tree))
         if meth:
             return meth(tree)
         else:
@@ -128,7 +129,7 @@ class ASTVisitorID(ASTVisitor):
             return tree
 
     def _BinOp(self, t):
-        print(f'Catch BinOp {t.op}')
+        # print(f'Catch BinOp {t.op}')
         t.left = self.dispatch(t.left)
         t.right = self.dispatch(t.right)
         return t
