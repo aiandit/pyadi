@@ -131,7 +131,7 @@ class Car:
     def drive(self, t):
         self.distance += self.velocity * t
 
-def _fobj(x):
+def fobj(x):
     o = Car()
     o.drive(x)
     r = o.distance
@@ -151,7 +151,7 @@ class Plane:
         self.distance += dist
         self.gas -= self.consumption * dist
 
-def _fplane(x):
+def fplane(x):
     o = Plane()
     o.fly(x)
     r = o.distance + o.gas
@@ -478,7 +478,7 @@ def fcalllocal(x):
     z = gcall(f1, s)
     return z
 
-def _fcalllocals(x):
+def fcalllocals(x):
     myf = f1 if x > 0 else f2
     d = {'a': gcall(myf, x), 'b': gcall(myf, x*x)}
     s = next(v for k,v in d.items() if k == 'b')
