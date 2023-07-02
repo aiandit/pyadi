@@ -78,7 +78,7 @@ class TestPyTracer(unittest.TestCase):
 
     def startStopExecution(self, handle, cvsleep, delay=1e-1):
         while True:
-            # lock is alawys owned by the program here
+            # lock is always owned by the program here
             # command sleep
             handle(condition=cvsleep, cmd='pause')
 
