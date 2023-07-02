@@ -259,7 +259,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         #print(f'Diff Call {t.func} {vars(t)}')
         dcallName = 'D'
         curargs = t.args
-        if self.isLocal(t.func):
+        if t.func._class == "Call" or self.isLocal(t.func):
             dcall = Call(Name('Dc'))
             dcall.args = [self.ddispatch(t.func.clone()),t.func]
         else:
@@ -679,6 +679,8 @@ def doSourceDiff(function, opts, *args, **kw):
     adfun = None
     _class = None
 
+    print(f'SD: {function.__name__}')
+
     if isbuiltin(function):
         fname = function.__name__
         id = rules.rid(function)
@@ -686,21 +688,21 @@ def doSourceDiff(function, opts, *args, **kw):
         raise (NoRule(msg))
 
     if isinstance(function, type):
+        print(f'SD: is a type!')
+        do, o = function(*args[1::2], **kw), function(*args[1::2], **kw)
+        do = dzeros(do)
         if not isbuiltin(function.__init__):
             _class = function
             function = function.__init__
+            args = [do, o] + list(args)
         else:
-            def initDObj():
-                do, o = function(), function()
-                do = dzeros(do)
-                print('dobj', do.velocity)
-                return do, o
-            adfun = lambda: initDObj()
-            return adfun
+            print(f'SD: is a builtin type!')
+            return do, o
 
     active = opts.get('active', [])
 #        print('DDD', active)
     if _class:
+        id = 'd_' + function.__name__
         adfun = getattr(_class, id, None)
 
     if adfun is not None:
@@ -723,9 +725,13 @@ def doSourceDiff(function, opts, *args, **kw):
 
     adres = adfun(*args, **kw)
     if adres is None:
-        (dres, res) = None, None
+        if _class:
+            # was constructor
+            dres, res = do, o
+        else:
+            dres, res = None, None
     else:
-        (dres, res) = adres
+        dres, res = adres
 
     return dres, res
 
@@ -786,6 +792,7 @@ def processRules(function, opts, *args, **kw):
         else:
             deco = rulemodules[mkeys[ind]][1]
             dres = deco(nextStep, ind+1, function, *args, **kw)
+        print(f'nextStep({ind}): {function.__name__} = {dres}')
         return dres
     return nextStep()
 
