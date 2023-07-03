@@ -1,18 +1,27 @@
 from astunparse.astnode import isgeneric, fields
 
 def dzeros(args):
+    #print(f'dzeros {args}')
     if isinstance(args, list):
         return [dzeros(f) for f in args]
     elif isinstance(args, tuple):
         return tuple([dzeros(f) for f in args])
     elif isinstance(args, dict):
         return {f: dzeros(v) for f, v in args.items()}
-    elif isgeneric(args):
+    elif isinstance(args, float) or isinstance(args, complex) or isinstance(args, int):
         return 0.0
+    elif isinstance(args, str) or isinstance(args, bytes) or isinstance(args, bytearray):
+        return args
+    elif hasattr(args, '__iter__'):
+        return [dzeros(v) for v in args]
     elif isinstance(args, object):
         # we assume the object is already allocated
-        for a in fields(args, True):
-            setattr(args, a, dzeros(getattr(args, a)))
+        try:
+            for a in fields(args, True):
+                setattr(args, a, dzeros(getattr(args, a)))
+        except BaseException as ex:
+            print(ex)
+            pass
         return args
     return args
 
