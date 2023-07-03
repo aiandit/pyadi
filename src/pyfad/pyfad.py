@@ -802,14 +802,13 @@ def DoDiffFunction(function, **opts):
 
 def DiffFunction(function, **opts):
 
-    if function in adc:
-        adfun = adc[function]
-        # print(f'Found diff function {function.__name__} in cache: {adfun.__name__}')
-    else:
+    adfun = adc.get(function, None)
+    if adfun is None:
         # print(f'Diff function {function.__name__}')
         adfun = DoDiffFunction(function, **opts)
         adc[function] = adfun
         # print(f'Diff function {function.__name__} cached => {adfun.__name__}')
+        # else: print(f'Found diff function {function.__name__} in cache: {adfun.__name__}')
     return adfun
 
 
