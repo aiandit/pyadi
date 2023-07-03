@@ -62,6 +62,7 @@ class TestPyfad(unittest.TestCase):
     def setUpClass(cls):
         # pyfad.initRules(rules='pyfad.trace,ad=pyfad.forwardad', verbose=True)
         # pyfad.initRules(rules='pyfad.trace,ad=pyfad.forwardad')
+        pyfad.clear()
         pyfad.initRules(rules='ad=pyfad.forwardad')
 
     def assertEqFD(self, f, r1, r2):
@@ -215,12 +216,14 @@ class TestPyfad(unittest.TestCase):
 
 
     def test_sD_ftan_1(self):
+        pyfad.clear()
         old = pyfad.delrule(math.tan)
         with self.assertRaises(pyfad.NoRule):
             self.do_sourceDiff_f_x(fx.ftan)
         pyfad.setrule(math.tan, old)
 
     def test_sD_ftan_2(self):
+        pyfad.clear()
         old = pyfad.delrule(math.tan)
         adf = lambda r, dx, x: 0
         pyfad.setrule(math.tan, adf)
@@ -229,6 +232,7 @@ class TestPyfad(unittest.TestCase):
         pyfad.setrule(math.tan, old)
 
     def test_sD_ftan_3(self):
+        pyfad.clear()
         old = pyfad.delrule(math.tan)
         adf = lambda r, dx, x: dx / (1 + x*x)
         pyfad.setrule(math.atan, adf)
@@ -237,6 +241,7 @@ class TestPyfad(unittest.TestCase):
 
 
     def test_sD_fsqrt_1(self):
+        pyfad.clear()
         adf = lambda r, dx, x: 0
         pyfad.setrule(fx.gbabylonian, adf)
         with self.assertRaises(WrongDerivative):
@@ -244,6 +249,7 @@ class TestPyfad(unittest.TestCase):
         pyfad.delrule(fx.gbabylonian)
 
     def test_sD_fsqrt_2(self):
+        pyfad.clear()
         adf = lambda r, dx, x: 0.5 * dx / r
         pyfad.setrule(fx.gbabylonian, adf)
         self.do_sourceDiff_f_x(fx.fbabylonian)

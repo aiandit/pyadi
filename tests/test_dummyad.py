@@ -15,6 +15,7 @@ class TestPyfDummyad(test_pyfad.TestPyfad):
     def setUpClass(cls):
         # pyfad.initRules(rules='trace,ad', verbose=True)
         # pyfad.initRules(rules='trace,ad')
+        pyfad.clear()
         pyfad.initRules(rules='pyfad.dummyad')
 
     def checkDer(self, func, args, dx, seed=1, active=[]):
