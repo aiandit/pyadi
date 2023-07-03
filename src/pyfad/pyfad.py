@@ -670,28 +670,7 @@ def doSourceDiff(function, opts):
         return mkConstr(function)
 
     active = opts.get('active', [])
-#        print('DDD', active)
-    if _class:
-        id = 'd_' + function.__name__
-        adfun = getattr(_class, id, None)
-
-    if adfun is not None:
-        print(f'Diff function {function.__name__} found as class attr')
-    else:
-        findex = fid(function, active)
-        if findex in adc:
-            #print(f'Found diff function {function.__name__}')
-            (adfun, actind) = adc[findex]
-        else:
-            print(f'Diff function {function.__name__}')
-            (adfun, actind) = difffunction(function, active=active)
-            adc[findex] = (adfun, actind)
-            print(f'Diff function {function.__name__} cached => {findex}')
-
-        if _class:
-            dfname = f'd_{function.__name__}'
-            setattr(_class, dfname, adfun)
-            print(f'Diff function {function.__name__} saved as attr {dfname} in type {_class.__qualname__}')
+    (adfun, actind) = difffunction(function, active=active)
 
     return adfun
 
@@ -752,7 +731,7 @@ def processRules(function, opts, *args, **kw):
         else:
             deco = rulemodules[mkeys[ind]][1]
             dres = deco(nextStep, ind+1, function, *args, **kw)
-        print(f'nextStep({ind}): {function.__name__} = {dres}')
+        #print(f'nextStep({ind}): {function.__name__} = {dres}')
         return dres
     return nextStep()
 
@@ -769,7 +748,7 @@ def mkConstr(function):
     return constr
 
 
-def DiffFunction(function, **opts):
+def DoDiffFunction(function, **opts):
 
     _class, constr = None, None
     if isinstance(function, type):
@@ -785,7 +764,7 @@ def DiffFunction(function, **opts):
     def theADFun(*ADargs, **kw):
 
         args = list(chain(*ADargs))
-        print(f'adfun called for {function.__name__}: {adfun.__name__}')
+        # print(f'adfun called for {function.__name__}: {adfun.__name__}')
 
         if constr is not None:
             do, o = initType(_class, *args, **kw)
@@ -805,20 +784,49 @@ def DiffFunction(function, **opts):
 
     return theADFun
 
+
+def DiffFunction(function, **opts):
+
+    active = opts.get('active', [])
+    findex = fid(function, active)
+    if findex in adc:
+        #print(f'Found diff function {function.__name__}')
+        adfun = adc[findex]
+    else:
+        print(f'Diff function {function.__name__}')
+        adfun = DoDiffFunction(function, **opts)
+        adc[findex] = adfun
+        print(f'Diff function {function.__name__} cached => {findex}')
+    return adfun
+
+
+
 D = DiffFunction
 
 
 def DiffFunctionObj(dfunc, function, **opts):
 
     dself, self = None, None
+    adfun = None
 
     if dfunc != 0 and dfunc != function:
         self = getattr(function, '__self__', None)
         if self.__class__.__name__ != 'module':
+            _class = self.__class__
             dself = dfunc.__self__
             function = getattr(self.__class__, function.__name__)
 
-    adfun = DiffFunction(function, **opts)
+    if dself is not None:
+        dfname = f'd_{function.__name__}'
+        adfun = getattr(_class, dfname, None)
+
+    if adfun is None:
+        adfun = DiffFunction(function, **opts)
+        if dself is not None:
+            try:
+                setattr(_class, dfname, adfun)
+            except:
+                pass
 
     def inner(*args, **kw):
         # Prepend dself and self to method call
