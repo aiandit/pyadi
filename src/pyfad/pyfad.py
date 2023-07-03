@@ -220,7 +220,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         dargs = []
         curargs = node.args
         for t in curargs:
-            if t.arg in self.active_objects:
+            if t.arg in self.active_objects or True:
                 tr1 = self.ddispatch(t)
                 dargs += [tr1]
         node.args = list(chain(*zip(dargs, curargs)))
@@ -270,7 +270,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         return [keyword(None, zcall)]
 
     def _Darg(self, t):
-        if t.arg in self.active_objects:
+        if t.arg in self.active_objects or True:
             t = t.clone()
             t.arg = dpref_ + t.arg
             #print('   * active arg', t.arg)
