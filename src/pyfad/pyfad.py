@@ -300,7 +300,7 @@ class ASTVisitorFMAD(ASTVisitorID):
             t = t.clone()
             t.id = dpref_ + t.id
             return t
-        return Constant(0)
+        return Call('dzeros', t)
 
     def getRoot(self, t):
         if t._class == "Attribute" or t._class == "Subscript":
