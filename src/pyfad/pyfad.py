@@ -83,7 +83,7 @@ class ASTVisitorFMAD(ASTVisitorID):
             return res
 
     nodiffFunctions = []
-    nodiffExpr = ["Raise", "Assert", 'FunctionDef']
+    nodiffExpr = ["Raise", "Assert"]
     def isnodiffExpr(self, item):
         res = False
         if item._class == "Expr":
@@ -110,7 +110,10 @@ class ASTVisitorFMAD(ASTVisitorID):
                     continue
                 if item.value._class not in self.tupleDiff:
                     nbody += [self.dispatch(item)]
-            elif item._class == "AugAssign":
+            elif item._class == "FunctionDef":
+                nbody += [self._DFunctionDef(item.clone())]
+                nbody += [item]
+            elif item._class == "AugAssign"or item._class == "FunctionDef":
                 nbody += [self.ddispatch(item.clone())]
                 nbody += [self.dispatch(item)]
             elif self.isnodiffExpr(item):
@@ -120,7 +123,10 @@ class ASTVisitorFMAD(ASTVisitorID):
         return nbody
 
     def _FunctionDef(self, t):
-        if t.name in self.active_methods:
+        return self.ddispatch(t)
+
+    def _DFunctionDef(self, t):
+        if t.name in self.active_methods or True:
             t = t.clone()
 #            print(f'Catch Active FunctionDef {t.name} {vars(t)}')
             t.name = dpref_ + t.name
