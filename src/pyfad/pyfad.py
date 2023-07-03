@@ -802,18 +802,15 @@ def DoDiffFunction(function, **opts):
 
 def DiffFunction(function, **opts):
 
-    active = opts.get('active', [])
-    findex = fid(function, active)
-    if findex in adc:
-        adfun = adc[findex]
+    if function in adc:
+        adfun = adc[function]
         # print(f'Found diff function {function.__name__} in cache: {adfun.__name__}')
     else:
         # print(f'Diff function {function.__name__}')
         adfun = DoDiffFunction(function, **opts)
-        adc[findex] = adfun
+        adc[function] = adfun
         # print(f'Diff function {function.__name__} cached => {adfun.__name__}')
     return adfun
-
 
 
 D = DiffFunction
