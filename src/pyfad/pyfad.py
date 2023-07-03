@@ -542,12 +542,12 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
         if not sfname:
             shutil.rmtree(tmpsdir)
 
-    gvars = {'data': {}, '__name__': 'pyfad.d_math', '__file__': sfname}
+    gvars = globals() | fglobals | {'data': {}}
     # print(f'exec compiled diff function code in file {sfname} with globals={(fglobals | globals() | gvars).keys()} locals={flocals}')
-    exec(res, fglobals | globals() | gvars, flocals)
+    exec(res, gvars, flocals)
 
     result = {name: gvars["data"][name] for name in vars}
-
+    gvars |= result
     return result
 
 
