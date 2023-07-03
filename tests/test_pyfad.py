@@ -314,6 +314,7 @@ class TestPyfad(unittest.TestCase):
 
     def test_finner(self):
         self.do_sourceDiff_f_xyz(fx.finner, args=[0.234])
+        self.do_sourceDiff_f_xyz(fx.fuseinner, args=[0.234])
 
     def test_fcalll(self):
         self.do_sourceDiff_f_xyz(fx.fcalll, args=[0.234])
@@ -339,8 +340,17 @@ class TestPyfad(unittest.TestCase):
     def test_fobj2a(self):
         self.do_sourceDiff_f_xyz(fx.fplane, args=[0.234])
 
-    def test_flong(self):
+    def test_flong1(self):
         self.do_sourceDiff_f_xyz(fx.flong, args=[0.234])
+        self.do_sourceDiff_f_xyz(fx.flong, args=[0.234])
+        self.do_sourceDiff_f_xyz(fx.flong, args=[0.234])
+        self.do_sourceDiff_f_xyz(fx.flong, args=[0.234])
+
+    def test_flong2(self):
+        self.do_sourceDiff_f_xyz(fx.flong2, args=[0.234])
+        self.do_sourceDiff_f_xyz(fx.flong2, args=[0.234])
+        self.do_sourceDiff_f_xyz(fx.flong2, args=[0.234])
+        self.do_sourceDiff_f_xyz(fx.flong2, args=[0.234])
 
     def test_timings(self):
         self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], timings=True)

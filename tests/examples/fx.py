@@ -410,6 +410,12 @@ def flong(x):
         s += fa(fb(fc(fd(fe(ff(l[k % len(l)]))))))
     return s
 
+def flong2(x):
+    l = [x, x*x, x*x*x]
+    s = 0
+    s = sum([fa(fb(fc(fd(fe(ff(l[k % len(l)])))))) for k in range(int(1e2))])
+    return s
+
 def fdict(x):
     d = {'a': x, 'b': x*x, 'c': x*x*x}
     s = 0
@@ -518,3 +524,14 @@ def finner(x):
     def inner(x,y,z):
         return x*y*z
     return inner(x, x*x, x*x*x)
+
+def gmkmult(c):
+    def inner(x):
+        return c*x
+    return inner
+
+def fuseinner(x):
+    l = [x, x*x, x*x*x]
+    fs = [gmkmult(i*x) for i in range(3)]
+    resl2 = [ f(l[1]) for f in fs]
+    return sum(resl2)
