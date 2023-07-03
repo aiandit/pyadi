@@ -821,12 +821,18 @@ def DiffFunctionObj(dfunc, function, **opts):
     dself, self = None, None
     adfun = None
 
-    self = getattr(function, '__self__', None)
-    if self is not None:
-        if self.__class__.__name__ != 'module':
-            _class = self.__class__
-            dself = dfunc.__self__
-            function = getattr(self.__class__, function.__name__)
+    if dfunc != function:
+        self = getattr(function, '__self__', None)
+        if self is not None:
+            if self.__class__.__name__ != 'module':
+                _class = self.__class__
+                dself = dfunc.__self__
+                function = getattr(self.__class__, function.__name__)
+        else:
+            def inner(*args, **kw):
+                args = list(chain(*args))
+                return dfunc(*args, **kw)
+            return inner
 
     if dself is not None:
         dfname = f'd_{function.__name__}'
