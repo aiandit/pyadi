@@ -477,6 +477,7 @@ class ASTVisitorLocals(ASTLocalAction):
 
     def Before(self, tree):
         if tree._class == "FunctionDef":
+            self.locals += [ tree.name ]
             self.locals += [ n.arg for n in tree.args.args ]
             if tree.args.kwarg:
                 self.locals += [ tree.args.kwarg.arg ]
