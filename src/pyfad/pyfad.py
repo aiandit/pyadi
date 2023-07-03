@@ -19,6 +19,7 @@ from .nodes import *
 from .runtime import dzeros, unzd, joind, unjnd
 
 from .timer import Timer
+from . import d_math
 
 from . import astvisitor
 
@@ -56,7 +57,6 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def __call__(self, tree):
         self.localvars = ASTVisitorLocals()(tree)
-        print('LOCALS', self.localvars)
 
         self.result = self.dispatch(tree)
         return self.result
@@ -83,7 +83,7 @@ class ASTVisitorFMAD(ASTVisitorID):
             return res
 
     nodiffFunctions = []
-    nodiffExpr = ["Raise", "Assert"]
+    nodiffExpr = ["Raise", "Assert", 'FunctionDef']
     def isnodiffExpr(self, item):
         res = False
         if item._class == "Expr":
@@ -511,13 +511,14 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
 
 #    dsrc = f"{importstr}\n{source}\n{collectstr}"
     dsrc = f"{source}\n{collectstr}"
-    print(f"{source}")
+    # print(f"{source}")
     sfname = ""
-    if Debug or True:
+    if Debug:
         tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
         sfname = f'{tmpsdir}/diff.py'
         with open(sfname, 'w') as f:
             f.write(dsrc)
+    # print(f'compile diff function code {source} in file {sfname}')
     try:
         res = compile(dsrc, sfname, "exec")
     except SyntaxError as ex:
@@ -526,7 +527,7 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
         print(dsrc)
         if not sfname:
             tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
-            sfname_ = f'{tmpsdir}/diff.py'
+            sfname_ = f'{tmpsdir}/d_math.py'
             with open(sfname_, 'w') as f:
                 f.write(dsrc)
         else:
@@ -535,8 +536,9 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
         if not sfname:
             shutil.rmtree(tmpsdir)
 
-    gvars = {'data': {}}
-    exec(res, gvars | globals() | fglobals, flocals)
+    gvars = {'data': {}, '__name__': 'pyfad.d_math', '__file__': sfname}
+    # print(f'exec compiled diff function code in file {sfname} with globals={(fglobals | globals() | gvars).keys()} locals={flocals}')
+    exec(res, fglobals | globals() | gvars, flocals)
 
     result = {name: gvars["data"][name] for name in vars}
 
@@ -556,6 +558,8 @@ def difffunction(func, active=[]):
         # globals = func.__globals__ if not isinstance(func, type) else func.__init__.__globals__
         dfunc = execompile(dsrc, vars=[fkey], fglobals=func.__globals__)
         dfunc = dfunc[fkey]
+        mod, modfile = getmodule(dfunc)
+        # print(f'Produced AD function: {dfunc.__qualname__} in {mod} file {modfile}')
     except BaseException as ex:
         print(unparse2j(dsrc, indent=1), file=open('d_failed.json', 'w'))
         print(unparse(dsrc), file=open('d_failed.py', 'w'))
@@ -565,6 +569,8 @@ Source:
 {py(func)}
 """)
         raise ex
+
+    astvisitor.updateDModDict(dfunc, dsrc)
     return (dfunc, active)
 
 
@@ -639,7 +645,8 @@ def clear(search=None):
     global adc
     if search is None:
         adc = {}
-        astvisitor.astcache = {}
+        astvisitor.modastcache = {}
+        astvisitor.getast(d_math.dummy)
     elif isinstance(search, str):
         for k in adc:
             if search in k:
@@ -657,7 +664,7 @@ def doSourceDiff(function, opts):
     adfun = None
     _class = None
 
-    print(f'SD: {function.__name__}')
+    # print(f'SD: {function.__name__}')
 
     if isbuiltin(function):
         fname = function.__name__
@@ -666,7 +673,7 @@ def doSourceDiff(function, opts):
         raise (NoRule(msg))
 
     elif isinstance(function, type):
-        print(f'Cannot diff. a type! {function.__name__}')
+        # print(f'Cannot diff. a type! {function.__name__}')
         return mkConstr(function)
 
     active = opts.get('active', [])
@@ -752,12 +759,13 @@ def DoDiffFunction(function, **opts):
 
     _class, constr = None, None
     if isinstance(function, type):
-        print(f'SD: {function.__name__} is a type!')
+        # print(f'SD: {function.__name__} is a type!')
         _class = function
         if not isbuiltin(function.__init__):
             constr = function = function.__init__
         else:
-            print(f'SD: type {function.__name__} has a builtin cosntructor !')
+            #print(f'SD: type {function.__name__} has a builtin cosntructor !')
+            pass
 
     adfun = processRules(function, opts)
 
@@ -790,13 +798,13 @@ def DiffFunction(function, **opts):
     active = opts.get('active', [])
     findex = fid(function, active)
     if findex in adc:
-        #print(f'Found diff function {function.__name__}')
         adfun = adc[findex]
+        # print(f'Found diff function {function.__name__} in cache: {adfun.__name__}')
     else:
-        print(f'Diff function {function.__name__}')
+        # print(f'Diff function {function.__name__}')
         adfun = DoDiffFunction(function, **opts)
         adc[findex] = adfun
-        print(f'Diff function {function.__name__} cached => {findex}')
+        # print(f'Diff function {function.__name__} cached => {adfun.__name__}')
     return adfun
 
 
@@ -809,8 +817,8 @@ def DiffFunctionObj(dfunc, function, **opts):
     dself, self = None, None
     adfun = None
 
-    if dfunc != 0 and dfunc != function:
-        self = getattr(function, '__self__', None)
+    self = getattr(function, '__self__', None)
+    if self is not None:
         if self.__class__.__name__ != 'module':
             _class = self.__class__
             dself = dfunc.__self__
@@ -825,8 +833,11 @@ def DiffFunctionObj(dfunc, function, **opts):
         if dself is not None:
             try:
                 setattr(_class, dfname, adfun)
+                print(f'Diff function {function.__name__} saved class type as {dfname} => {adfun.__name__}')
             except:
                 pass
+    else:
+        print(f'Diff function {function.__name__} in class type as {dfname} => {adfun.__name__}')
 
     def inner(*args, **kw):
         # Prepend dself and self to method call

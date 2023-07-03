@@ -38,6 +38,7 @@ class NotFound(BaseException):
 class NoSource(BaseException):
     pass
 
+
 def getmodule(func):
     mod = getattr(func, '__module__', None)
     if mod is None:
@@ -45,40 +46,51 @@ def getmodule(func):
     modfile = getattr(sys.modules[mod], '__file__', None)
     return mod, modfile
 
+
 def isbuiltin(func):
     mod, modfile = getmodule(func)
     res = modfile is None
     return res
 
 
-astcache = {}
+modastcache = {}
 def getast(func):
-    ta0 = time.time()
+    # ta0 = time.time()
     mod, modfile = getmodule(func)
+    # print(f'Get SRC and AST: {func.__qualname__} in {mod} file {modfile}')
     if modfile is None:
+        print(f'No source for {mod}.{func.__name__}')
         raise(NoSource(f'No source for {mod}.{func.__name__}'))
-    load = modfile not in astcache
-    mtm = os.stat(modfile).st_mtime
+    load = modfile not in modastcache
     if not load:
-        centry = astcache[modfile]
-        if mtm > centry['mtime']:
-            load = True
-        else:
-            tree, imports, modules = centry["data"]
-    if load:
+        centry = modastcache[modfile]
+        tree, imports, modules = centry["data"]
+        moddict = centry["dict"]
+    else:
         t0 = time.time()
         with open(modfile) as f:
             csrc = f.read()
         tree = loadastpy(csrc)
         imports, modules = ASTVisitorImports()(tree)
-        astcache[modfile] = {"file": modfile, "mtime": mtm, "data": (tree, imports, modules)}
+        moddict = ASTVisitorDict()(tree)
+        # print(f'Load and parse module {mod} source from {modfile}: {moddict.keys()}')
+        modastcache[modfile] =  {"file": modfile, "data": (tree, imports, modules), "dict": moddict}
         t1 = time.time()
         print(f'Load and parse module {mod} source from {modfile}: {1e3*(t1-t0):.1f} ms')
-    tree = filterFunctions(tree, func.__qualname__)
-    ta1 = time.time()
-    print(f'Got AST of {mod}.{func.__name__}: {1e3*(ta1-ta0):.1f} ms')
-    # print(f'{unparse(tree)}')
+
+    # print(f'Search for {func.__qualname__} in {mod}')
+
+    tree = moddict[func.__qualname__]
+    # ta1 = time.time()
+    # print(f'Got AST of {mod}.{func.__name__}: {1e3*(ta1-ta0):.1f} ms')
     return tree, imports, modules
+
+
+def updateDModDict(func, dtree):
+    mod, modfile = getmodule(func)
+    moddict = modastcache[modfile]["dict"]
+    newitems = ASTVisitorDict()(dtree)
+    moddict.update(newitems)
 
 
 def py(func, info=False):
@@ -406,6 +418,41 @@ class ASTVisitorImports(ASTLocalAction):
 
     def End(self, tree):
         return self.imports, self.modules
+
+
+class ASTVisitorDict(ASTLocalAction):
+    def Begin(self, tree):
+        self.dict = {}
+        self.path = []
+        self.infunc = 0
+        self.infuncs = []
+
+    def Before(self, tree):
+        if tree._class == "FunctionDef":
+            self.infunc += 1
+            if self.infunc > 1:
+                self.path += ['<locals>.' + tree.name]
+            else:
+                self.path += [tree.name]
+            self.dict['.'.join(self.path)] = tree
+        elif tree._class == "ClassDef":
+            self.infuncs += [self.infunc]
+            self.infunc = 0
+            self.path += [tree.name]
+            self.dict['.'.join(self.path)] = tree
+
+    def After(self, tree):
+        if tree._class == "FunctionDef":
+            self.infunc -= 1
+            self.path = self.path[0:-1]
+        elif tree._class == "ClassDef":
+            self.path = self.path[0:-1]
+            self.infunc = self.infuncs[-1]
+            self.infuncs = self.infuncs[0:-1]
+
+
+    def End(self, tree):
+        return self.dict
 
 
 class ASTVisitorLocals(ASTLocalAction):

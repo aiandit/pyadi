@@ -1,7 +1,10 @@
 from .astvisitor import isbuiltin
+from .runtime import unjnd
 
 def mkCall(f):
     def run(*args, **kw):
+        d_kw, kw = unjnd(kw)
+        # print(f'Run function {f.__name__} ({args}), kw={kw}, d_kw={d_kw}')
         res = f(*args[1::2], **kw)
         return res, res
     return run
