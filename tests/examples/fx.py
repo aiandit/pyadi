@@ -508,3 +508,13 @@ def fcallcall(x):
     s = next(v for k,v in d.items() if k == 'b')
     z = gcall(myf, s)
     return z
+
+def ginner():
+    def inner(x,y,z):
+        return x*y*z
+    return inner
+
+def finner(x):
+    def inner(x,y,z):
+        return x*y*z
+    return inner(x, x*x, x*x*x)

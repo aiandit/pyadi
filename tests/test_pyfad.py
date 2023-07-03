@@ -312,6 +312,9 @@ class TestPyfad(unittest.TestCase):
     def test_ast_clearcache(self, module=None):
         pyfad.clear()
 
+    def test_finner(self):
+        self.do_sourceDiff_f_xyz(fx.finner, args=[0.234])
+
     def test_fcalll(self):
         self.do_sourceDiff_f_xyz(fx.fcalll, args=[0.234])
 
@@ -323,6 +326,21 @@ class TestPyfad(unittest.TestCase):
 
     def test_fprint2(self):
         self.do_sourceDiff_f_xyz(fx.fprint2, args=[0.234])
+
+    def test_fobj(self):
+        self.do_sourceDiff_f_xyz(fx.fobj, args=[0.234])
+
+    def test_fobja(self):
+        self.do_sourceDiff_f_xyz(fx.fobj, args=[0.234])
+
+    def test_fobj2(self):
+        self.do_sourceDiff_f_xyz(fx.fplane, args=[0.234])
+
+    def test_fobj2a(self):
+        self.do_sourceDiff_f_xyz(fx.fplane, args=[0.234])
+
+    def test_flong(self):
+        self.do_sourceDiff_f_xyz(fx.flong, args=[0.234])
 
     def test_timings(self):
         self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], timings=True)
@@ -350,3 +368,14 @@ class TestPyfad(unittest.TestCase):
 
         self.assertEqual(dr, dr2)
         self.assertEqual(r, r2)
+
+    def test_getSource_py(self):
+        src = pyfad.py(fx.f1)
+        line1 = next(l for l in src.split('\n'))
+        self.assertEqual(line1, 'def f1(x):')
+
+    def test_getSource_py_inner(self):
+        inner = fx.ginner()
+        src = pyfad.py(inner)
+        line1 = next(l for l in src.split('\n'))
+        self.assertEqual(line1, 'def inner(x, y, z):')
