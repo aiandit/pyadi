@@ -1,6 +1,7 @@
 from itertools import chain
 from math import sin, cos, tan, asin, acos, atan, log, sqrt
 from .astvisitor import getmodule
+from .runtime import unjnd
 import sys
 
 
@@ -14,8 +15,9 @@ def rid(func):
 
 def mkRule(f, rule):
     def runRule(*args, **kw):
+        d_kw, kw = unjnd(kw)
         res = f(*args[1::2], **kw)
-        dres = rule(res, *args, **kw)
+        dres = rule(res, *args, **d_kw)
         return dres, res
     runRule.builtin = True
     return runRule

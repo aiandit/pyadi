@@ -16,7 +16,7 @@ from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast
 from .astvisitor import ASTVisitorID, ASTVisitorImports, ASTVisitorLocals, mkTmp
 from .nodes import *
-from .runtime import dzeros
+from .runtime import dzeros, unzd, joind, unjnd
 
 from .timer import Timer
 
@@ -37,31 +37,6 @@ def setprefix(diff, tmp, common=''):
 
 def czip(a, b):
     return chain(*zip(a, b))
-
-
-def unjnd(d):
-    names = list(d.keys())
-    values = list(d.values())
-    dd = dict(zip(names[len(names)//2:], values[0:len(names)//2]))
-    d = dict(zip(names[len(names)//2:], values[len(names)//2:]))
-    return dd, d
-
-
-def joind(ddl, dl):
-    res = {}
-    for dd in ddl:
-        res |= { 'd_' + k: v for k, v in dd.items() }
-    for d in dl:
-        res |= { k: v for k, v in d.items() }
-    return res
-
-
-def unzd(d):
-    print('unzd', d)
-    keys = d.keys()
-    dvals, vals = zip(*d.values())
-    d_r, r = dict(zip(keys, dvals)), dict(zip(keys, vals))
-    return d_r, r
 
 
 def nodiff(tree):
