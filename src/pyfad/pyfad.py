@@ -517,9 +517,9 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
 
 #    dsrc = f"{importstr}\n{source}\n{collectstr}"
     dsrc = f"{source}\n{collectstr}"
-    # print(f"{source}")
+    print(f"{source}")
     sfname = ""
-    if Debug:
+    if Debug or True:
         tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
         sfname = f'{tmpsdir}/diff.py'
         with open(sfname, 'w') as f:
@@ -533,7 +533,7 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
         print(dsrc)
         if not sfname:
             tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
-            sfname_ = f'{tmpsdir}/d_math.py'
+            sfname_ = f'{tmpsdir}/diff.py'
             with open(sfname_, 'w') as f:
                 f.write(dsrc)
         else:
