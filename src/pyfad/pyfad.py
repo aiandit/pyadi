@@ -565,7 +565,8 @@ def difffunction(func, active=[]):
         dfunc = execompile(dsrc, vars=[fkey], fglobals=func.__globals__)
         dfunc = dfunc[fkey]
         mod, modfile = getmodule(dfunc)
-        # print(f'Produced AD function: {dfunc.__qualname__} in {mod} file {modfile}')
+        setattr(sys.modules[mod], dfunc.__name__, dfunc)
+        print(f'Produced AD function: {dfunc.__qualname__}, added to module {mod}')
     except BaseException as ex:
         print(unparse2j(dsrc, indent=1), file=open('d_failed.json', 'w'))
         print(unparse(dsrc), file=open('d_failed.py', 'w'))
