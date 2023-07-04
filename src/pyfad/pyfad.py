@@ -239,7 +239,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         curargs = t.args
         if t.func._class == "Call" or self.isLocal(t.func):
             dcall = Call(Name('Dc'))
-            dcall.args = [self.ddispatch(t.func.clone()),t.func]
+            dcall.args = [ self.diffUnlessIsTupleDiff(t.func) ]
         else:
             dcall = Call(Name('D'))
             dcall.args = [t.func]
@@ -810,7 +810,8 @@ def DiffFunction(function, **opts):
 D = DiffFunction
 
 
-def DiffFunctionObj(dfunc, function, **opts):
+def DiffFunctionObj(tpl, **opts):
+    dfunc, function = tpl
 
     dself, self = None, None
     adfun = None
