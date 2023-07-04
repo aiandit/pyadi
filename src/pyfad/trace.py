@@ -39,13 +39,13 @@ def decorator(**opts):
             nonlocal hist
 
             if verbose:
-                print(f'call to {f.__name__}{(*args,)}) starts {time.time()} s')
+                print(f'call to {f.__name__}() starts {time.time()} s')
 
             if tracecalls:
                 data['cur'] = f.__qualname__
                 hist += [f.__qualname__]
 
-            if 'cmd' in data:
+            if data and 'cmd' in data:
                 while True:
                     cmd = data.get('cmd', '')
                     print(f'Command set: {cmd}')
@@ -69,7 +69,7 @@ def decorator(**opts):
 
             res = adfun(*args, **kw)
             if verbose:
-                print(f'call to {f.__name__}{(*args,)}) = {res} ends {time.time()} s')
+                print(f'call to {f.__name__}() ends {time.time()} s')
 
             return res
 
