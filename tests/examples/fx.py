@@ -552,3 +552,36 @@ def gcalllist(x, l):
 def fcalllist(x):
     fl = [f1, f2, fsin]
     return gcalllist(x, fl)
+
+class MyIter:
+    def __init__(self, l):
+        self.l = l
+
+
+    def apply(self, f):
+        self.l = [f(v) for v in self.l]
+
+    def __iter__(self):
+        self.index = 0
+        return self
+
+    def __next__(self):
+        if self.index < len(self.l):
+            res = self.l[self.index]
+            self.index += 1
+            return res
+        else:
+            raise StopIteration()
+
+
+def fiter(x):
+    l = [x, x*x, x*x*x]
+    i1 = MyIter(l)
+    return sum([ v for v in i1 ])
+
+
+def fiter2(x):
+    l = [x, x*x, x*x*x]
+    i1 = MyIter(l)
+    i1.apply(fcos)
+    return sum([ v for v in i1 ])
