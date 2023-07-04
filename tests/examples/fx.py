@@ -8,7 +8,7 @@ def f1(x):
     return z
 
 def f2(x):
-    z = 2*x
+    z = fcos(x*3)
     return z
 
 def fsin(x):
@@ -535,3 +535,20 @@ def fuseinner(x):
     fs = [gmkmult(i*x) for i in range(3)]
     resl2 = [ f(l[1]) for f in fs]
     return sum(resl2)
+
+def gprocess(x, f, done, key):
+    y = f(x)
+    return done(key, y)
+
+def gcalllist(x, l):
+    def step(key, res):
+        if key < len(l):
+            return gprocess(res, l[key], step, key+1)
+        else:
+            return res
+
+    return step(0, x)
+
+def fcalllist(x):
+    fl = [f1, f2, fsin]
+    return gcalllist(x, fl)
