@@ -8,8 +8,12 @@ def dzeros(args):
         return tuple([dzeros(f) for f in args])
     elif isinstance(args, dict):
         return {f: dzeros(v) for f, v in args.items()}
-    elif isinstance(args, float) or isinstance(args, complex) or isinstance(args, int):
+    elif isinstance(args, int):
+        return 0
+    elif isinstance(args, float):
         return 0.0
+    elif isinstance(args, complex):
+        return complex(0.0)
     elif isinstance(args, str) or isinstance(args, bytes) or isinstance(args, bytearray):
         return args
     elif isinstance(args, object):
