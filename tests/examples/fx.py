@@ -585,3 +585,27 @@ def fiter2(x):
     i1 = MyIter(l)
     i1.apply(fcos)
     return sum([ v for v in i1 ])
+
+
+class MyClassC:
+    def __init__(self, l):
+        self.l = l
+    def apply(self, f):
+        self.l = [f(v) for v in self.l]
+    def __call__(self, f):
+        return sum([f(v) for v in self.l])
+
+
+def fclassc(x):
+    l = [x, x*x, x*x*x]
+    i1 = MyClassC(l)
+    r = i1(f1)
+    return r
+
+
+
+def flambda(x):
+    l = [x, x*x, x*x*x]
+    f = lambda x, y: x+y
+    r = f(l[0], l[1]) * f(l[1], l[2])
+    return r
