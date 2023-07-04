@@ -5,7 +5,7 @@ def mkCall(f):
     def run(*args, **kw):
         d_kw, kw = unjnd(kw)
         # print(f'Run function {f.__name__} ({args}), kw={kw}, d_kw={d_kw}')
-        #dres = f(*args[1::2], **d_kw)
+        # dres = f(*args[0::2], **d_kw)
         res = f(*args[1::2], **kw)
         dres = dzeros(res)
         #print(f'dzeros {res} {dres}')
