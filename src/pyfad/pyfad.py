@@ -823,6 +823,10 @@ def DiffFunctionObj(tpl, **opts):
                 _class = self.__class__
                 dself = dfunc.__self__
                 function = getattr(self.__class__, function.__name__)
+        elif not hasattr(function, '__qualname__'): # not isinstance(function, Function):
+            _class = function.__class__
+            dself, self = dfunc, function
+            function = function.__class__.__call__
         else:
             def inner(*args, **kw):
                 print(f'inner shortcut called: {dfunc.__qualname__} for {function.__qualname__}')
