@@ -4,7 +4,7 @@ def dzeros(args):
     #print(f'dzeros {args}')
     if isinstance(args, list):
         return [dzeros(f) for f in args]
-    elif isinstance(args, tuple):
+    elif isinstance(args, tuple) or args.__class__.__name__ in ['dict_values', 'dict_keys', 'dict_items']:
         return tuple([dzeros(f) for f in args])
     elif isinstance(args, dict):
         return {f: dzeros(v) for f, v in args.items()}
@@ -12,8 +12,6 @@ def dzeros(args):
         return 0.0
     elif isinstance(args, str) or isinstance(args, bytes) or isinstance(args, bytearray):
         return args
-    elif hasattr(args, '__iter__'):
-        return [dzeros(v) for v in args]
     elif isinstance(args, object):
         # we assume the object is already allocated
         try:
