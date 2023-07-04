@@ -157,6 +157,15 @@ class ASTVisitorFMAD(ASTVisitorID):
         t.generators = self.ddispatch(t.generators)
         return t
 
+    def _DLambda(self, node):
+        node.args = self.ddispatch(node.args)
+        bck = self.localvars
+        self.localvars += ASTVisitorLocals.getVars(node.args.args)
+        print('locals', ASTVisitorLocals.getVars(node.args.args), self.localvars)
+        self.localvars = bck
+        node.body = self.diffUnlessIsTupleDiff(node.body)
+        return node
+
 
     tupleDiff = ["Call", "List", "ListComp", "Dict", "DictComp", "DictComp", "IfExp", "GeneratorExp"]
     def diffUnlessIsTupleDiff(self, t, src=None):
@@ -170,8 +179,10 @@ class ASTVisitorFMAD(ASTVisitorID):
             return Tuple([self.ddispatch(t.clone()),t])
 
     def _DList(self, node):
-        dargs = [self.diffUnlessIsTupleDiff(t) for t in node.elts]
-        return List([Starred(Call('zip', dargs))])
+        if len(node.elts):
+            dargs = [self.diffUnlessIsTupleDiff(t) for t in node.elts]
+            return List([Starred(Call('zip', dargs))])
+        return Tuple([List([]), List([])])
 
     def _DDict(self, node):
         node.values = [self.diffUnlessIsTupleDiff(t) for t in node.values]
@@ -287,8 +298,9 @@ class ASTVisitorFMAD(ASTVisitorID):
         isList = t.value._class == "List" or t.value._class == "Dict"
         t.value = self.ddispatch(t.value)
         if isList:
-            assert t.value.elts[0]._class == "Starred"
-            t.value = t.value.elts[0].value
+            #assert t.value.elts[0]._class == "Starred"
+            if hasattr(t.value, 'elts') and t.value.elts[0]._class == "Starred":
+                t.value = t.value.elts[0].value
         return t
 
     def _DName(self, t):
@@ -321,7 +333,8 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def _DConstant(self, t):
         t = t.clone()
-        t.value = 0
+        t.value = 0.0
+        #t = Call('dzeros', t)
         return t
 
     def mkOpPartialC(self, op, r, dx, x, y):
@@ -667,7 +680,7 @@ def doSourceDiff(function, opts):
     adfun = None
     _class = None
 
-    # print(f'SD: {function.__name__}')
+    print(f'SD: {function.__name__}')
 
     if isbuiltin(function):
         fname = function.__name__

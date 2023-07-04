@@ -7,4 +7,4 @@ from .pyfad import nvars, varv, fill, czip, clear, NoRule
 from .pyfad import getRuleModules, getHandle, initRules
 from .runtime import dzeros, unzd, joind, unjnd
 from .rules import setrule, delrule, restorerule, getrules
-from .astvisitor import py, canonicalize, normalize, filterLastFunction, ASTVisitorImports
+from .astvisitor import py, isbuiltin

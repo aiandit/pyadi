@@ -40,6 +40,7 @@ class NoSource(BaseException):
 
 
 def getmodule(func):
+    print('getmodule', func, type(func))
     mod = getattr(func, '__module__', None)
     if mod is None:
         mod = func.__class__.__module__
@@ -187,7 +188,7 @@ class ASTCanonicalizer:
         elif isinstance(tree, ASTNode):
 #            print('visit', vars(tree))
 
-            if getattr(tree, 'body', None) is not None and tree._class != "Module" and tree._class != "IfExp":
+            if getattr(tree, 'body', None) is not None and tree._class != "Module" and tree._class != "IfExp" and tree._class != "Lambda":
                 nbody = []
                 for stmt in tree.body:
                     if stmt._class == "For":
@@ -456,18 +457,25 @@ class ASTVisitorDict(ASTLocalAction):
 
 
 class ASTVisitorLocals(ASTLocalAction):
+    @classmethod
     def getRoot(self, t):
         if t._class == "Attribute" or t._class == "Subscript":
             return self.getRoot(t.value)
         return t
 
+    @classmethod
     def getVars(self, t):
         res = []
-        if t._class == "Tuple":
+        if isinstance(t, list) or isinstance(t, tuple):
+            for e in t:
+                res += ASTVisitorLocals.getVars(e)
+        elif t._class == "Tuple":
             for e in t.elts:
-                res += self.getVars(e)
+                res += ASTVisitorLocals.getVars(e)
         elif t._class == "Name":
             res = [t.id]
+        elif t._class == "arg":
+            res = [t.arg]
         elif t._class == "Attribute" or t._class == "Subscript":
             res = [self.getRoot(t)]
         return res
