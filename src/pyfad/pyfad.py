@@ -775,6 +775,7 @@ def DoDiffFunction(function, **opts):
             pass
 
     adfun = processRules(function, opts)
+    print(f'adfun produced for {function.__name__}: {adfun.__name__}')
 
     def theADFun(*ADargs, **kw):
 
@@ -789,13 +790,11 @@ def DoDiffFunction(function, **opts):
         if adres is None:
             if _class:
                 # was constructor
-                dres, res = do, o
+                adres = do, o
             else:
-                dres, res = None, None
-        else:
-            dres, res = adres
+                adres = None, None
 
-        return dres, res
+        return adres
 
     return theADFun
 

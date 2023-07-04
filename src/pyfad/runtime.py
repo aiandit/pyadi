@@ -27,11 +27,14 @@ def dzeros(args):
 
 
 def unjnd(d):
-    names = list(d.keys())
-    values = list(d.values())
-    dd = dict(zip(names[len(names)//2:], values[0:len(names)//2]))
-    d = dict(zip(names[len(names)//2:], values[len(names)//2:]))
-    return dd, d
+    if d:
+        names = list(d.keys())
+        values = list(d.values())
+        dd = dict(zip(names[len(names)//2:], values[0:len(names)//2]))
+        d = dict(zip(names[len(names)//2:], values[len(names)//2:]))
+        return dd, d
+    else:
+        return {}, {}
 
 
 def joind(ddl, dl):
