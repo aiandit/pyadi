@@ -127,7 +127,6 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def _DFunctionDef(self, t):
         if t.name in self.active_methods or True:
-            t = t.clone()
 #            print(f'Catch Active FunctionDef {t.name} {vars(t)}')
             t.name = dpref_ + t.name
             t.args = self.ddispatch(t.args)
@@ -202,11 +201,11 @@ class ASTVisitorFMAD(ASTVisitorID):
         return node
 
     def _DForCommon(self, node):
-        tnode = Tuple([self.ddispatch(node.target), node.target])
+        tnode = Tuple([self.ddispatch(node.target.clone()), node.target])
         if node.iter._class == "Call":
             itnode = Call('zip', [Starred(self.ddispatch(node.iter))])
         else:
-            itnode = Call('zip', [self.ddispatch(node.iter), self.dispatch(node.iter)])
+            itnode = Call('zip', [self.ddispatch(node.iter.clone()), node.iter])
         node.target = tnode
         node.iter = itnode
 
@@ -221,7 +220,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         curargs = node.args
         for t in curargs:
             if t.arg in self.active_objects or True:
-                tr1 = self.ddispatch(t)
+                tr1 = self.ddispatch(t.clone())
                 dargs += [tr1]
         node.args = list(chain(*zip(dargs, curargs)))
         ddefs = self.ddispatch(node.defaults)
@@ -271,20 +270,18 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def _Darg(self, t):
         if t.arg in self.active_objects or True:
-            t = t.clone()
             t.arg = dpref_ + t.arg
             #print('   * active arg', t.arg)
         return t
 
     def _Dkeyword(self, t):
-        t = t.clone()
         t.arg = dpref_ + t.arg
         t.value = self.ddispatch(t.value)
         return t
 
     def _DAssign(self, t):
         if t.value._class in self.tupleDiff:
-            t.targets = [Tuple(self.ddispatch(t.targets) + self.dispatch(t.targets))]
+            t.targets = [Tuple(self.ddispatch([t.clone() for t in t.targets]) + self.dispatch(t.targets))]
         else:
             t.targets = self.ddispatch(t.targets)
         isList = t.value._class == "List" or t.value._class == "Dict"
@@ -297,7 +294,6 @@ class ASTVisitorFMAD(ASTVisitorID):
     def _DName(self, t):
         #print(f'Diff Name {t.id}')
         if t.id in self.localvars:
-            t = t.clone()
             t.id = dpref_ + t.id
             return t
         return Call('dzeros', t)
@@ -320,7 +316,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         #print(f'Diff Attribute {t.attr} of {vars(t.value)} {self.imports}')
         if not self.isLocal(t):
             return Constant(0)
-        t.value = self.ddispatch(t.value.clone())
+        t.value = self.ddispatch(t.value)
         return t
 
     def _DConstant(self, t):
@@ -828,14 +824,16 @@ def DiffFunctionObj(dfunc, function, **opts):
                 function = getattr(self.__class__, function.__name__)
         else:
             def inner(*args, **kw):
+                print(f'inner shortcut called: {dfunc.__qualname__} for {function.__qualname__}')
                 args = list(chain(*args))
                 return dfunc(*args, **kw)
             return inner
 
     if dself is not None:
         dfname = f'd_{function.__name__}'
-        adfun = getattr(_class, dfname, None)
+        #adfun = getattr(_class, dfname, None)
 
+    print(f'DC: {dfunc} for {function}')
     if adfun is None:
         adfun = DiffFunction(function, **opts)
         if dself is not None:
@@ -849,6 +847,7 @@ def DiffFunctionObj(dfunc, function, **opts):
 
     def inner(*args, **kw):
         # Prepend dself and self to method call
+        print(f'method called: {adfun.__qualname__} for {function.__qualname__}')
         return adfun((dself, self), *args, **kw)
 
     return inner if dself is not None else adfun
