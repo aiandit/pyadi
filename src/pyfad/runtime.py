@@ -1,13 +1,17 @@
+from itertools import chain
 from astunparse.astnode import isgeneric, fields
 
-def dzeros(args):
+def dzeros(args, lev=0):
     #print(f'dzeros {args}')
-    if isinstance(args, list):
-        return [dzeros(f) for f in args]
+    lev += 1
+    if isinstance(args, type) or lev > 3:
+        return args
+    elif isinstance(args, list):
+        return [dzeros(f, lev) for f in args]
     elif isinstance(args, tuple) or args.__class__.__name__ in ['dict_values', 'dict_keys', 'dict_items']:
-        return tuple([dzeros(f) for f in args])
+        return tuple([dzeros(f, lev) for f in args])
     elif isinstance(args, dict):
-        return {f: dzeros(v) for f, v in args.items()}
+        return {f: dzeros(v, lev) for f, v in args.items()}
     elif isinstance(args, int):
         return 0
     elif isinstance(args, float):
@@ -17,10 +21,10 @@ def dzeros(args):
     elif isinstance(args, str) or isinstance(args, bytes) or isinstance(args, bytearray):
         return args
     elif isinstance(args, object):
-        # we assume the object is already allocated
+        fnames = list(chain(*map(lambda c: fields(c, True), args.__class__.__mro__)))
         try:
-            for a in fields(args, True):
-                setattr(args, a, dzeros(getattr(args, a)))
+            for a in fnames:
+                setattr(args, a, dzeros(getattr(args, a), lev))
         except BaseException as ex:
             print(ex)
             pass

@@ -22,6 +22,20 @@ def mkRule(f, rule):
     runRule.builtin = True
     return runRule
 
+def mkRuleObj(f, rule):
+    def runRuleObj(*args, **kw):
+        d_kw, kw = unjnd(kw)
+        res = f(*args[3::2], **kw)
+        dres = rule(res, *args, **d_kw)
+        return dres, res
+    return runRuleObj
+
+def mkRule2(f, rule):
+    def runRule2(*args, **kw):
+        return rule(*args, **kw)
+    runRule2.builtin = True
+    return runRule2
+
 def initType(function, *args, **kw):
     do, o = function(*args[1::2], **kw), function(*args[1::2], **kw)
     do = dzeros(do)
@@ -35,7 +49,16 @@ def decorator(**opts):
         rule = getattr(me, id, None)
 
         if rule is not None:
+            self = getattr(f, '__self__', None)
+            if self is not None and f.__name__ != 'super' and self.__class__.__name__ != 'module':
+                return mkRuleObj(f, rule)
             return mkRule(f, rule)
+
+        id = 'E_' + rid(f)
+        rule = getattr(me, id, None)
+
+        if rule is not None:
+            return mkRule2(f, rule)
 
         # try source diff
         return done(key)
@@ -50,6 +73,18 @@ hidden = {}
 def D_print_builtins(r, *args):
     print('D ', *args[0::2])
     return 0
+
+def D_super_builtins(r, *args):
+    print('D_super', *args)
+    return super(*args[0::2])
+
+def E_super___init___builtins(*args, **kw):
+    print('E_super___init___builtins', *args)
+    return args[0], args[1]
+
+def E_object___init___builtins(*args, **kw):
+    print('E_object___init___builtins', *args)
+    return args[0], args[1]
 
 def D_dict_items_builtins(r, dx, x):
     return dx.items()

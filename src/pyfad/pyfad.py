@@ -320,13 +320,13 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def _DSubscript(self, node):
         if not self.isLocal(node):
-            return Constant(0)
+            return Call('dzeros', node)
         node.value = self.ddispatch(node.value)
         return node
 
     def _DAttribute(self, t):
         #print(f'Diff Attribute {t.attr} of {vars(t.value)} {self.imports}')
-        if not self.isLocal(t):
+        if not t.value._class == "Call" and not self.isLocal(t.value):
             return Constant(0)
         t.value = self.ddispatch(t.value)
         return t
@@ -574,8 +574,8 @@ def difffunction(func, active=[]):
         dfunc = execompile(dsrc, vars=[fkey], fglobals=func.__globals__)
         dfunc = dfunc[fkey]
         mod, modfile = getmodule(dfunc)
-        setattr(sys.modules[mod], dfunc.__name__, dfunc)
-        print(f'Produced AD function: {dfunc.__qualname__}, added to module {mod}')
+        #setattr(sys.modules[mod], dfunc.__name__, dfunc)
+        #print(f'Produced AD function: {dfunc.__qualname__}, added to module {mod}')
     except BaseException as ex:
         print(unparse2j(dsrc, indent=1), file=open('d_failed.json', 'w'))
         print(unparse(dsrc), file=open('d_failed.py', 'w'))
@@ -784,15 +784,17 @@ def DoDiffFunction(function, **opts):
             pass
 
     adfun = processRules(function, opts)
-    print(f'adfun produced for {function.__name__}: {adfun.__name__}')
+    print(f'adfun produced for {function.__qualname__}: {adfun.__qualname__}')
 
     def theADFun(*ADargs, **kw):
 
         args = list(chain(*ADargs))
-        # print(f'adfun called for {function.__name__}: {adfun.__name__}')
+        print(f'adfun called for {function.__qualname__}: {adfun.__qualname__}: {ADargs}, kw={kw}')
 
         if constr is not None:
-            do, o = initType(_class, *args, **kw)
+            print(f'adfun called for constr {function.__qualname__}: {adfun.__qualname__}, kw={kw}')
+            d_kw, f_kw = unjnd(kw)
+            do, o = initType(_class, *args, **f_kw)
             args = [do, o] + list(args)
 
         adres = adfun(*args, **kw)
@@ -829,13 +831,17 @@ def DiffFunctionObj(tpl, **opts):
     dself, self = None, None
     adfun = None
 
+    print(f'diff likely method {function}: {dfunc}: {opts}')
     if dfunc != function:
         self = getattr(function, '__self__', None)
+        print(f'diffrent functions {function}: {dfunc}: self {self}')
         if self is not None:
             if self.__class__.__name__ != 'module':
                 _class = self.__class__
                 dself = dfunc.__self__
-                function = getattr(self.__class__, function.__name__)
+                #if function.__qualname__ == f'{_class.__name__}.{function.__name__}':
+                #    function = getattr(self.__class__, function.__name__)
+
         elif not hasattr(function, '__qualname__'): # not isinstance(function, Function):
             _class = function.__class__
             dself, self = dfunc, function
@@ -851,7 +857,7 @@ def DiffFunctionObj(tpl, **opts):
         dfname = f'd_{function.__name__}'
         #adfun = getattr(_class, dfname, None)
 
-    print(f'DC: {dfunc} for {function}')
+    print(f'DC: {dfunc} for {function} self={self}, dself={dself}')
     if adfun is None:
         adfun = DiffFunction(function, **opts)
         if dself is not None:
@@ -865,7 +871,7 @@ def DiffFunctionObj(tpl, **opts):
 
     def inner(*args, **kw):
         # Prepend dself and self to method call
-        print(f'method called: {adfun.__qualname__} for {function.__qualname__}')
+        print(f'method called: {adfun.__qualname__} for {function.__qualname__}, kw={kw}')
         return adfun((dself, self), *args, **kw)
 
     return inner if dself is not None else adfun
