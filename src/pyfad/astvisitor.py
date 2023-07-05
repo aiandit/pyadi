@@ -216,7 +216,7 @@ class ASTCanonicalizer:
             for k in fields(tree):
                 setattr(tree, k, self.dispatch(getattr(tree, k)))
 
-            if tree._class == "AugAssign":
+            if tree._class == "AugAssign" or tree._class == "Subscript" or tree._class == "Attribute":
                 if iscanon(tree.value):
                     (tl, tmpvar) = self.edispatch(tree.value)
                     tree.value = tmpvar
