@@ -66,11 +66,24 @@ class TestPyfad(unittest.TestCase):
         pyfad.clear()
         cls.verbose = 0
 
+    def assertEq(self, f, r1, r2):
+        if not almostEq(r1, r2):
+            raise(WrongResult(r1, r2))
+        return True
+
+    def assertEqD(self, f, r1, r2):
+        if not almostEq(r1, r2):
+            raise(WrongDerivative(r1, r2))
+        return True
+
     def assertEqFD(self, f, r1, r2):
         if not almostEqFD(r1, r2):
             raise(WrongDerivative(r1, r2))
         return True
 
+    def checkResult(self, func, args, res):
+        self.assertTrue(sqsum(pyfad.varv(res)) != 0)
+        self.assertTrue(self.assertEq(func, func(*args), res))
 
     def checkDer(self, func, args, dx, seed=1, active=[]):
         (der, r) = pyfad.DiffFD(func, *args, seed=seed, active=active, h=fdH)
@@ -107,6 +120,7 @@ class TestPyfad(unittest.TestCase):
         dydx, y = df(*zip([1, 0, 0], args))
         dydy, y = df(*zip([0, 1, 0], args))
         dydz, y = df(*zip([0, 0, 1], args))
+        self.checkResult(func, args, y)
         self.checkDer(func, args, dydx, active='x')
         self.checkDer(func, args, dydy, active='y')
         self.checkDer(func, args, dydz, active='z')
@@ -128,6 +142,7 @@ class TestPyfad(unittest.TestCase):
             args = [1,2,3]
         (d_r, r) = pyfad.DiffFor(func, *args, **kw)
         self.checkDer(func, args, d_r)
+        self.checkResult(func, args, r)
         return (d_r, r)
 
     def do_sourceDiff_f_x(self, func, args=None):
@@ -355,6 +370,10 @@ class TestPyfad(unittest.TestCase):
 
     def test_fobj2a(self):
         self.do_sourceDiff_f_xyz(fx.fplane, args=[0.234])
+
+    def test_fobj3(self):
+        fx.fplane3(2.3)
+        self.do_sourceDiff_f_xyz(fx.fplane3, args=[0.234])
 
     def test_flong1(self):
         self.do_sourceDiff_f_xyz(fx.flong, args=[0.234])

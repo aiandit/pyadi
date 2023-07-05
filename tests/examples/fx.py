@@ -157,17 +157,37 @@ def fplane(x):
     r = o.distance + o.gas
     return r
 
-class Plane2:
+class Root:
+    pass
+
+class Plane2(Root):
     distance = 0
     velocity = 100
     gas = 1e2
     consumption = 10
-    def __init__(self, c):
+    def __init__(self, c, **kw):
         self.consumption = c
+        super(Plane2, self).__init__(**kw)
+        print(f'Plane2.init v={self.velocity}')
     def fly(self, t):
+        print(f'Plane2.fly t={t} v={self.velocity}')
         dist = self.velocity * t
         self.distance += dist
         self.gas -= self.consumption * dist
+
+class Plane3(Plane2):
+    heading = 0
+    wind = 0
+    def __init__(self, h, **kw):
+        sinit = super(Plane3, self).__init__(**kw)
+        self.heading = h
+        print(f'Plane3.init v={self.velocity}')
+    def fly(self, t):
+        print(f'Plane3.fly t={t} v={self.velocity}')
+        vel = self.velocity
+        self.velocity += -self.wind * atan(self.heading)
+        super(Plane3, self).fly(t)
+        self.velocity = vel
 
 def fplane2(x):
     y = x*x
@@ -181,10 +201,10 @@ def fplane2(x):
 def fplane3(x):
     y = x*2
     l = [x, x*x, x*x*x ]
-    o = Plane2(y)
+    o = Plane3(h=y, c=x)
     r = [ o.fly(t) for t in l ]
-    r = o.distance + o.gas
-    print('Plane fly dist', o.distance)
+    r = o.distance + o.gas + o.heading + o.wind
+    print('Plane fly dist', o.distance, o.heading)
     return r
 
 
@@ -603,9 +623,25 @@ def fclassc(x):
     return r
 
 
-
 def flambda(x):
     l = [x, x*x, x*x*x]
     f = lambda x, y: x+y
     r = f(l[0], l[1]) * f(l[1], l[2])
+    return r
+
+def flambda2(x):
+    l = [x, x*x, x*x*x]
+    f = lambda t: t*l[2]
+    r = gcall(f, f(l[0]) * f(l[1]))
+    return r
+
+def gmkobj(x):
+    return Plane2(x)
+
+def fattr(x):
+    r = gmkobj(x).velocity
+    return r
+
+def fsubscript(x):
+    r = gmkd(x)['c']
     return r
