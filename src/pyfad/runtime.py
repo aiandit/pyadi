@@ -54,7 +54,10 @@ def joind(ddl, dl):
 
 def unzd(d):
     print('unzd', d)
-    keys = d.keys()
-    dvals, vals = zip(*d.values())
-    d_r, r = dict(zip(keys, dvals)), dict(zip(keys, vals))
-    return d_r, r
+    if d:
+        keys = d.keys()
+        dvals, vals = zip(*d.values())
+        d_r, r = dict(zip(keys, dvals)), dict(zip(keys, vals))
+        return d_r, r
+    else:
+        return {}, {}
