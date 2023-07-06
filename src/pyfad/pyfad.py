@@ -113,7 +113,7 @@ class ASTVisitorFMAD(ASTVisitorID):
             elif item._class == "FunctionDef":
                 nbody += [self._DFunctionDef(item.clone())]
                 nbody += [item]
-            elif item._class == "AugAssign"or item._class == "FunctionDef":
+            elif item._class == "AugAssign" or item._class == "FunctionDef":
                 nbody += [self.ddispatch(item.clone())]
                 nbody += [self.dispatch(item)]
             elif self.isnodiffExpr(item):
