@@ -24,8 +24,8 @@ def almostEq(r1, r2, tol=tolAD):
     return d < tol
 
 
-class WrongDerivative(BaseException):
-    pass
+class WrongDerivative(BaseException): pass
+class WrongResult(BaseException): pass
 
 
 def sqsum(r1):
