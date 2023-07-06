@@ -57,6 +57,7 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def __call__(self, tree):
         self.localvars = ASTVisitorLocals()(tree)
+        print('locals', self.localvars)
 
         self.result = self.dispatch(tree)
         return self.result

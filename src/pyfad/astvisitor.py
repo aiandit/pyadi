@@ -497,6 +497,9 @@ class ASTVisitorLocals(ASTLocalAction):
         elif tree._class == "For" or tree._class == "comprehension":
             self.locals += self.getVars(tree.target)
 
+        elif tree._class == "With":
+            self.locals += [ self.getRoot(s.optional_vars).id for s in tree.items if s.optional_vars is not None ]
+
     def End(self, tree):
         return self.locals
 
