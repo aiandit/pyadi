@@ -3,6 +3,8 @@ from math import sin, cos, tan, asin, acos, atan, log, sqrt
 import math
 import math as m2
 
+import pyfad.timer as timer
+
 def f1(x):
     z = fsin(x)
     return z
@@ -654,4 +656,21 @@ def fdel(x):
     for k, v in d.items():
         s += v
         s += d[k]
+    return s
+
+def fwith(x):
+    l = [x, x*x, x*x*x]
+    tobj = timer.Timer(f1, 'test')
+    with tobj as t:
+        s = 0
+        for i in range(3):
+            s += l[i]
+    return s
+
+def fwith2(x):
+    l = [x, x*x, x*x*x]
+    with timer.Timer(f1, 'test') as t:
+        s = 0
+        for i in range(3):
+            s += l[i]
     return s

@@ -323,7 +323,7 @@ class TestPyfad(unittest.TestCase):
     def test_py2(self, module=None):
         src, imps, mods = pyfad.py(fx.f1, True)
         self.assertEqual(src[0:10], "def f1(x):")
-        self.assertEqual(mods, ['math', 'm2'])
+        self.assertEqual(mods, ['math', 'm2', 'timer'])
         print(src, imps, mods)
 
     def test_py_meth(self, module=None):
