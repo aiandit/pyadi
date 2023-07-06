@@ -477,7 +477,7 @@ class ASTVisitorLocals(ASTLocalAction):
         elif t._class == "arg":
             res = [t.arg]
         elif t._class == "Attribute" or t._class == "Subscript":
-            res = [self.getRoot(t)]
+            res = [self.getRoot(t).id]
         return res
 
     def Begin(self, tree):
