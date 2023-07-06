@@ -61,3 +61,17 @@ def unzd(d):
         return d_r, r
     else:
         return {}, {}
+
+class DWith:
+    def __init__(self, *args, **kw):
+        self.dobj, self.obj = args[0]
+        super().__init__(*kw)
+
+    def __enter__(self, *args, **kw):
+        self.dobj.__enter__(*args, **kw)
+        self.obj.__enter__(*args, **kw)
+        return self.dobj, self.obj
+
+    def __exit__(self, *args, **kw):
+        self.dobj.__exit__(*args, **kw)
+        self.obj.__exit__(*args, **kw)

@@ -16,7 +16,7 @@ from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast
 from .astvisitor import ASTVisitorID, ASTVisitorImports, ASTVisitorLocals, mkTmp
 from .nodes import *
-from .runtime import dzeros, unzd, joind, unjnd
+from .runtime import dzeros, unzd, joind, unjnd, DWith
 
 from .timer import Timer
 from . import d_math
@@ -456,6 +456,24 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def _DTry(self, t):
         t.body = self.ddispatch(t.body)
+        return t
+
+    def _DWith(self, t):
+        t.items = self.ddispatch(t.items)
+        t.body = self.diffStmtList(t.body)
+        return t
+
+    def _Dwithitem(self, t):
+        t.context_expr = Call('DWith', self.diffUnlessIsTupleDiff(t.context_expr))
+        if t.optional_vars:
+            t.optional_vars = self.diffUnlessIsTupleDiff(t.optional_vars)
+        return t
+
+    def __Dwithitem(self, t):
+        t = t.clone()
+        t.context_expr = self.ddispatch(t.context_expr)
+        if t.optional_vars:
+            t.optional_vars = self.ddispatch(t.optional_vars)
         return t
 
     def _DDelete(self, t):
