@@ -408,6 +408,8 @@ class ASTVisitorFMAD(ASTVisitorID):
                 t.left = left
 
         elif t.op == '%':
+            if t.right._class == "Tuple" or (t.left._class == "Constant" and isinstance(t.left.value, str)):
+                return t
             if isdiff(t.left):
                 lfact_ = self.mkOpPartialL('%', None, left, t.left, t.right)
             if isdiff(t.right):
