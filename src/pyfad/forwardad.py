@@ -22,14 +22,6 @@ def mkRule(f, rule):
     runRule.builtin = True
     return runRule
 
-def mkRuleObj(f, rule):
-    def runRuleObj(*args, **kw):
-        d_kw, kw = unjnd(kw)
-        res = f(*args[3::2], **kw)
-        dres = rule(res, *args, **d_kw)
-        return dres, res
-    return runRuleObj
-
 def mkRule2(f, rule):
     def runRule2(*args, **kw):
         return rule(*args, **kw)
@@ -49,9 +41,6 @@ def decorator(**opts):
         rule = getattr(me, id, None)
 
         if rule is not None:
-            self = getattr(f, '__self__', None)
-            if self is not None and f.__name__ != 'super' and self.__class__.__name__ != 'module':
-                return mkRuleObj(f, rule)
             return mkRule(f, rule)
 
         id = 'E_' + rid(f)
