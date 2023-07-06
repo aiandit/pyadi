@@ -332,9 +332,12 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _DConstant(self, t):
-        t = t.clone()
-        t.value = 0.0
-        #t = Call('dzeros', t)
+        if isinstance(t.value, float) or isinstance(t.value, int):
+            t = t.clone()
+            t.value = 0.0
+        elif isinstance(t.value, complex):
+            t = t.clone()
+            t.value = 0.0j
         return t
 
     def mkOpPartialC(self, op, r, dx, x, y):
