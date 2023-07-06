@@ -645,3 +645,13 @@ def fattr(x):
 def fsubscript(x):
     r = gmkd(x)['c']
     return r
+
+
+def fdel(x):
+    d = {'a': x, 'b': x*x, 'c': x*x*x}
+    s = 0
+    del d['b']
+    for k, v in d.items():
+        s += v
+        s += d[k]
+    return s
