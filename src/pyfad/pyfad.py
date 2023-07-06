@@ -454,6 +454,15 @@ class ASTVisitorFMAD(ASTVisitorID):
         t.value = self.diffUnlessIsTupleDiff(t.value)
         return t
 
+    def _DTry(self, t):
+        t.body = self.ddispatch(t.body)
+        return t
+
+    def _DDelete(self, t):
+        dtargets = [ self.ddispatch(s.clone()) for s in t.targets if self.isLocal(s) ]
+        t.targets = dtargets + t.targets
+        return t
+
 
 def diff2pys(intree, visitor, *kw):
 #   print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
