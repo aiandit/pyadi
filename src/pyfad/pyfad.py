@@ -851,10 +851,12 @@ def DiffFunctionObj(tpl, **opts):
         print(f'diffrent functions {function}: {dfunc}: self {self}')
         if self is not None:
             if self.__class__.__name__ != 'module':
-                _class = self.__class__
+                parts = function.__qualname__.split('.')
+                cname = parts[-2]
+                # pick the right class from object's MRO
+                _class = [c for c in self.__class__.__mro__ if c.__name__ == cname][0]
                 dself = dfunc.__self__
-                #if function.__qualname__ == f'{_class.__name__}.{function.__name__}':
-                #    function = getattr(self.__class__, function.__name__)
+                function = getattr(_class, function.__name__)
 
         elif not hasattr(function, '__qualname__'): # not isinstance(function, Function):
             _class = function.__class__
