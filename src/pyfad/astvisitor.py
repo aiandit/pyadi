@@ -412,9 +412,9 @@ class ASTVisitorImports(ASTLocalAction):
         if tree._class == "ImportFrom":
             for f in tree.names:
                 if f.asname:
-                    self.imports[f.asname] = f'{tree.module}.{f.name}'
+                    self.imports[f.asname] = {f'{tree.module}': '{f.name}'}
                 else:
-                    self.imports[f.name] = f'{tree.module}.{f.name}'
+                    self.imports[f.name] = {f'{tree.module}': '{f.name}'}
 
         elif tree._class == "Import":
             for f in tree.names:
