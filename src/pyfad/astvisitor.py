@@ -55,16 +55,13 @@ def isbuiltin(func):
 
 
 modastcache = {}
-def getast(func):
-    # ta0 = time.time()
-    mod, modfile = getmodule(func)
-    # print(f'Get SRC and AST: {func.__qualname__} in {mod} file {modfile}')
+def getmoddict(mod):
+    modfile = getattr(sys.modules[mod], '__file__', None)
     if modfile is None:
-        print(f'No source for {mod}.{func.__name__}')
-        raise(NoSource(f'No source for {mod}.{func.__name__}'))
-    load = modfile not in modastcache
-    if not load:
-        centry = modastcache[modfile]
+        print(f'No source for module {mod}')
+        raise NoSource(f'No source for module {mod}')
+    if mod in modastcache:
+        centry = modastcache[mod]
         tree, imports, modules = centry["data"]
         moddict = centry["dict"]
     else:
@@ -75,13 +72,24 @@ def getast(func):
         imports, modules = ASTVisitorImports()(tree)
         moddict = ASTVisitorDict()(tree)
         print(f'Load and parse module {mod} source from {modfile}: {moddict.keys()}')
-        modastcache[modfile] =  {"file": modfile, "data": (tree, imports, modules), "dict": moddict}
+        modastcache[mod] =  {'name': mod, "file": modfile, "data": (tree, imports, modules), "dict": moddict}
         t1 = time.time()
         print(f'Load and parse module {mod} source from {modfile}: {1e3*(t1-t0):.1f} ms')
+    return moddict, imports, modules
 
-    # print(f'Search for {func.__qualname__} in {mod}')
+
+def getast(func):
+    # ta0 = time.time()
+    mod, modfile = getmodule(func)
+    # print(f'Get SRC and AST: {func.__qualname__} in {mod} file {modfile}')
+    if modfile is None:
+        print(f'No source for {mod}.{func.__name__}')
+        raise(NoSource(f'No source for {mod}.{func.__name__}'))
+
+    moddict, imports, modules = getmoddict(mod)
 
     tree = moddict[func.__qualname__]
+
     # ta1 = time.time()
     # print(f'Got AST of {mod}.{func.__name__}: {1e3*(ta1-ta0):.1f} ms')
     return tree, imports, modules
@@ -89,7 +97,7 @@ def getast(func):
 
 def updateDModDict(func, dtree):
     mod, modfile = getmodule(func)
-    moddict = modastcache[modfile]["dict"]
+    moddict = modastcache[mod]["dict"]
     newitems = ASTVisitorDict()(dtree)
     moddict.update(newitems)
 
