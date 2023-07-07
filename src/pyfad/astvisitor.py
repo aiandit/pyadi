@@ -74,7 +74,7 @@ def getast(func):
         tree = loadastpy(csrc)
         imports, modules = ASTVisitorImports()(tree)
         moddict = ASTVisitorDict()(tree)
-        # print(f'Load and parse module {mod} source from {modfile}: {moddict.keys()}')
+        print(f'Load and parse module {mod} source from {modfile}: {moddict.keys()}')
         modastcache[modfile] =  {"file": modfile, "data": (tree, imports, modules), "dict": moddict}
         t1 = time.time()
         print(f'Load and parse module {mod} source from {modfile}: {1e3*(t1-t0):.1f} ms')
@@ -492,7 +492,10 @@ class ASTVisitorLocals(ASTLocalAction):
 
         elif tree._class == "Assign":
             for n in tree.targets:
-                self.locals += self.getVars(n)
+                if n._class == "Name":
+                    self.locals += [ n.id ]
+                elif n._class == "Tuple":
+                    self.locals += [ m.id for m in n.elts if m._class == "Name" ]
 
         elif tree._class == "For" or tree._class == "comprehension":
             self.locals += self.getVars(tree.target)

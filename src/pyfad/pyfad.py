@@ -320,7 +320,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         return self.getRoot(t).id in self.localvars
 
     def _DSubscript(self, node):
-        if not self.isLocal(node):
+        if not self.isLocal(node.value):
             return Call('dzeros', node)
         node.value = self.ddispatch(node.value)
         return node
