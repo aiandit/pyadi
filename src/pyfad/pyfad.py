@@ -921,6 +921,8 @@ def nvars(args):
         return sum([nvars(v) for f, v in args.items()])
     elif isgeneric(args):
         return 1
+    else:
+        return len(args)
 
 
 def varv(args):
