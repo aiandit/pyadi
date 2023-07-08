@@ -13,7 +13,7 @@ from itertools import chain
 from astunparse import loadast, unparse2j, unparse2x, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 
-from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast
+from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast, fqname
 from .astvisitor import ASTVisitorID, ASTVisitorImports, ASTVisitorLocals, mkTmp
 from .nodes import *
 from .runtime import dzeros, unzd, joind, unjnd, DWith
@@ -817,7 +817,7 @@ def DoDiffFunction(function, **opts):
             pass
 
     adfun = processRules(function, opts)
-    print(f'adfun produced for {function.__qualname__}: {adfun.__qualname__}')
+    print(f'adfun produced for {fqname(function)}: {adfun.__qualname__}')
 
     def theADFun(*ADargs, **kw):
 
@@ -921,6 +921,8 @@ def nvars(args):
         return sum([nvars(v) for f, v in args.items()])
     elif isgeneric(args):
         return 1
+    elif hasattr(args, 'flat'):
+        return args.size
     else:
         return len(args)
 
@@ -932,24 +934,30 @@ def varv(args):
         return chain(*[varv(v) for f, v in args.items()])
     elif isgeneric(args):
         return [args]
+    elif hasattr(args, 'flat'):
+        return list(args.flat)
 
 
 
 class FillHelper:
     def __init__(self, seed):
         self.seed = seed
+        self.len = nvars(seed)
         self.offs = 0
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        if self.offs < len(self.seed):
+        if self.offs < self.len:
             r = self.seed[self.offs]
             self.offs += 1
             return r
         else:
             raise StopIteration
+
+    def __repr__(self):
+        return f'Filler({self.offs}/{len(self.seed)})'
 
 
 def fill(arg, seed):
@@ -963,6 +971,10 @@ def fill(arg, seed):
         return {f: fill(v, seed) for f, v in arg.items()}
     elif isgeneric(arg):
         return next(seed)
+    elif hasattr(arg, 'flat'):
+        arg = arg.copy()
+        arg.flat[:] = [next(seed) for i in range(arg.size)]
+        return arg
 
 
 def dargs(args, seed=1):
