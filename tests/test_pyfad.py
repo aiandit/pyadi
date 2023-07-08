@@ -6,6 +6,7 @@ from itertools import chain
 
 import pyfad
 from .examples import fxyz, fx, fgen
+from .examples.fx import f1 as f1alt,  f2 as f2alt
 
 pyfad.Debug = True
 
