@@ -822,10 +822,10 @@ def DoDiffFunction(function, **opts):
     def theADFun(*ADargs, **kw):
 
         args = list(chain(*ADargs))
-        print(f'adfun called for {function.__qualname__}: {adfun.__qualname__}: {ADargs}, kw={kw}')
+        #print(f'adfun called for {function.__qualname__}: {adfun.__qualname__}: {ADargs}, kw={kw}')
 
         if constr is not None:
-            print(f'adfun called for constr {function.__qualname__}: {adfun.__qualname__}, kw={kw}')
+            #print(f'adfun called for constr {function.__qualname__}: {adfun.__qualname__}, kw={kw}')
             d_kw, f_kw = unjnd(kw)
             do, o = initType(_class, *args, **f_kw)
             args = [do, o] + list(args)
