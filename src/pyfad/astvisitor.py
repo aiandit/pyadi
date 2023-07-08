@@ -15,6 +15,7 @@ def setprefix(t):
     global tpref_
     tpref_ = t
 
+
 tmpseen = {}
 class TmpVar(Name):
     def __init__(self, kind='t'):
@@ -39,12 +40,30 @@ class NoSource(BaseException):
     pass
 
 
+def fname(func):
+    fname = getattr(func, '__qualname__', getattr(func, '__name__', None))
+    return fname
+
+def fqname(func):
+    mod, _ = getmodule(func)
+    fname = getattr(func, '__qualname__', getattr(func, '__name__', None))
+    return f'{mod}.{fname}'
+
+
+def rid(func):
+    fname = fqname(func)
+    print(f'rid(func) = {func} {fname} {dir(func)}')
+    fid = fname.replace('.', '_')
+    return fid
+
+
 def getmodule(func):
     print('getmodule', func, type(func))
     mod = getattr(func, '__module__', None)
     if mod is None:
         mod = func.__class__.__module__
     modfile = getattr(sys.modules[mod], '__file__', None)
+    print('getmodule', func, mod, modfile)
     return mod, modfile
 
 
@@ -57,7 +76,7 @@ def isbuiltin(func):
 modastcache = {}
 def getmoddict(mod):
     modfile = getattr(sys.modules.get(mod, {}), '__file__', None)
-    if modfile is None:
+    if modfile is None or modfile.endswith('.so'):
         print(f'No source for module {mod}')
         raise NoSource(f'No source for module {mod}')
     if mod in modastcache:
@@ -131,12 +150,16 @@ def getast(func):
     mod, modfile = getmodule(func)
     # print(f'Get SRC and AST: {func.__qualname__} in {mod} file {modfile}')
     if modfile is None:
-        print(f'No source for {mod}.{func.__name__}')
-        raise(NoSource(f'No source for {mod}.{func.__name__}'))
+        print(f'No source for {mod}.{fqname(func)}')
+        raise(NoSource(f'No source for {mod}.{fqname(func)}'))
 
     moddict, imports, modules = getmoddict(mod)
 
-    tree = moddict[func.__qualname__]
+    try:
+        tree = moddict[fname(func)]
+    except KeyError:
+        print(f'No source for {mod}.{fname(func)}')
+        raise(NoSource(f'No source for {mod}.{fname(func)} => {rid(func)}'))
 
     # ta1 = time.time()
     # print(f'Got AST of {mod}.{func.__name__}: {1e3*(ta1-ta0):.1f} ms')
