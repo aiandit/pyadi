@@ -56,7 +56,7 @@ def isbuiltin(func):
 
 modastcache = {}
 def getmoddict(mod):
-    modfile = getattr(sys.modules[mod], '__file__', None)
+    modfile = getattr(sys.modules.get(mod, {}), '__file__', None)
     if modfile is None:
         print(f'No source for module {mod}')
         raise NoSource(f'No source for module {mod}')
@@ -71,11 +71,59 @@ def getmoddict(mod):
         tree = loadastpy(csrc)
         imports, modules = ASTVisitorImports()(tree)
         moddict = ASTVisitorDict()(tree)
+        modastcache[mod] = {'name': mod, "file": modfile, "data": (tree, imports, modules), "dict": moddict}
+        resolveImports(mod, modfile, moddict, imports, modules)
         print(f'Load and parse module {mod} source from {modfile}: {moddict.keys()}')
-        modastcache[mod] =  {'name': mod, "file": modfile, "data": (tree, imports, modules), "dict": moddict}
         t1 = time.time()
         print(f'Load and parse module {mod} source from {modfile}: {1e3*(t1-t0):.1f} ms')
     return moddict, imports, modules
+
+
+def resolveImports(mod, modfile, moddict, imports, modules):
+    pkgs = mod.split('.')
+    moduleImports = {}
+    print(f'Resolve imports for {mod}, {modfile}:, imports={imports}, modules={modules}')
+    print(f'moddict={moddict.keys()}')
+    for name in imports:
+        impentry = imports[name]
+        if isinstance(impentry, dict):
+            assert len(impentry.keys()) == 1
+            imod = list(impentry.keys())[0]
+            if imod not in moduleImports:
+                moduleImports[imod] = {}
+            moduleImports[imod].update({ name:  impentry[imod] })
+    print(f'moduleImports={moduleImports}')
+    for imod in moduleImports:
+        modname, level = imod
+        if modname is None:
+            # these are all modules
+            continue
+        if level > 0:
+            ilevel = level
+            if modfile.endswith('__init__.py'):
+                ilevel -= 1
+            prepkgs = pkgs if ilevel <= 0 else pkgs[0:-ilevel]
+            prepkgs += [modname]
+            modname_ = '.'.join(prepkgs)
+            print(f'Get local import {modname}, {level}, {ilevel}, {pkgs} => {modname_}')
+            modname = modname_
+        try:
+            impd, _, _ = getmoddict(modname)
+            print(f'Got moddict for {modname}: {impd.keys()}')
+        except NoSource:
+            continue
+        imodimps = moduleImports[imod]
+        for name, impname in imodimps.items():
+            if name == "*":
+                print(f'Import {impname} from import module {modname} as {name} into {mod}')
+                moddict.update(impd)
+            else:
+                if impname in impd:
+                    print(f'Import {impname} from module {modname} into {mod} as {name}')
+                    moddict[name] = impd[impname]
+                else:
+                    print(f'Import {impname} from module {modname} into {mod} as {name} is likely a module.')
+    return moddict
 
 
 def getast(func):
@@ -410,11 +458,12 @@ class ASTVisitorImports(ASTLocalAction):
 
     def Before(self, tree):
         if tree._class == "ImportFrom":
+            mname = f'{tree.module}' if tree.module is not None else None
             for f in tree.names:
                 if f.asname:
-                    self.imports[f.asname] = {f'{tree.module}': '{f.name}'}
+                    self.imports[f.asname] = {(mname, tree.level): f'{f.name}'}
                 else:
-                    self.imports[f.name] = {f'{tree.module}': '{f.name}'}
+                    self.imports[f.name] = {(mname, tree.level): f'{f.name}'}
 
         elif tree._class == "Import":
             for f in tree.names:
