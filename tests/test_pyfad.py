@@ -86,7 +86,7 @@ class TestPyfad(unittest.TestCase):
         self.assertTrue(sqsum(pyfad.varv(res)) != 0)
         self.assertTrue(self.assertEq(func, func(*args), res))
 
-    def checkDer(self, func, args, dx, seed=1, active=[]):
+    def checkDer(self, func, args, dx, seed=1, active=[], **kw):
         (der, r) = pyfad.DiffFD(func, *args, seed=seed, active=active, h=fdH)
         if self.verbose > 0:
             print('cd', (der, dx))
@@ -125,9 +125,9 @@ class TestPyfad(unittest.TestCase):
         self.checkDer(func, args, dydx, active='x')
         self.checkDer(func, args, dydy, active='y')
         self.checkDer(func, args, dydz, active='z')
-        self.checkDer(func, args, dydx, seed=[1, 0, 0])
-        self.checkDer(func, args, dydy, seed=[0, 1, 0])
-        self.checkDer(func, args, dydz, seed=[0, 0, 1])
+        self.checkDer(func, args, dydx, seed=[ [1, 0, 0] ])
+        self.checkDer(func, args, dydy, seed=[ [0, 1, 0] ])
+        self.checkDer(func, args, dydz, seed=[ [0, 0, 1] ])
 
     def test_D_f1_call(self):
         self.do_call_xyz(f1, [1,2,3])
@@ -221,11 +221,11 @@ class TestPyfad(unittest.TestCase):
         self.assertTrue(almostEq(dr[1], dr_y))
         self.assertTrue(almostEq(dr[2], dr_z))
 
-        dr_y2, r = pyfad.DiffFD(f, x, y, z, seed=[0,1,0])
+        dr_y2, r = pyfad.DiffFD(f, x, y, z, seed=[ [0,1,0] ])
         self.assertTrue(almostEq(dr_y2, dr_y))
 
         with self.assertRaises(IndexError):
-            dr_y2, r = pyfad.DiffFD(f, x, y, z, seed=[0,1])
+            dr_y2, r = pyfad.DiffFD(f, x, y, z, seed=[ [0,1] ])
 
         dr_z, r = pyfad.DiffFD(f, x, y, z, active='fz2')
         self.assertTrue(len(dr_z) == 0)
