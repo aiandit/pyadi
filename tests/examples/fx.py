@@ -706,11 +706,38 @@ def _fmatmul(x):
 def gtpl(a,b,c):
     return 2*a,2*b,4*c
 
+def gtpl2(a,b,c):
+    return tuple((2*a,2*b,4*c))
+
+def glist(a,b,c):
+    return [2*a,2*b,4*c]
+
+def glist2(a,b,c):
+    return list((2*a,2*b,4*c))
+
 def fcalltpl(x):
     l = [x, x*x, x*x*x]
     r1, r2, r3 = gtpl(*l)
     print(f'fcalltpl: {r1} {r2} {r3}')
     return r1+r2+r3
+
+def fcalltpl2(x):
+    l = [x, x*x, x*x*x]
+    r = gtpl2(*l)
+    print(f'fcalltpl: {r}')
+    return gl_sum(r)
+
+def fcallglist(x):
+    l = [x, x*x, x*x*x]
+    r1, r2, r3 = glist(*l)
+    print(f'fcalllist: {r1} {r2} {r3}')
+    return r1+r2+r3
+
+def fcallglist2(x):
+    l = [x, x*x, x*x*x]
+    r = glist2(*l)
+    print(f'fcalllist: {r}')
+    return gl_sum(r)
 
 def glong3(l):
     s = 0
