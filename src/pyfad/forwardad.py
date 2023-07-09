@@ -151,5 +151,7 @@ def D_numpy_matmul(r, dx, x, dy, y):
     return np.matmul(dx, y) + np.matmul(x, dy)
 
 def E_builtins_ndarray_copy(*args, **kw):
-    print('builtins_ndarray_copy', args)
     return args[0].copy(),  args[1].copy()
+
+def D_numpy_sum(r, dx, x):
+    return np.sum(dx)
