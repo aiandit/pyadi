@@ -22,4 +22,4 @@ def delrule(func, mode='D'):
 
 
 def getrules():
-    return forwardad.dict
+    return forwardad.__dict__
