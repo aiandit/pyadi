@@ -1097,9 +1097,6 @@ def DiffFD(f, *args, **opts):
         rv1 = varv(r1)
         rv2 = varv(r2)
         der = ([(rv1[i] - rv2[i])/h2 for i in range(len(rv1))])
-        print('v1', fill(args, v1))
-        print('v2', fill(args, v2))
-        print('res', fill(r, der))
         return fill(r, der)
 
     if isgeneric(seed) and seed == 1:
@@ -1108,7 +1105,6 @@ def DiffFD(f, *args, **opts):
             seed = [0] * N
             seed[i] = 1
             dres.append(dirder(func, args, seed))
-            print(f'FD dir {i}: {dres[-1]}')
     elif isinstance(seed, list):
         dres = [ dirder(func, args, seeddir) for seeddir in seed ]
     return dres, r
