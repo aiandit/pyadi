@@ -52,18 +52,18 @@ def fqname(func):
 
 def rid(func):
     fname = fqname(func)
-    print(f'rid(func) = {func} {fname} {dir(func)}')
+    #print(f'rid(func) = {func} {fname} {dir(func)}')
     fid = fname.replace('.', '_')
     return fid
 
 
 def getmodule(func):
-    print('getmodule', func, type(func))
+    #print('getmodule', func, type(func))
     mod = getattr(func, '__module__', None)
     if mod is None:
         mod = func.__class__.__module__
     modfile = getattr(sys.modules[mod], '__file__', None)
-    print('getmodule', func, mod, modfile)
+    #print('getmodule', func, mod, modfile)
     return mod, modfile
 
 
@@ -642,7 +642,7 @@ class ASTVisitorLocals(ASTLocalAction):
 
 def normalize(tree, **kw):
     tree = ASTPatchSuper()(tree)
-    if not kw.get('edu', True):
+    if kw.get('replaceops', False):
         tree = ASTReplaceOps()(tree)
     #tree = resolvetmpvars(tree)
     #tree = astunparse.normalize(tree)

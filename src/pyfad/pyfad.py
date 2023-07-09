@@ -508,9 +508,9 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
 
-def diff2pys(intree, visitor, *kw):
+def diff2pys(intree, visitor, **kw):
 #   print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
-    intree = normalize(intree.clone())
+    intree = normalize(intree.clone(), **kw)
     intree = canonicalize(intree)
 #    intree = resolvetmpvars(intree)
 #    print('canon', unparse2j(intree, indent=1), file=open('canon.json', 'w'))
@@ -557,7 +557,7 @@ def differentiate(intree, activef=None, active=None, modules=None, filter=False,
         fmadtrans.active_fields = varspec(active)
     fmadtrans.active_objects = ['self', 'dself', 'dt'] + fmadtrans.active_fields
 
-    dtree = diff2pys(intree, fmadtrans)
+    dtree = diff2pys(intree, fmadtrans, **kw)
     return dtree
 
 
@@ -618,14 +618,14 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
     return result
 
 
-def Dpy(func, active=[]):
+def Dpy(func, active=[], **kw):
     csrc, imports, modules = getast(func)
-    dtree = differentiate(csrc, activef=func.__name__, active=active, modules=modules)
+    dtree = differentiate(csrc, activef=func.__name__, active=active, modules=modules, **kw)
     return dtree
 
 
-def difffunction(func, active=[]):
-    dsrc = Dpy(func, active)
+def difffunction(func, active=[], **kw):
+    dsrc = Dpy(func, active, **kw)
     try:
         fkey = dpref_ + func.__name__
         # globals = func.__globals__ if not isinstance(func, type) else func.__init__.__globals__
@@ -721,8 +721,7 @@ def doSourceDiff(function, opts):
         # print(f'Cannot diff. a type! {function.__name__}')
         return mkConstr(function)
 
-    active = opts.get('active', [])
-    (adfun, actind) = difffunction(function, active=active)
+    (adfun, actind) = difffunction(function, **opts)
 
     self = getattr(function, '__self__', None)
     if self is not None:
@@ -853,7 +852,7 @@ def DiffFunction(function, **opts):
     adfun = adc.get(function, None)
     if adfun is None:
         # print(f'Diff function {function.__name__}')
-        adfun = DoDiffFunction(function, **opts)
+        adfun = DoDiffFunction(function, **(transformOps|opts))
         adc[function] = adfun
         # print(f'Diff function {function.__name__} cached => {adfun.__name__}')
         # else: print(f'Found diff function {function.__name__} in cache: {adfun.__name__}')
@@ -1002,8 +1001,11 @@ def createFullGradients(args):
         seeds.append(dargs)
     return seeds
 
+transformOps = {}
 
 def DiffFor(function, *args, **opts):
+    global transformOps
+    transformOps = opts
 
     timings = opts.get('timings', True)
     if timings:
