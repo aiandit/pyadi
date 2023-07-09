@@ -290,6 +290,7 @@ class ASTCanonicalizer:
 
                 return tree
             elif tree._class == "DictComp" or tree._class == "ListComp":
+                tree.generators = [self.dispatch(tree.generators)]
                 return tree
 
             for k in fields(tree):
