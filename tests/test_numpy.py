@@ -106,6 +106,7 @@ class TestNumpy(unittest.TestCase):
     def test_swirl(self):
         init = swirl.initialize_starting_point(1)
         seed = np.random.rand(init.size + 1)
+        self.do_sourceDiff_f_xyz(swirl.swirl, args=[init, 1e-2], replaceops=True)
         self.do_sourceDiff_f_xyz(swirl.swirl, args=[init, 1e-2])
 
     def test_fsqr(self):

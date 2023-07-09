@@ -377,16 +377,16 @@ class TestPyfad(unittest.TestCase):
         self.do_sourceDiff_f_xyz(fx.fplane3, args=[0.234])
 
     def test_flong1(self):
-        self.do_sourceDiff_f_xyz(fx.flong, args=[0.234])
-        self.do_sourceDiff_f_xyz(fx.flong, args=[0.234])
-        self.do_sourceDiff_f_xyz(fx.flong, args=[0.234])
-        self.do_sourceDiff_f_xyz(fx.flong, args=[0.234])
+        self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], replaceops=True)
+        self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], replaceops=True)
+        self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], replaceops=True)
+        self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], replaceops=True)
 
     def test_flong2(self):
-        self.do_sourceDiff_f_xyz(fx.flong2, args=[0.234])
-        self.do_sourceDiff_f_xyz(fx.flong2, args=[0.234])
-        self.do_sourceDiff_f_xyz(fx.flong2, args=[0.234])
-        self.do_sourceDiff_f_xyz(fx.flong2, args=[0.234])
+        self.do_sourceDiff_f_xyz(fx.flong2, args=[0.234], replaceops=True)
+        self.do_sourceDiff_f_xyz(fx.flong2, args=[0.234], replaceops=True)
+        self.do_sourceDiff_f_xyz(fx.flong2, args=[0.234], replaceops=True)
+        self.do_sourceDiff_f_xyz(fx.flong2, args=[0.234], replaceops=True)
 
     def test_timings(self):
         self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], timings=True)

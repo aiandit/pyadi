@@ -21,6 +21,20 @@ def runPyfad(bfun):
 
     return inner
 
+def runPyfad2(bfun):
+
+    def inner(*args, **kw):
+        return pyfad.DiffFor(bfun, *args, timings=True, **kw)
+
+    return inner
+
+def runPyfad3(bfun):
+
+    def inner(*args, **kw):
+        return pyfad.DiffFor(bfun, *args, timings=False, replaceops=True, **kw)
+
+    return inner
+
 def runPyFD(bfun):
 
     def inner(*args, **kw):
@@ -46,6 +60,11 @@ def mkInput(N):
     args = swirl.initialize_starting_point(N), 1e-2
     return args, { 'seed':  [ np.random.rand(args[0].size+1) ] }
 
+def reset():
+    pyfad.clear()
+
 bfun = swirl.swirl
 
-contest(dict(swirl=runF(bfun), ad_swirl=runPyfad(bfun), fd_swirl=runPyFD(bfun)), timeout=1, input=mkInput, name="Swirl test", outdir='out')
+contest(dict(swirl=runF(bfun), ad_swirl=runPyfad(bfun), ad_swirl2=runPyfad2(bfun), ad_swirl3=runPyfad3(bfun), fd_swirl=runPyFD(bfun)),
+        timeout=3e-1, input=mkInput, reset=reset,
+        name="Swirl test", outdir='out')
