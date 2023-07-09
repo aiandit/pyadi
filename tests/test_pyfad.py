@@ -344,6 +344,9 @@ class TestPyfad(unittest.TestCase):
     def test_ast_clearcache(self, module=None):
         pyfad.clear()
 
+    def test_particular_fx(self):
+        self.do_sourceDiff_f_xyz(fx.fkeywords4a, args=[0.234])
+
     def test_finner(self):
         self.do_sourceDiff_f_xyz(fx.finner, args=[0.234])
         self.do_sourceDiff_f_xyz(fx.fuseinner, args=[0.234])

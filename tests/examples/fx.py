@@ -492,6 +492,10 @@ def gmkd(x):
     d = {'a': x, 'b': x*x, 'c': x*x*x}
     return d
 
+def gmkd2(x):
+    d = dict(a=x, b=x*x, c=x*x*x)
+    return d
+
 def gmkdict(x):
     d = {'a': x, 'b': x*x, 'c': x*x*x}
     e = {'a1': x, 'b1': x*x, 'c1': x*x*x}
@@ -514,6 +518,12 @@ def fkeywords3(x):
 
 def fkeywords4(x):
     d, e = gmkdict(x)
+    s = gsumd(mkd(**d, r=gmkd(x), **e))
+    return s
+
+def fkeywords4a(x):
+    d = gmkd2(x)
+    e = {'x' + k: v for k, v in gmkd2(x/2).items()}
     s = gsumd(mkd(**d, r=gmkd(x), **e))
     return s
 
