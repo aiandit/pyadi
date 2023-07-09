@@ -51,9 +51,6 @@ def decorator(**opts):
     return inner
 
 
-dict = {}
-hidden = {}
-
 
 def D_pyfad_runtime_binop_add(r, dx, x, dy, y):       return dx+dy
 def D_pyfad_runtime_binop_sub(r, dx, x, dy, y):       return dx-dy
