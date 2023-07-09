@@ -391,6 +391,59 @@ def resolvetmpvars(tree, **kw):
     return an(tree)
 
 
+class ASTPatchSuper(ASTLocalAction):
+
+    def Begin(self, tree):
+        self.seen = {}
+
+    def Before(self, tree):
+        if tree._class == "Call" and getattr(tree.func, 'id', '') == "super":
+            if len(tree.args) == 0:
+                tree.args = [Attribute(Name('self'), '__class__'), Name('self')]
+            return (tree, True)
+
+
+def mkOprevName(dict):
+    rdict = {v: k.lower() for k, v in dict.items()}
+    def inner(op):
+        return rdict[op]
+    return inner
+
+op_revname = mkOprevName(Unparser.binop | Unparser.boolops | Unparser.cmpops)
+op_revname_unary = mkOprevName(Unparser.unop)
+
+class ASTReplaceOps(ASTLocalAction):
+
+    def __init__(self, **kw):
+        self.replace = kw.get('replace', ['binop', 'unaryop', 'augassign'])
+        #self.replace += ['attribute']
+
+    def Begin(self, tree):
+        self.seen = {}
+
+    def Before(self, tree):
+        if tree._class == "AugAssign":
+            tree.value = self.dispatch(tree.value)
+            return (tree, True)
+        elif tree._class == "Assign":
+            tree.value = self.dispatch(tree.value)
+            return (tree, True)
+
+    def After(self, tree):
+        if tree._class == "BinOp" and 'binop' in self.replace:
+            return Call(f'binop_{op_revname(tree.op)}', [tree.left, tree.right])
+        elif tree._class == "UnaryOp" and 'unaryop' in self.replace:
+            return Call(f'unaryop_{op_revname_unary(tree.op)}', [tree.operand])
+        elif tree._class == "CmpOp" and 'cmpop' in self.replace:
+            return Call(f'cmpop_{op_revname(tree.op)}', [tree.value])
+        elif tree._class == "BoolOp" and 'boolop' in self.replace:
+            return Call(f'boolop_{op_revname(tree.op)}', tree.values)
+        elif tree._class == "AugAssign" and 'augassign' in self.replace:
+            return Assign(tree.target, Call(f'binop_{op_revname(tree.op)}', [tree.target, tree.value]))
+        elif tree._class == "Attribute" and 'attribute' in self.replace:
+            return Call(f'getattr', [tree.value, Constant(tree.attr)])
+
+
 class ASTVisitorLastFunction(ASTLocalAction):
 
     def Begin(self, tree):
@@ -588,8 +641,11 @@ class ASTVisitorLocals(ASTLocalAction):
 
 
 def normalize(tree, **kw):
-    tree = resolvetmpvars(tree)
-    tree = astunparse.normalize(tree)
+    tree = ASTPatchSuper()(tree)
+    if not kw.get('edu', True):
+        tree = ASTReplaceOps()(tree)
+    #tree = resolvetmpvars(tree)
+    #tree = astunparse.normalize(tree)
     return tree
 
 

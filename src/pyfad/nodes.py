@@ -64,6 +64,13 @@ class Subscript(ASTNode):
         self.slice = Constant(ind)
 
 
+class Attribute(ASTNode):
+    def __init__(self, v, attr):
+        self._class = "Attribute"
+        self.value = v
+        self.attr = attr
+
+
 class Call(ASTNode):
     def __init__(self, func, args=[], kw=[]):
         self._class = "Call"

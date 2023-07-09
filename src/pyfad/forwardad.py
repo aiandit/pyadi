@@ -1,5 +1,5 @@
 from itertools import chain
-from math import sin, cos, tan, asin, acos, atan, log, sqrt
+from math import sin, cos, tan, asin, acos, atan, log, sqrt, floor
 from .astvisitor import getmodule, rid
 from .runtime import unjnd
 import sys
@@ -55,6 +55,18 @@ dict = {}
 hidden = {}
 
 
+def D_pyfad_runtime_binop_add(r, dx, x, dy, y):       return dx+dy
+def D_pyfad_runtime_binop_sub(r, dx, x, dy, y):       return dx-dy
+def D_pyfad_runtime_binop_mult(r, dx, x, dy, y):      return dx*y + x*dy
+def D_pyfad_runtime_binop_matmult(r, dx, x, dy, y):   return dx@y + x@dy
+def D_pyfad_runtime_binop_div(r, dx, x, dy, y):       return (dx*y - x*dy) / y**2
+def D_pyfad_runtime_binop_truediv(r, dx, x, dy, y):   return 0
+def D_pyfad_runtime_binop_mod(r, dx, x, dy, y):       return dx - dy * int(floor(x/y))
+def D_pyfad_runtime_binop_pow(r, dx, x, dy, y):       return r * (dx * y / x + dy*log(x))
+
+def D_pyfad_runtime_unaryop_uadd(r, dx, x): return +dx
+def D_pyfad_runtime_unaryop_usub(r, dx, x): return -dx
+
 def D_builtins_print(r, *args):
     print('D ', *args[0::2])
     return 0
@@ -95,6 +107,9 @@ def D_builtins_list(r, dx, x):
 def D_builtins_int(r, dx, x): return 0
 def D_builtins_float(r, dx, x): return float(dx)
 def D_builtins_complex(r, dx, x, dy, y): return complex(dx, dy)
+
+def D_builtins_getattr(r, *args):
+    return getattr(*args[0::2])
 
 def D_builtins_Random_random(r):
     return 0

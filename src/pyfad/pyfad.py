@@ -18,6 +18,10 @@ from .astvisitor import ASTVisitorID, ASTVisitorImports, ASTVisitorLocals, mkTmp
 from .nodes import *
 from .runtime import dzeros, unzd, joind, unjnd, DWith
 
+from .runtime import binop_add, binop_sub, binop_mult, binop_matmult, binop_div, binop_truediv, binop_mod, binop_pow
+from .runtime import unaryop_uadd, unaryop_usub
+from .runtime import augassign_add, augassign_sub, augassign_mult, augassign_div, augassign_truediv, augassign_mod
+
 from .timer import Timer
 from . import d_math
 
@@ -176,6 +180,9 @@ class ASTVisitorFMAD(ASTVisitorID):
                 if t._class == "List":
                     res = res.elts[0].value
             return res
+        elif t._class == "Tuple":
+            dargs = [self.diffUnlessIsTupleDiff(t) for t in t.elts]
+            return Tuple([Starred(Call('zip', dargs))])
         else:
             return Tuple([self.ddispatch(t.clone()),t])
 
@@ -183,6 +190,12 @@ class ASTVisitorFMAD(ASTVisitorID):
         if len(node.elts):
             dargs = [self.diffUnlessIsTupleDiff(t) for t in node.elts]
             return List([Starred(Call('zip', dargs))])
+        return Tuple([List([]), List([])])
+
+    def __DTuple(self, node):
+        if len(node.elts):
+            dargs = [self.diffUnlessIsTupleDiff(t) for t in node.elts]
+            return Tuple([Starred(Call('zip', dargs))])
         return Tuple([List([]), List([])])
 
     def _DDict(self, node):
@@ -497,12 +510,12 @@ class ASTVisitorFMAD(ASTVisitorID):
 
 def diff2pys(intree, visitor, *kw):
 #   print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
+    intree = normalize(intree.clone())
     intree = canonicalize(intree)
 #    intree = resolvetmpvars(intree)
 #    print('canon', unparse2j(intree, indent=1), file=open('canon.json', 'w'))
 #    print('canon', unparse(intree), file=open('canon.py', 'w'))
     print('canon', unparse(intree))
-    intree = normalize(intree.clone())
 #    print('canon', unparse2j(intree, indent=1), file=open('norm.json', 'w'))
 #    print('canon', unparse(intree), file=open('norm.py', 'w'))
 #    print('canon', unparse(intree))

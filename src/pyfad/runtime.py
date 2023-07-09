@@ -78,3 +78,23 @@ class DWith:
     def __exit__(self, *args, **kw):
         self.dobj.__exit__(*args, **kw)
         self.obj.__exit__(*args, **kw)
+
+
+def binop_add(x, y): return x+y
+def binop_sub(x, y): return x-y
+def binop_mult(x, y): return x*y
+def binop_matmult(x, y): return x@y
+def binop_div(x, y): return x/y
+def binop_truediv(x, y): return x//y
+def binop_mod(x, y): return x%y
+def binop_pow(x, y): return x**y
+
+def unaryop_uadd(x): return +x
+def unaryop_usub(x): return -x
+
+def augassign_add(x, y): return x+y
+def augassign_sub(x, y): return x-y
+def augassign_mult(x, y): return x*y
+def augassign_div(x, y): return x/y
+def augassign_truediv(x, y): return x//y
+def augassign_mod(x, y): return x%y
