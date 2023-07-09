@@ -92,7 +92,7 @@ def getmoddict(mod):
         moddict = ASTVisitorDict()(tree)
         modastcache[mod] = {'name': mod, "file": modfile, "data": (tree, imports, modules), "dict": moddict}
         resolveImports(mod, modfile, moddict, imports, modules)
-        print(f'Load and parse module {mod} source from {modfile}: {moddict.keys()}')
+        print(f'Load and parse module {mod} source from {modfile}')
         t1 = time.time()
         print(f'Load and parse module {mod} source from {modfile}: {1e3*(t1-t0):.1f} ms')
     return moddict, imports, modules
@@ -101,8 +101,9 @@ def getmoddict(mod):
 def resolveImports(mod, modfile, moddict, imports, modules):
     pkgs = mod.split('.')
     moduleImports = {}
-    print(f'Resolve imports for {mod}, {modfile}:, imports={imports}, modules={modules}')
-    print(f'moddict={moddict.keys()}')
+    print(f'Resolve imports for {mod}, {modfile}')
+    # print(f'Resolve imports for {mod}, {modfile}:, imports={imports}, modules={modules}')
+    # print(f'moddict={moddict.keys()}')
     for name in imports:
         impentry = imports[name]
         if isinstance(impentry, dict):
@@ -128,7 +129,7 @@ def resolveImports(mod, modfile, moddict, imports, modules):
             modname = modname_
         try:
             impd, _, _ = getmoddict(modname)
-            print(f'Got moddict for {modname}: {impd.keys()}')
+            #print(f'Got moddict for {modname}: {impd.keys()}')
         except NoSource:
             continue
         imodimps = moduleImports[imod]
