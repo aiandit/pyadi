@@ -6,6 +6,10 @@ from .runtime import unjnd, dzeros
 me = sys.modules[__name__]
 
 
+call1 = [
+    'binop_add', 'binop_sub', 'binop_mult', 'binop_matmult', 'binop_div', 'binop_floordiv', 'binop_mod', 'binop_pow',
+    'unaryop_uplus', 'unaryop_usub'
+]
 call2 = ['super']
 
 
@@ -37,17 +41,17 @@ def decorator(**opts):
 
     def inner(done, key, f, *args, **kw):
 
-        print(f'D1 {f.__name__} before')
+        print(f'D1 {f.__qualname__} before')
 
         if f.__name__ in call2:
             return mkCall2(f)
 
-        if isbuiltin(f):
+        if isbuiltin(f) or f.__qualname__ in call1:
             return mkCall(f)
 
         res = done(key)
 
-        print(f'D2 {f.__name__} after')
+        print(f'D2 {f.__qualname__} after')
 
         return res
 
