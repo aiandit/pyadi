@@ -703,7 +703,16 @@ def doSourceDiff(function, opts):
     active = opts.get('active', [])
     (adfun, actind) = difffunction(function, active=active)
 
-    return adfun
+    self = getattr(function, '__self__', None)
+    if self is not None:
+        _class = self.__class__
+        if _class.__name__ == 'module':
+            self = None
+
+    def inner(*args, **kw):
+        return adfun(dzeros(self), self, *args, **kw)
+
+    return adfun if self is None else inner
 
 rulemodules = {}
 def clearrulemodules(name=None):
