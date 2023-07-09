@@ -1,5 +1,6 @@
 from itertools import chain
 from astunparse.astnode import isgeneric, fields
+import numpy as np
 
 def dzeros(args, lev=0):
     #print(f'dzeros {args}')
@@ -12,6 +13,8 @@ def dzeros(args, lev=0):
         return tuple([dzeros(f, lev) for f in args])
     elif isinstance(args, dict):
         return {f: dzeros(v, lev) for f, v in args.items()}
+    elif hasattr(args, 'flat'):
+        return np.zeros(args.shape)
     elif isinstance(args, int):
         return 0
     elif isinstance(args, float):
