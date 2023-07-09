@@ -83,6 +83,8 @@ class DWith:
 def binop_add(x, y): return x+y
 def binop_sub(x, y): return x-y
 def binop_mult(x, y): return x*y
+def binop_c_mult(x, y): return x*y
+def binop_d_mult(x, y): return x*y
 def binop_matmult(x, y): return x@y
 def binop_div(x, y): return x/y
 def binop_floordiv(x, y): return x//y

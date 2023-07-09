@@ -18,7 +18,7 @@ from .astvisitor import ASTVisitorID, ASTVisitorImports, ASTVisitorLocals, mkTmp
 from .nodes import *
 from .runtime import dzeros, unzd, joind, unjnd, DWith
 
-from .runtime import binop_add, binop_sub, binop_mult, binop_matmult, binop_div, binop_floordiv, binop_mod, binop_pow
+from .runtime import binop_add, binop_sub, binop_mult, binop_c_mult, binop_d_mult, binop_matmult, binop_div, binop_floordiv, binop_mod, binop_pow
 from .runtime import unaryop_uadd, unaryop_usub
 from .runtime import augassign_add, augassign_sub, augassign_mult, augassign_div, augassign_truediv, augassign_mod
 

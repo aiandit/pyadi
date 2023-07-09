@@ -431,7 +431,12 @@ class ASTReplaceOps(ASTLocalAction):
 
     def After(self, tree):
         if tree._class == "BinOp" and 'binop' in self.replace:
-            return Call(f'binop_{op_revname(tree.op)}', [tree.left, tree.right])
+            if tree.op == "*" and tree.left._class == "Constant":
+                return Call(f'binop_c_{op_revname(tree.op)}', [tree.left, tree.right])
+            elif tree.op == "*" and tree.right._class == "Constant":
+                return Call(f'binop_d_{op_revname(tree.op)}', [tree.left, tree.right])
+            else:
+                return Call(f'binop_{op_revname(tree.op)}', [tree.left, tree.right])
         elif tree._class == "UnaryOp" and 'unaryop' in self.replace:
             return Call(f'unaryop_{op_revname_unary(tree.op)}', [tree.operand])
         elif tree._class == "CmpOp" and 'cmpop' in self.replace:

@@ -58,6 +58,8 @@ hidden = {}
 def D_pyfad_runtime_binop_add(r, dx, x, dy, y):       return dx+dy
 def D_pyfad_runtime_binop_sub(r, dx, x, dy, y):       return dx-dy
 def D_pyfad_runtime_binop_mult(r, dx, x, dy, y):      return dx*y + x*dy
+def D_pyfad_runtime_binop_c_mult(r, dx, x, dy, y):    return x*dy
+def D_pyfad_runtime_binop_d_mult(r, dx, x, dy, y):    return dx*y
 def D_pyfad_runtime_binop_matmult(r, dx, x, dy, y):   return dx@y + x@dy
 def D_pyfad_runtime_binop_div(r, dx, x, dy, y):       return (dx*y - x*dy) / y**2
 def D_pyfad_runtime_binop_floordiv(r, dx, x, dy, y):  return 0
@@ -91,6 +93,12 @@ def D_builtins_dict_keys(r, dx, x):
 
 def D_builtins_dict_values(r, dx, x):
     return dx.values()
+
+def D_builtins_list(r, dx, x):
+    return list(dx)
+
+def D_builtins_tuple(r, dx, x):
+    return tuple(dx)
 
 def D_builtins_range(r, *args):
     return [0]*len(r)
