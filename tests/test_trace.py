@@ -118,4 +118,12 @@ class TestPyTracer(unittest.TestCase):
         print('Start/Stop thread joined, finish.')
 
     def _test_tr_loadast(self):
+
+        print('Test function', ftrace.floadast(0))
+        print('Test gunction', ftrace.gunparse(ftrace.floadast(0)))
+
         self.do_sourceDiff_f_xyz(ftrace.floadast, args=[0.234])
+        self.do_sourceDiff_f_xyz(ftrace.floadast, args=[0.234])
+
+    def _test_tr_generic(self):
+        self.do_sourceDiff_f_xyz(ftrace.pargs, args=[0.234])

@@ -688,3 +688,17 @@ def fcalltpl(x):
     l = [x, x*x, x*x*x]
     r1, r2, r3 = gtpl(*l)
     return r1+r2+r3
+
+def glong3(l):
+    s = 0
+    for i in range(int(1e2)):
+        s += gl_sum2(l)
+    return s
+
+def flong4(x):
+    l = [x, x*x, x*x*x]
+    M = gdiag(l)
+    s = 0
+    for i in range(len(l)):
+        s += glong3(M)
+    return s
