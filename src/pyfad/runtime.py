@@ -56,7 +56,7 @@ def joind(ddl, dl):
 
 
 def unzd(d):
-    print('unzd', d)
+    # print('unzd', d)
     if d:
         keys = d.keys()
         dvals, vals = zip(*d.values())

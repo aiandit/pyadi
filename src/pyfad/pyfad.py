@@ -61,7 +61,7 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def __call__(self, tree):
         self.localvars = ASTVisitorLocals()(tree)
-        print('locals', self.localvars)
+        # print('locals', self.localvars)
 
         self.result = self.dispatch(tree)
         return self.result
@@ -289,7 +289,7 @@ class ASTVisitorFMAD(ASTVisitorID):
                 res += [ self.diffUnlessIsTupleDiff(key.value) ]
             else:
                 res += [ Call('unzd', Call('dict', keyword(key.arg, self.diffUnlessIsTupleDiff(key.value)))) ]
-        print('keywords::', res)
+        # print('keywords::', res)
         zcall = Call('joind', Starred(Call('zip', res)))
         return [keyword(None, zcall)]
 
@@ -538,7 +538,7 @@ def differentiate(intree, activef=None, active=None, modules=None, filter=False,
         _, modules = ASTVisitorImports()(intree)
 
     fmadtrans.imports = modules
-    print('imports', fmadtrans.imports)
+    # print('imports', fmadtrans.imports)
     # print('source', unparse(intree))
 
     if activef is None:
@@ -709,7 +709,7 @@ def doSourceDiff(function, opts):
     adfun = None
     _class = None
 
-    print(f'SD: {function.__name__}')
+    # print(f'SD: {function.__name__}')
 
     if isbuiltin(function):
         fname = function.__name__
@@ -868,10 +868,10 @@ def DiffFunctionObj(tpl, **opts):
     dself, self = None, None
     adfun = None
 
-    print(f'diff likely method {function}: {dfunc}: {opts}')
+    # print(f'diff likely method {function}: {dfunc}: {opts}')
     if dfunc != function:
         self = getattr(function, '__self__', None)
-        print(f'diffrent functions {function}: {dfunc}: self {self}')
+        # print(f'different functions {function}: {dfunc}: self {self}')
         if self is not None:
             if self.__class__.__name__ != 'module':
                 parts = function.__qualname__.split('.')
@@ -887,7 +887,7 @@ def DiffFunctionObj(tpl, **opts):
             function = function.__class__.__call__
         else:
             def inner(*args, **kw):
-                print(f'inner shortcut called: {dfunc.__qualname__} for {function.__qualname__}')
+                # print(f'inner shortcut called: {dfunc.__qualname__} for {function.__qualname__}')
                 args = list(chain(*args))
                 return dfunc(*args, **kw)
             return inner
@@ -896,21 +896,22 @@ def DiffFunctionObj(tpl, **opts):
         dfname = f'd_{function.__name__}'
         #adfun = getattr(_class, dfname, None)
 
-    print(f'DC: {dfunc} for {function} self={self}, dself={dself}')
+    # print(f'DC: {dfunc} for {function} self={self}, dself={dself}')
     if adfun is None:
         adfun = DiffFunction(function, **opts)
         if dself is not None:
             try:
                 setattr(_class, dfname, adfun)
-                print(f'Diff function {function.__name__} saved class type as {dfname} => {adfun.__name__}')
+                # print(f'Diff function {function.__name__} saved class type as {dfname} => {adfun.__name__}')
             except:
                 pass
     else:
-        print(f'Diff function {function.__name__} in class type as {dfname} => {adfun.__name__}')
+        # print(f'Diff function {function.__name__} in class type as {dfname} => {adfun.__name__}')
+        pass
 
     def inner(*args, **kw):
         # Prepend dself and self to method call
-        print(f'method called: {adfun.__qualname__} for {function.__qualname__}, kw={kw}')
+        # print(f'method called: {adfun.__qualname__} for {function.__qualname__}, kw={kw}')
         return adfun((dself, self), *args, **kw)
 
     return inner if dself is not None else adfun
