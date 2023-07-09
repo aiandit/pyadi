@@ -412,6 +412,9 @@ class ASTVisitorFMAD(ASTVisitorID):
             elif isdiff(t.left):
                 t.left = left
 
+        elif t.op == '//':
+            t = Constant(0.0)
+
         elif t.op == '%':
             if t.right._class == "Tuple" or (t.left._class == "Constant" and isinstance(t.left.value, str)):
                 return t
@@ -447,6 +450,11 @@ class ASTVisitorFMAD(ASTVisitorID):
             t = BinOp('*', fact, term)
 
         elif t.op == '+' or t.op == '-':
+            if nodiff(t.left):
+                left = self.ddispatch(t.left.clone())
+            if nodiff(t.right):
+                right = self.ddispatch(t.right.clone())
+
             t.left = left
             t.right = right
 
