@@ -674,3 +674,17 @@ def fwith2(x):
         for i in range(3):
             s += l[i]
     return s
+
+def _fmatmul(x):
+    l = [x, x*x, x*x*x]
+    M = gdiag(l)
+    M2 = M @ M
+    return gsum2(M2)
+
+def gtpl(a,b,c):
+    return 2*a,2*b,4*c
+
+def fcalltpl(x):
+    l = [x, x*x, x*x*x]
+    r1, r2, r3 = gtpl(*l)
+    return r1+r2+r3
