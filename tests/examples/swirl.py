@@ -214,4 +214,5 @@ def run():
     with open('swirl.txt', 'w') as f:
         np.savetxt(f, res)
 
-run()
+if __name__ == "__main__":
+    run()
