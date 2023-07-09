@@ -627,35 +627,6 @@ Source:
     return (dfunc, active)
 
 
-def run():
-    fname = 'pyphy/parser.py'
-    with open(fname) as f:
-        code = f.read()
-        output = sys.stdout
-        tree = compile(code, fname, "exec", ast.PyCF_ONLY_AST, dont_inherit=True)
-        c1 = ASTFragment(tree)
-        Unparser(tree, output)
-
-        src = inspect.getsource(Test.energy).strip()
-        print(f'prop: "\n{src}"')
-        roundtrip2Js(src, 'test_py')
-
-
-def testdir():
-    base = 'examples'
-    for name in sorted(os.listdir(base)):
-        fname = os.path.join(base, name)
-        if os.path.isfile(fname) and fname.endswith('.py'):
-            with open(fname) as f:
-                source = f.read()
-                res = roundtrip2JIDs(source, fname)
-                print(f"""File {fname}
-Source:
-{source}
-Result:
-{res}""")
-
-
 def fid(func, active):
     mod, modfile = getmodule(func)
     if modfile is None:
