@@ -424,12 +424,7 @@ class ASTReplaceOps(ASTLocalAction):
         self.seen = {}
 
     def Before(self, tree):
-        if tree._class == "AugAssign":
-            tree.value = self.dispatch(tree.value)
-            return (tree, True)
-        elif tree._class == "Assign":
-            tree.value = self.dispatch(tree.value)
-            return (tree, True)
+        pass
 
     def After(self, tree):
         if tree._class == "BinOp" and 'binop' in self.replace:
