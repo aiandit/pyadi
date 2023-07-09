@@ -381,11 +381,11 @@ class ASTVisitorFMAD(ASTVisitorID):
             return Constant(0.0)
 
         if nodiff(t.left):
-            left = self.dispatch(t.left)
+            left = t.left
         else:
             left = self.ddispatch(t.left.clone())
         if nodiff(t.right):
-            right = self.dispatch(t.right)
+            right = t.right
         else:
             right = self.ddispatch(t.right.clone())
 
