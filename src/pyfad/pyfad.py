@@ -168,7 +168,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         return node
 
 
-    tupleDiff = ["Call", "List", "ListComp", "Dict", "DictComp", "DictComp", "IfExp", "GeneratorExp"]
+    tupleDiff = ["Call", "List", "ListComp", "Dict", "DictComp", "DictComp", "IfExp", "GeneratorExp", 'Starred']
     def diffUnlessIsTupleDiff(self, t, src=None):
         if t._class in self.tupleDiff:
             res = self.ddispatch(t.clone())
@@ -318,6 +318,10 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def isLocal(self, t):
         return self.getRoot(t).id in self.localvars
+
+    def _DStarred(self, node):
+        node.value = Call('zip', [self.ddispatch(node.value.clone()), node.value])
+        return node
 
     def _DSubscript(self, node):
         if not self.isLocal(node.value):
