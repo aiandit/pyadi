@@ -82,6 +82,9 @@ def E_builtins_object___init__(*args, **kw):
     print('E_object___init___builtins', *args)
     return args[0], args[1]
 
+def D_builtins_dict(r, *args, **d_kw):
+    return dict(**d_kw)
+
 def D_builtins_dict_items(r, dx, x):
     return dx.items()
 
