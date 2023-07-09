@@ -60,7 +60,7 @@ def D_pyfad_runtime_binop_sub(r, dx, x, dy, y):       return dx-dy
 def D_pyfad_runtime_binop_mult(r, dx, x, dy, y):      return dx*y + x*dy
 def D_pyfad_runtime_binop_matmult(r, dx, x, dy, y):   return dx@y + x@dy
 def D_pyfad_runtime_binop_div(r, dx, x, dy, y):       return (dx*y - x*dy) / y**2
-def D_pyfad_runtime_binop_truediv(r, dx, x, dy, y):   return 0
+def D_pyfad_runtime_binop_floordiv(r, dx, x, dy, y):  return 0
 def D_pyfad_runtime_binop_mod(r, dx, x, dy, y):       return dx - dy * int(floor(x/y))
 def D_pyfad_runtime_binop_pow(r, dx, x, dy, y):       return r * (dx * y / x + dy*log(x))
 

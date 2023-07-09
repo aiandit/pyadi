@@ -85,7 +85,7 @@ def binop_sub(x, y): return x-y
 def binop_mult(x, y): return x*y
 def binop_matmult(x, y): return x@y
 def binop_div(x, y): return x/y
-def binop_truediv(x, y): return x//y
+def binop_floordiv(x, y): return x//y
 def binop_mod(x, y): return x%y
 def binop_pow(x, y): return x**y
 
