@@ -209,6 +209,28 @@ def fplane3(x):
     print('Plane fly dist', o.distance, o.heading)
     return r
 
+class Plane4(Plane2):
+    heading = 0
+    wind = 0
+    def __init__(self, h, **kw):
+        sinit = super().__init__(**kw)
+        self.heading = h
+        print(f'Plane3.init v={self.velocity}')
+    def fly(self, t):
+        print(f'Plane3.fly t={t} v={self.velocity}')
+        vel = self.velocity
+        self.velocity += -self.wind * atan(self.heading)
+        super().fly(t)
+        self.velocity = vel
+
+def fplane4(x):
+    y = x*2
+    l = [x, x*x, x*x*x ]
+    o = Plane4(h=y, c=x)
+    r = [ o.fly(t) for t in l ]
+    r = o.distance + o.gas + o.heading + o.wind
+    print('Plane fly dist', o.distance, o.heading)
+    return r
 
 def gl_sum(x):
     s = 0
@@ -687,6 +709,7 @@ def gtpl(a,b,c):
 def fcalltpl(x):
     l = [x, x*x, x*x*x]
     r1, r2, r3 = gtpl(*l)
+    print(f'fcalltpl: {r1} {r2} {r3}')
     return r1+r2+r3
 
 def glong3(l):
