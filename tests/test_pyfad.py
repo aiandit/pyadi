@@ -224,7 +224,7 @@ class TestPyfad(unittest.TestCase):
         dr_y2, r = pyfad.DiffFD(f, x, y, z, seed=[ [0,1,0] ])
         self.assertTrue(almostEq(dr_y2, dr_y))
 
-        with self.assertRaises(IndexError):
+        with self.assertRaises(ValueError):
             dr_y2, r = pyfad.DiffFD(f, x, y, z, seed=[ [0,1] ])
 
         dr_z, r = pyfad.DiffFD(f, x, y, z, active='fz2')
