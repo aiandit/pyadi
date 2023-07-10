@@ -113,4 +113,23 @@ class TestNumpy(unittest.TestCase):
         X = np.zeros((2,2))
         X.flat[:] = [1, 2, 3, 4]
         print(f'nvars: {pyfad.nvars(X)} {X.size}')
-        self.do_sourceDiff_f_xyz(fnp.fsqr, args=[X])
+        self.do_sourceDiff_f_xyz(fnp.gsqr, args=[X])
+
+
+    def runtest_fxyz(self, module=None, args=([1,2,3],)):
+        if module is None:
+            module = fnp
+        fnames = [f for f in dir(module) if f[0] == 'f']
+        for f in fnames:
+            fn = getattr(module, f)
+            if self.verbose > 0:
+                print(f'Test function {fn.__name__} from {module.__name__}')
+            self.do_sourceDiff_f_xyz(fn, args=args)
+
+
+    def test_fnp(self):
+        self.runtest_fxyz(args=( [0.234, 1.234, -4.321e-3], ))
+
+
+    def test_fnp2(self):
+        self.runtest_fxyz(args=([0.234, 1.234, 4.321e-3], ))

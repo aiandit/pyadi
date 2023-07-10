@@ -1,11 +1,39 @@
 import numpy as np
 
-def fsqr(X):
+def gsqr(X):
     return np.matmul(X,X)
 
 def fmatmul(x):
-    l = [x, x*x, x*x*x]
-    M = np.diag(l)
+    M = np.diag(x)
     M2 = M @ M
     return np.sum(M2)
 
+def fmatmul2(x):
+    M = np.diag(x)
+    M2 = np.matmul(M, M)
+    return np.sum(M2)
+
+def fmatmul3(x):
+    M = np.diag(x)
+    M2 = 2.1*M
+    r = M @ M2 @ M
+    return np.sum(np.diag(r))
+
+def _fmatmul4(x):
+    M = np.diag(x)
+    M2 = 2.1*M
+    print(M.shape, M2.shape)
+    r = M @ np.invert(M2) @ M
+    return np.sum(np.diag(r))
+
+def fnorm(x):
+    M = np.diag(x)
+    M2 = 2.1*M
+    r = np.linalg.norm(np.diag(M2))
+    return r
+
+def ftest(x):
+    M = np.diag(x)
+    M2 = np.matmul(M, 2*M)
+    r = np.linalg.norm(np.diag(M2))
+    return r
