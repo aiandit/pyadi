@@ -7,6 +7,7 @@ import shutil
 from io import StringIO
 import tempfile
 import importlib
+import numpy as np
 
 from itertools import chain
 
@@ -947,7 +948,7 @@ def varv(args):
 
 class FillHelper:
     def __init__(self, seed):
-        self.seed = seed
+        self.seed = np.array(seed)
         self.len = nvars(seed)
         self.offs = 0
 
@@ -965,6 +966,11 @@ class FillHelper:
     def __repr__(self):
         return f'Filler({self.offs}/{len(self.seed)})'
 
+    def get(self, N):
+        r = self.seed[self.offs:(self.offs+N)]
+        self.offs += N
+        return r
+
 
 def fill(arg, seed):
     if not isinstance(seed, FillHelper):
@@ -978,8 +984,7 @@ def fill(arg, seed):
     elif isgeneric(arg):
         return next(seed)
     elif hasattr(arg, 'flat'):
-        arg = arg.copy()
-        arg.flat[:] = [next(seed) for i in range(arg.size)]
+        arg.flat[:] = seed.get(arg.size)
         return arg
 
 
@@ -1101,27 +1106,30 @@ def DiffFD(f, *args, **opts):
         func = inner
         args = [args[i] for i in inds]
 
-    N = nvars(args)
-    v = list(varv(args))
+    v = np.array(list(varv(args)))
+    dargs = dzeros(args)
+    N = v.size
     h2 = h*2
     r = func(*args)
 
     def dirder(func, args, seed):
-        v1 = [v[i] + h * seed[i] for i in range(N)]
-        v2 = [v[i] - h * seed[i] for i in range(N)]
-        r1 = func(*fill(args, v1))
-        r2 = func(*fill(args, v2))
-        rv1 = varv(r1)
-        rv2 = varv(r2)
-        der = ([(rv1[i] - rv2[i])/h2 for i in range(len(rv1))])
+        #print('FDD', v, seed)
+        v1 = v + h * seed
+        v2 = v - h * seed
+        r1 = func(*fill(dargs, v1))
+        r2 = func(*fill(dargs, v2))
+        #print('FDD', r1, r2)
+        rv1 = np.array(varv(r1))
+        rv2 = np.array(varv(r2))
+        der = (rv1 - rv2)/h2
         return fill(r, der)
 
     if isgeneric(seed) and seed == 1:
         dres = []
         for i in range(N):
-            seed = [0] * N
+            seed = np.zeros(N)
             seed[i] = 1
             dres.append(dirder(func, args, seed))
     elif isinstance(seed, list):
-        dres = [ dirder(func, args, seeddir) for seeddir in seed ]
+        dres = [ dirder(func, args, np.array(seeddir)) for seeddir in seed ]
     return dres, r
