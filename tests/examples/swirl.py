@@ -104,8 +104,6 @@ def swirl(x, epsilon):
 
         hm = hm*h;
 
-    np.savetxt('rhnfhk.txt', rhnfhk.flat)
-
     #Set up the boundary equations at t = 0
     # f(0) = 0, f'(0) = 0, g(0) = omega1
     fvec[0] = x[0];
