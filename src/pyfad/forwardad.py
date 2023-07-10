@@ -178,3 +178,9 @@ def E_builtins_ndarray_copy(*args, **kw):
 
 def D_numpy_sum(r, dx, x):
     return np.sum(dx)
+
+def D_numpy_diag(r, dx, x):
+    return np.diag(dx)
+
+def D_numpy_linalg_norm(r, dx, x):
+    return np.sum(x * dx) / r
