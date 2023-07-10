@@ -13,7 +13,7 @@ from itertools import chain
 from astunparse import loadast, unparse2j, unparse2x, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 
-from .astvisitor import canonicalize, resolvetmpvars, normalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast, fqname
+from .astvisitor import canonicalize, resolvetmpvars, normalize, unnormalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast, fqname
 from .astvisitor import ASTVisitorID, ASTVisitorImports, ASTVisitorLocals, mkTmp
 from .nodes import *
 from .runtime import dzeros, unzd, joind, unjnd, DWith
@@ -522,6 +522,7 @@ def diff2pys(intree, visitor, **kw):
     outtree = visitor(intree)
 #    print('outtree', unparse2j(outtree, indent=1), file=open('outtree.json', 'w'))
 #    outtree = resolvetmpvars(outtree)
+    outtree = unnormalize(outtree.clone(), **kw)
     print('outtree', unparse2x(outtree, indent=1), file=open('outtree.xml', 'w'))
     return outtree
 

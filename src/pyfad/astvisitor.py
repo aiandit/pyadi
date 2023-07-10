@@ -411,8 +411,16 @@ def mkOprevName(dict):
         return rdict[op]
     return inner
 
+def mkUnOprevName(dict):
+    rdict = {k.lower(): v for k, v in dict.items()}
+    def inner(op):
+        return rdict[op]
+    return inner
+
 op_revname = mkOprevName(Unparser.binop | Unparser.boolops | Unparser.cmpops)
 op_revname_unary = mkOprevName(Unparser.unop)
+
+op_unrevname = mkUnOprevName(Unparser.unop | Unparser.binop | Unparser.boolops | Unparser.cmpops)
 
 class ASTReplaceOps(ASTLocalAction):
 
@@ -444,6 +452,50 @@ class ASTReplaceOps(ASTLocalAction):
             return Assign(tree.target, Call(f'binop_{op_revname(tree.op)}', [tree.target, tree.value]))
         elif tree._class == "Attribute" and 'attribute' in self.replace:
             return Call(f'getattr', [tree.value, Constant(tree.attr)])
+
+
+class ASTReplaceOpsInvert(ASTLocalAction):
+
+    def __init__(self, **kw):
+        self.replace = kw.get('replace', ['binop', 'unaryop', 'augassign'])
+        #self.replace += ['attribute']
+
+    def Begin(self, tree):
+        self.seen = {}
+
+    def Before(self, tree):
+        pass
+
+    def After(self, tree):
+        if 'binop' in self.replace and tree._class == "Call" and getattr(tree.func, 'id', '').startswith('binop_'):
+            return BinOp(op_unrevname(tree.func.id[6:]), tree.args[0], tree.args[1])
+        elif 'unaryop' in self.replace and tree._class == "Call" and getattr(tree.func, 'id', '').startswith('unaryop_'):
+            return UnaryOp(op_unrevname(tree.func.id[8:]), tree.args[0])
+        elif 'cmpop' in self.replace and tree._class == "Call" and getattr(tree.func, 'id', '').startswith('cmpop_'):
+            return CmpOp(op_unrevname(tree.func.id[6:]), tree.args[0], tree.args[1])
+        elif 'boolop' in self.replace and tree._class == "Call" and getattr(tree.func, 'id', '').startswith('boolop_'):
+            return CmpOp(op_unrevname(tree.func.id[7:]), tree.args[0], tree.args[1])
+        elif 'augassign' in self.replace and tree._class == "Assign" \
+             and len(tree.targets) == 1 and tree.value._class == "Call" \
+             and getattr(tree.value.func, 'id', '').startswith('binop_'):
+            return AugAssign(op_revname(tree.value.func.id), tree.targets[0], tree.value.args[1])
+        elif 'attribute' in self.replace and tree._class == "Call" and tree.func.id == 'op_getattr':
+            return Attribute(tree.args[0], tree.args[1].value)
+
+
+def normalize(tree, **kw):
+    tree = ASTPatchSuper()(tree)
+    if kw.get('replaceops', False):
+        tree = ASTReplaceOps()(tree)
+    #tree = resolvetmpvars(tree)
+    #tree = astunparse.normalize(tree)
+    return tree
+
+
+def unnormalize(tree, **kw):
+    if kw.get('replaceops', False):
+        tree = ASTReplaceOpsInvert()(tree)
+    return tree
 
 
 class ASTVisitorLastFunction(ASTLocalAction):
@@ -640,15 +692,6 @@ class ASTVisitorLocals(ASTLocalAction):
 
     def End(self, tree):
         return self.locals
-
-
-def normalize(tree, **kw):
-    tree = ASTPatchSuper()(tree)
-    if kw.get('replaceops', False):
-        tree = ASTReplaceOps()(tree)
-    #tree = resolvetmpvars(tree)
-    #tree = astunparse.normalize(tree)
-    return tree
 
 
 def py2pys_check(jdict, visitor):
