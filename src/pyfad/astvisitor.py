@@ -435,24 +435,30 @@ class ASTReplaceOps(ASTLocalAction):
         pass
 
     def After(self, tree):
+        transformed = True
         if tree._class == "BinOp" and 'binop' in self.replace:
             if tree.op == "*" and tree.left._class == "Constant":
-                return Call(f'binop_c_{op_revname(tree.op)}', [tree.left, tree.right])
+                res = Call(f'binop_c_{op_revname(tree.op)}', [tree.left, tree.right])
             elif tree.op == "*" and tree.right._class == "Constant":
-                return Call(f'binop_d_{op_revname(tree.op)}', [tree.left, tree.right])
+                res = Call(f'binop_d_{op_revname(tree.op)}', [tree.left, tree.right])
             else:
-                return Call(f'binop_{op_revname(tree.op)}', [tree.left, tree.right])
+                res = Call(f'binop_{op_revname(tree.op)}', [tree.left, tree.right])
         elif tree._class == "UnaryOp" and 'unaryop' in self.replace:
-            return Call(f'unaryop_{op_revname_unary(tree.op)}', [tree.operand])
+            res = Call(f'unaryop_{op_revname_unary(tree.op)}', [tree.operand])
         elif tree._class == "CmpOp" and 'cmpop' in self.replace:
-            return Call(f'cmpop_{op_revname(tree.op)}', [tree.value])
+            res = Call(f'cmpop_{op_revname(tree.op)}', [tree.value])
         elif tree._class == "BoolOp" and 'boolop' in self.replace:
-            return Call(f'boolop_{op_revname(tree.op)}', tree.values)
+            res = Call(f'boolop_{op_revname(tree.op)}', tree.values)
         elif tree._class == "AugAssign" and 'augassign' in self.replace:
-            return Assign(tree.target, Call(f'binop_{op_revname(tree.op)}', [tree.target, tree.value]))
+            res = Assign(tree.target, Call(f'binop_{op_revname(tree.op)}', [tree.target, tree.value]))
         elif tree._class == "Attribute" and 'attribute' in self.replace:
-            return Call(f'getattr', [tree.value, Constant(tree.attr)])
-
+            res = Call(f'getattr', [tree.value, Constant(tree.attr)])
+        else:
+            transformed = False
+            res = tree
+        if transformed:
+            res.transformed = True
+        return res
 
 class ASTReplaceOpsInvert(ASTLocalAction):
 
@@ -467,20 +473,30 @@ class ASTReplaceOpsInvert(ASTLocalAction):
         pass
 
     def After(self, tree):
-        if 'binop' in self.replace and tree._class == "Call" and getattr(tree.func, 'id', '').startswith('binop_'):
-            return BinOp(op_unrevname(tree.func.id[6:]), tree.args[0], tree.args[1])
-        elif 'unaryop' in self.replace and tree._class == "Call" and getattr(tree.func, 'id', '').startswith('unaryop_'):
-            return UnaryOp(op_unrevname(tree.func.id[8:]), tree.args[0])
-        elif 'cmpop' in self.replace and tree._class == "Call" and getattr(tree.func, 'id', '').startswith('cmpop_'):
-            return CmpOp(op_unrevname(tree.func.id[6:]), tree.args[0], tree.args[1])
-        elif 'boolop' in self.replace and tree._class == "Call" and getattr(tree.func, 'id', '').startswith('boolop_'):
-            return CmpOp(op_unrevname(tree.func.id[7:]), tree.args[0], tree.args[1])
-        elif 'augassign' in self.replace and tree._class == "Assign" \
-             and len(tree.targets) == 1 and tree.value._class == "Call" \
-             and getattr(tree.value.func, 'id', '').startswith('binop_'):
-            return AugAssign(op_revname(tree.value.func.id), tree.targets[0], tree.value.args[1])
-        elif 'attribute' in self.replace and tree._class == "Call" and tree.func.id == 'op_getattr':
-            return Attribute(tree.args[0], tree.args[1].value)
+        if getattr(tree, 'transformed', False):
+            transformed = True
+            if 'binop' in self.replace and tree._class == "Call" and getattr(tree.func, 'id', '').startswith('binop_'):
+                res = BinOp(op_unrevname(tree.func.id[6:]), tree.args[0], tree.args[1])
+            elif 'unaryop' in self.replace and tree._class == "Call" and getattr(tree.func, 'id', '').startswith('unaryop_'):
+                res = UnaryOp(op_unrevname(tree.func.id[8:]), tree.args[0])
+            elif 'cmpop' in self.replace and tree._class == "Call" and getattr(tree.func, 'id', '').startswith('cmpop_'):
+                res = CmpOp(op_unrevname(tree.func.id[6:]), tree.args[0], tree.args[1])
+            elif 'boolop' in self.replace and tree._class == "Call" and getattr(tree.func, 'id', '').startswith('boolop_'):
+                res = BoolOp(op_unrevname(tree.func.id[7:]), tree.args[0], tree.args[1])
+            elif 'augassign' in self.replace and tree._class == "Assign" \
+                 and len(tree.targets) == 1 and tree.value._class == "Call" \
+                 and getattr(tree.value.func, 'id', '').startswith('binop_'):
+                res = AugAssign(op_revname(tree.value.func.id), tree.targets[0], tree.value.args[1])
+            elif 'attribute' in self.replace and tree._class == "Call" and tree.func.id == 'op_getattr':
+                res = Attribute(tree.args[0], tree.args[1].value)
+            else:
+                transformed = False
+                res = tree
+            if transformed:
+                res.untransformed = True
+        else:
+            res = tree
+        return res
 
 
 def normalize(tree, **kw):
