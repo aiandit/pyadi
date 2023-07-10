@@ -402,11 +402,11 @@ class ASTVisitorFMAD(ASTVisitorID):
         else:
             right = self.ddispatch(t.right.clone())
 
-        if t.op == '*':
+        if t.op == '*' or t.op == '@':
 
             if isdiff(t.left) and isdiff(t.right):
-                left_ = BinOp('*', left, t.right)
-                right_ = BinOp('*', t.left, right)
+                left_ = BinOp(t.op, left, t.right)
+                right_ = BinOp(t.op, t.left, right)
                 t = BinOp('+', left_, right_)
             else:
                 t.left = left
