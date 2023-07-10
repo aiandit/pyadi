@@ -8,7 +8,7 @@ me = sys.modules[__name__]
 
 call1 = [
     'binop_add', 'binop_sub', 'binop_mult', 'binop_matmult', 'binop_div', 'binop_floordiv', 'binop_mod', 'binop_pow',
-    'unaryop_uplus', 'unaryop_usub'
+    'unaryop_uadd', 'unaryop_usub'
 ]
 call2 = ['super']
 
