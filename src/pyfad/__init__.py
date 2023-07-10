@@ -1,7 +1,7 @@
 
 version = "1.0.0"
 
-from .pyfad import DiffFor, DiffFD
+from .pyfad import DiffFor, DiffFD, DiffFDNP
 from .pyfad import D, Diff, Dpy, diff2pys, differentiate, dargs, dzeros
 from .pyfad import nvars, varv, fill, czip, clear, NoRule
 from .pyfad import getRuleModules, getHandle, initRules

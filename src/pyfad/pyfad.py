@@ -1133,3 +1133,55 @@ def DiffFD(f, *args, **opts):
     elif isinstance(seed, list):
         dres = [ dirder(func, args, np.array(seeddir)) for seeddir in seed ]
     return dres, r
+
+
+def DiffFDNP(f, *args, **opts):
+
+    seed = opts.get('seed', 1)
+    active = opts.get('active', [])
+    h = opts.get('h', 1e-8)
+
+    if len(active) == 0:
+        func = f
+    else:
+        active = varspec(active)
+        sig = getsig(f)
+        inds = [sig.index(a) for a in sig if a in active]
+        fullargs = [v for v in args]
+
+        def inner(*aargs):
+            for i, k in enumerate(inds):
+                fullargs[k] = aargs[i]
+            return f(*fullargs)
+        func = inner
+        args = [args[i] for i in inds]
+
+    assert(len(args) == 1)
+
+    v = args[0]
+    v1 = v.copy()
+    v2 = v.copy()
+    N = v.size
+    h2 = h*2
+    r = func(*args)
+
+    if isgeneric(seed) and seed == 1:
+        seed = np.eye(N)
+
+    if isinstance(seed, list):
+        getcol = lambda i: seed[i]
+        ndd = len(seed)
+    else:
+        getcol = lambda i: seed[:,i]
+        n, ndd = seed.shape
+    
+    Jac = np.zeros((r.size, ndd))
+    for i in range(ndd):
+        v1.flat[:] = v.flat + h * getcol(i)
+        v2.flat[:] = v.flat - h * getcol(i)
+        r1 = func(v1)
+        r2 = func(v2)
+        #print('FDD', r1, r2)
+        Jac[:,i] = (r1 - r2)/h2
+
+    return Jac, r
