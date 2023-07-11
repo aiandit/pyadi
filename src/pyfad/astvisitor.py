@@ -683,8 +683,12 @@ class ASTVisitorLocals(ASTLocalAction):
         if tree._class == "FunctionDef":
             self.locals += [ tree.name ]
             self.locals += [ n.arg for n in tree.args.args ]
+            for deco in tree.decorator_list:
+                self.locals += self.getVars(deco)
             if tree.args.kwarg:
                 self.locals += [ tree.args.kwarg.arg ]
+            if tree.args.vararg:
+                self.locals += [ tree.args.vararg.arg ]
 
         elif tree._class == "Assign":
             for n in tree.targets:

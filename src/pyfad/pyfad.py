@@ -62,7 +62,7 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def __call__(self, tree):
         self.localvars = ASTVisitorLocals()(tree)
-        # print('locals', self.localvars)
+        print('LOCALS', self.localvars)
 
         self.result = self.dispatch(tree)
         return self.result
@@ -134,12 +134,26 @@ class ASTVisitorFMAD(ASTVisitorID):
     def _DFunctionDef(self, t):
         if t.name in self.active_methods or True:
 #            print(f'Catch Active FunctionDef {t.name} {vars(t)}')
-            t.name = dpref_ + t.name
             t.args = self.ddispatch(t.args)
             t.body = self.diffStmtList(t.body)
+            prestmts = []
             if t.args.kwarg:
-                t.body = [Assign(Tuple([Name('d_' + t.args.kwarg.arg), Name(t.args.kwarg.arg)]), Call('unjnd', Name(t.args.kwarg.arg)))] + t.body
-            t.decorator_list = []
+                prestmts += [Assign(Tuple([Name('d_' + t.args.kwarg.arg), Name(t.args.kwarg.arg)]), Call('unjnd', Name(t.args.kwarg.arg)))]
+            if t.args.vararg:
+                prestmts += [Assign(Tuple([Name('d_' + t.args.vararg.arg), Name(t.args.vararg.arg)]), Tuple([Subscript(Name(t.args.vararg.arg), Slice(0, s=2)), Subscript(Name(t.args.vararg.arg), Slice(1, s=2))]))]
+            t.body = prestmts + t.body
+            decos = []
+            for d in t.decorator_list:
+                if d._class == "Name":
+                    decos += [
+                        Lambda('f', Subscript(Call(Call('D', d), Tuple([Name('f'), Name(t.name)])), 0))
+                    ]
+                else:
+                    decos += [
+                        Lambda('f', Subscript(Call(Subscript(self.diffUnlessIsTupleDiff(d), 0), [Name('f'), Name(t.name)]), 0)) 
+                    ]
+            t.decorator_list = decos
+            t.name = dpref_ + t.name
         else:
             t.args = self.dispatch(t.args)
             t.body = self.dispatch(t.body)
@@ -811,7 +825,8 @@ def mkConstr(function):
 
 def DoDiffFunction(function, **opts):
 
-    _class, constr = None, None
+    _class, constr, deco = None, None, None
+
     if isinstance(function, type):
         # print(f'SD: {function.__name__} is a type!')
         _class = function
@@ -820,6 +835,16 @@ def DoDiffFunction(function, **opts):
         else:
             #print(f'SD: type {function.__name__} has a builtin cosntructor !')
             pass
+    else:
+        clos = getattr(function, '__closure__', None)
+        if clos is not None and len(clos) > 0:
+            if isinstance(clos[-1].cell_contents, type):
+                # print(f'Function {function} is a method, {function.__closure__[-1]}')
+                pass
+            else:
+                # print(f'Function {function} has a closure!, {function.__closure__[-1]}')
+                deco = function
+                function = clos[-1].cell_contents
 
     adfun = processRules(function, opts)
     print(f'adfun produced for {fqname(function)}: {adfun.__qualname__}')
