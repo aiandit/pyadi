@@ -140,7 +140,7 @@ class TestPyfad(unittest.TestCase):
 
     def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
-            args = [1,2,3]
+            args = [0.1,0.2,0.3]
         (d_r, r) = pyfad.DiffFor(func, *args, **kw)
         self.checkDer(func, args, d_r)
         self.checkResult(func, args, r)
@@ -286,7 +286,7 @@ class TestPyfad(unittest.TestCase):
         self.do_sourceDiff_f_x(fx.fbabylonian)
         pyfad.delrule(fx.gbabylonian)
 
-    def test_fxyz(self, module=None, args=[1,2,3]):
+    def test_fxyz(self, module=None, args=[0.1,0.2,0.3]):
         if module is None:
             module = fxyz
         fnames = [f for f in dir(module) if f[0] == 'f']
@@ -297,16 +297,16 @@ class TestPyfad(unittest.TestCase):
             self.do_sourceDiff_f_xyz(fn, args=args)
 
     def test_fxyz2(self):
-        self.test_fxyz(module=fxyz, args=[-1,2,3])
+        self.test_fxyz(module=fxyz, args=[-0.1,0.2,0.3])
 
     def test_fxyz3(self):
-        self.test_fxyz(module=fxyz, args=[1,-2,3])
+        self.test_fxyz(module=fxyz, args=[0.1,-0.2,0.3])
 
     def test_fxyz4(self):
-        self.test_fxyz(module=fxyz, args=[-1,-2,3])
+        self.test_fxyz(module=fxyz, args=[-0.1,-0.2,0.3])
 
     def test_fxyz5(self):
-        self.test_fxyz(module=fxyz, args=[-1,-2,-3])
+        self.test_fxyz(module=fxyz, args=[-0.1,-0.2,-0.3])
 
     def test_fx(self):
         self.test_fxyz(module=fx, args=[0.234])
