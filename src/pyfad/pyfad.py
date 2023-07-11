@@ -1145,8 +1145,12 @@ def DiffFDNP(f, *args, **opts):
         func = f
     else:
         active = varspec(active)
-        sig = getsig(f)
-        inds = [sig.index(a) for a in sig if a in active]
+        if isinstance(active[0], str):
+            sig = getsig(f)
+            inds = [sig.index(a) for a in sig if a in active]
+        else:
+            inds = active
+
         fullargs = [v for v in args]
 
         def inner(*aargs):
