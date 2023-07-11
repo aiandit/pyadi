@@ -160,6 +160,9 @@ class TestPyfad(unittest.TestCase):
     def test_sD_f3_call(self):
         self.do_sourceDiff_f_xyz(fxyz.f3)
 
+    def test_sD_fx_call(self):
+        self.do_sourceDiff_f_xyz(fx.fdeco, args=[1.2])
+
     def test_varv(self):
         obj = [1,2,3,4]
         if self.verbose > 0:
