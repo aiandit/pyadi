@@ -112,7 +112,7 @@ class TestNumpy(unittest.TestCase):
     def test_fsqr(self):
         X = np.zeros((2,2))
         X.flat[:] = [1, 2, 3, 4]
-        print(f'nvars: {pyfad.nvars(X)} {X.size}')
+        # print(f'nvars: {pyfad.nvars(X)} {X.size}')
         self.do_sourceDiff_f_xyz(fnp.gsqr, args=[X])
 
 
