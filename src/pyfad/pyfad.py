@@ -1000,12 +1000,10 @@ def dargs(args, seed=1):
 def createFullGradients(args):
     N = nvars(args)
     seeds = []
-    zargs = dzeros(args)
     for i in range(N):
         seed = [0] * N
         seed[i] = 1
-        dargs = fill(zargs, seed)
-        seeds.append(dargs)
+        seeds.append(seed)
     return seeds
 
 transformOps = {}
@@ -1046,10 +1044,16 @@ def DiffFor(function, *args, **opts):
         dargs = dx
     else:
         if isgeneric(seed) and seed == 1:
-            dargsList = createFullGradients(args)
+            seed = createFullGradients(args)
         elif isinstance(seed, list):
-            dargsList = [ fill(dzeros(args), seeddir) for seeddir in seed ]
-        dresult = [adfun(*zip(dargs, args)) for dargs in dargsList]
+            pass
+        else:
+            raise ValueError()
+
+        dargs = dzeros(args)
+        dresult = []
+        for s in seed:
+            dresult.append(adfun(*zip(fill(dargs, s), args)))
         result = dresult[0][1]
         dresult = [d for d, r in dresult]
 
@@ -1112,26 +1116,27 @@ def DiffFD(f, *args, **opts):
     h2 = h*2
     r = func(*args)
 
-    def dirder(func, args, seed):
+    def dirder(func, seed):
         #print('FDD', v, seed)
-        v1 = v + h * seed
-        v2 = v - h * seed
-        r1 = func(*fill(dargs, v1))
-        r2 = func(*fill(dargs, v2))
+        r1 = func(*fill(dargs, v + h * seed))
+        r2 = func(*fill(dargs, v - h * seed))
         #print('FDD', r1, r2)
         rv1 = np.array(varv(r1))
         rv2 = np.array(varv(r2))
         der = (rv1 - rv2)/h2
-        return fill(r, der)
+        return fill(dzeros(r), der)
 
+    # print('seed', seed)
     if isgeneric(seed) and seed == 1:
         dres = []
         for i in range(N):
             seed = np.zeros(N)
             seed[i] = 1
-            dres.append(dirder(func, args, seed))
+            dres.append(dirder(func, seed))
     elif isinstance(seed, list):
-        dres = [ dirder(func, args, np.array(seeddir)) for seeddir in seed ]
+        dres = [ dirder(func, np.array(seeddir)) for seeddir in seed ]
+    else:
+        raise ValuseError()
     return dres, r
 
 
@@ -1185,7 +1190,6 @@ def DiffFDNP(f, *args, **opts):
         v2.flat[:] = v.flat - h * getcol(i)
         r1 = func(v1)
         r2 = func(v2)
-        #print('FDD', r1, r2)
-        Jac[:,i] = (r1 - r2)/h2
+        Jac[:,i] = (r1.flat[:] - r2.flat[:])/h2
 
     return Jac, r
