@@ -55,13 +55,13 @@ def isdiff(tree):
 
 class ASTVisitorFMAD(ASTVisitorID):
 
-    active_objects = ['self', 'dself', 'dt']
-    active_fields = ['acc', 'vel', 'pos', 'axis', 'x', 'y', 'z']
-    active_methods = ['equations']
+    active_fields = []
+    active_methods = []
     localvars = []
 
     def __call__(self, tree):
-        self.localvars = ASTVisitorLocals()(tree)
+        self.localvars, self.localfuncs = ASTVisitorLocals()(tree)
+        self.active_methods += self.localfuncs
         print('LOCALS', self.localvars)
 
         self.result = self.dispatch(tree)
@@ -132,7 +132,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         return self.ddispatch(t)
 
     def _DFunctionDef(self, t):
-        if t.name in self.active_methods or True:
+        if t.name in self.active_methods:
 #            print(f'Catch Active FunctionDef {t.name} {vars(t)}')
             t.args = self.ddispatch(t.args)
             t.body = self.diffStmtList(t.body)
@@ -178,10 +178,9 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _DLambda(self, node):
-        node.args = self.ddispatch(node.args)
         bck = self.localvars
         self.localvars += ASTVisitorLocals.getVars(node.args.args)
-        print('locals', ASTVisitorLocals.getVars(node.args.args), self.localvars)
+        node.args = self.ddispatch(node.args)
         self.localvars = bck
         node.body = self.diffUnlessIsTupleDiff(node.body)
         return node
@@ -259,7 +258,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         dargs = []
         curargs = node.args
         for t in curargs:
-            if t.arg in self.active_objects or True:
+            if t.arg in self.localvars:
                 tr1 = self.ddispatch(t.clone())
                 dargs += [tr1]
         node.args = list(chain(*zip(dargs, curargs)))
@@ -309,7 +308,7 @@ class ASTVisitorFMAD(ASTVisitorID):
         return [keyword(None, zcall)]
 
     def _Darg(self, t):
-        if t.arg in self.active_objects or True:
+        if t.arg in self.localvars:
             t.arg = dpref_ + t.arg
             #print('   * active arg', t.arg)
         return t
@@ -571,7 +570,6 @@ def differentiate(intree, activef=None, active=None, modules=None, filter=False,
         fmadtrans.active_fields = sig
     else:
         fmadtrans.active_fields = varspec(active)
-    fmadtrans.active_objects = ['self', 'dself', 'dt'] + fmadtrans.active_fields
 
     dtree = diff2pys(intree, fmadtrans, **kw)
     return dtree

@@ -678,9 +678,11 @@ class ASTVisitorLocals(ASTLocalAction):
 
     def Begin(self, tree):
         self.locals = []
+        self.localfuncs = []
 
     def Before(self, tree):
         if tree._class == "FunctionDef":
+            self.localfuncs += [ tree.name ]
             self.locals += [ tree.name ]
             self.locals += [ n.arg for n in tree.args.args ]
             for deco in tree.decorator_list:
@@ -704,7 +706,7 @@ class ASTVisitorLocals(ASTLocalAction):
             self.locals += [ self.getRoot(s.optional_vars).id for s in tree.items if s.optional_vars is not None ]
 
     def End(self, tree):
-        return self.locals
+        return self.locals, self.localfuncs
 
 
 def py2pys_check(jdict, visitor):
