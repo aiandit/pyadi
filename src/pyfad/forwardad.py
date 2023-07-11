@@ -130,7 +130,7 @@ def D_builtins_max(r, dx, x, dy, y):
 
 
 def D_builtins_abs(r, dx, x):
-    return 1 if not(x < 0) else -1
+    return dx * (1 if not(x < 0) else -1)
 
 
 def D_builtins_sum(r, dx, x):
