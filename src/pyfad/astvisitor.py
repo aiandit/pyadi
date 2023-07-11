@@ -167,13 +167,6 @@ def getast(func):
     return tree, imports, modules
 
 
-def updateDModDict(func, dtree):
-    mod, modfile = getmodule(func)
-    moddict = modastcache[mod]["dict"]
-    newitems = ASTVisitorDict()(dtree)
-    moddict.update(newitems)
-
-
 def py(func, info=False):
     tree, imports, modules = getast(func)
     src = unparse(tree).strip()

@@ -646,7 +646,6 @@ Source:
 """)
         raise ex
 
-    astvisitor.updateDModDict(dfunc, dsrc)
     return (dfunc, active)
 
 
