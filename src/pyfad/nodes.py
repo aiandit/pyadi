@@ -28,6 +28,12 @@ class FunctionDef(ASTNode):
         self.body = l
         self.decorator_list = []
 
+class Lambda(ASTNode):
+    def __init__(self, args, l):
+        self._class = 'Lambda'
+        self.args = arguments([arg(n) for n in args])
+        self.body = l
+
 class Return(ASTNode):
     def __init__(self, val):
         self._class = 'Return'
@@ -57,11 +63,23 @@ class Module(ASTNode):
         self._class = 'Module'
         self.body = body
 
+
+class Slice(ASTNode):
+    def __init__(self, l, u=None, s=None):
+        self._class = 'Slice'
+        self.lower = Constant(l) if isinstance(l, int) else l
+        self.upper = Constant(u) if isinstance(u, int) else u
+        self.step = Constant(s) if isinstance(s, int) else s
+
+
 class Subscript(ASTNode):
     def __init__(self, v, ind):
         self._class = "Subscript"
         self.value = v
-        self.slice = Constant(ind)
+        if isinstance(ind, int):
+            self.slice = Constant(ind)
+        else:
+            self.slice = ind
 
 
 class Attribute(ASTNode):
