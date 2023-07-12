@@ -17,7 +17,7 @@ class Timer():
         self.t1 = time.time()
         self.active = False
         self.register()
-        if self.verbose > 1:
+        if self.verbose > 0:
             print(f'Timer {self.func} {self.kind}: {self}')
         if self.kind == 'adrun':
             ev = self.getev(self.func, 'run')

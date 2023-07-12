@@ -92,7 +92,7 @@ def getmoddict(mod, **opts):
         imports, modules = ASTVisitorImports()(tree)
         moddict = ASTVisitorDict()(tree)
         modastcache[mod] = {'name': mod, "file": modfile, "data": (tree, imports, modules), "dict": moddict}
-        resolveImports(mod, modfile, moddict, imports, modules)
+        resolveImports(mod, modfile, moddict, imports, modules, **opts)
         if opts.get('verbose', 0):
             print(f'Load and parse module {mod} source from {modfile}')
         t1 = time.time()
@@ -155,7 +155,7 @@ def resolveImports(mod, modfile, moddict, imports, modules, **opts):
     return moddict
 
 
-def getast(func):
+def getast(func, **kw):
     # ta0 = time.time()
     mod, modfile = getmodule(func)
     # print(f'Get SRC and AST: {func.__qualname__} in {mod} file {modfile}')
@@ -163,7 +163,7 @@ def getast(func):
         print(f'No source for {mod}.{fqname(func)}')
         raise(NoSource(f'No source for {mod}.{fqname(func)}'))
 
-    moddict, imports, modules = getmoddict(mod)
+    moddict, imports, modules = getmoddict(mod, **kw)
 
     try:
         tree = moddict[fname(func)]

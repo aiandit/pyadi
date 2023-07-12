@@ -41,6 +41,9 @@ def setprefix(diff, tmp, common=''):
     astvisitor.setprefix(common + tmp)
 
 
+dumpDir = '.'
+def dumpFile(fname): return os.path.join(dumpDir, fname)
+
 def czip(a, b):
     return chain(*zip(a, b))
 
@@ -152,7 +155,7 @@ class ASTVisitorFMAD(ASTVisitorID):
                     ]
                 else:
                     decos += [
-                        Lambda('f', Subscript(Call(Subscript(self.diffUnlessIsTupleDiff(d), 0), [Name('f'), Name(t.name)]), 0)) 
+                        Lambda('f', Subscript(Call(Subscript(self.diffUnlessIsTupleDiff(d), 0), [Name('f'), Name(t.name)]), 0))
                     ]
             t.decorator_list = decos
             t.name = dpref_ + t.name
@@ -532,7 +535,7 @@ def diff2pys(intree, visitor, **kw):
     #    print('canon', unparse2j(intree, indent=1), file=open('canon.json', 'w'))
     #    print('canon', unparse(intree), file=open('canon.py', 'w'))
     if kw.get('verbose', 0) > 1:
-        print('Preprocessed code for {intree.name}:', unparse(intree))
+        print(f'Preprocessed code for {intree.name}:', unparse(intree))
 #    print('canon', unparse2j(intree, indent=1), file=open('norm.json', 'w'))
 #    print('canon', unparse(intree), file=open('norm.py', 'w'))
 #    print('canon', unparse(intree))
@@ -541,12 +544,14 @@ def diff2pys(intree, visitor, **kw):
 #    outtree = resolvetmpvars(outtree)
     outtree = unnormalize(outtree.clone(), **kw)
     if kw.get('dump', 0):
-        print(unparse2x(outtree, indent=1), file=open(self.dumpFile('outtree.xml'), 'w'))
+        print(unparse2x(outtree, indent=1), file=open(dumpFile('outtree.xml'), 'w'))
     return outtree
 
 
 def differentiate(intree, activef=None, active=None, modules=None, filter=False, prefix=None, **kw):
     fmadtrans = ASTVisitorFMAD()
+
+    fmadtrans.verbose = kw.get('verbose', 0)
 
     if prefix:
         while len(prefix) < 3:
@@ -603,7 +608,7 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
 #    dsrc = f"{importstr}\n{source}\n{collectstr}"
     dsrc = f"{source}\n{collectstr}"
     if kw.get('verbose', 0):
-        print(f"{source}")
+        print(f'Differentiated code {source.name}: {source}')
     sfname = ""
     if Debug or True:
         tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
@@ -638,7 +643,7 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
 
 
 def Dpy(func, active=[], **kw):
-    csrc, imports, modules = getast(func)
+    csrc, imports, modules = getast(func, **kw)
     dtree = differentiate(csrc, activef=func.__name__, active=active, modules=modules, **kw)
     return dtree
 
@@ -648,9 +653,9 @@ def difffunction(func, active=[], **kw):
     try:
         fkey = dpref_ + func.__name__
         # globals = func.__globals__ if not isinstance(func, type) else func.__init__.__globals__
-        dfunc = execompile(dsrc, vars=[fkey], fglobals=func.__globals__)
+        dfunc = execompile(dsrc, vars=[fkey], fglobals=func.__globals__, **kw)
         dfunc = dfunc[fkey]
-        mod, modfile = getmodule(dfunc)
+        # mod, modfile = getmodule(dfunc)
         #setattr(sys.modules[mod], dfunc.__name__, dfunc)
         #print(f'Produced AD function: {dfunc.__qualname__}, added to module {mod}')
     except BaseException as ex:
@@ -1040,18 +1045,19 @@ def DiffFor(function, *args, **opts):
     global transformOps
     transformOps = opts
 
+    verbose = opts.get('verbose', 0)
     timings = opts.get('timings', True)
     if timings:
-        with Timer(function.__qualname__, 'run') as t:
+        with Timer(function.__qualname__, 'run', verbose=verbose-1) as t:
             result = function(*args)
 
     if timings:
 
-        with Timer(function.__qualname__, 'diff') as t:
+        with Timer(function.__qualname__, 'diff', verbose=verbose-1) as t:
             adfunOrig = D(function, **opts)
 
         def TimeIt(*args, **kw):
-            with Timer(function.__qualname__, 'adrun') as t:
+            with Timer(function.__qualname__, 'adrun', verbose=verbose) as t:
                 return adfunOrig(*args, **kw)
         adfun = TimeIt
 
@@ -1088,7 +1094,7 @@ def DiffFor(function, *args, **opts):
     return dresult, result
 
 
-def Diff(active='all'):
+def Diff(active='all', **opts):
     def _pyfad_diff(function):
 
         adc = {'f': None}
@@ -1100,7 +1106,7 @@ def Diff(active='all'):
                 result = function(*args)
 
                 if adc['f'] is None:
-                    (adfun, actind) = difffunction(function, active=active)
+                    (adfun, actind) = difffunction(function, active=active, **opts)
                     adc['f'] = (adfun, actind)
                 else:
                     (adfun, actind) = adc['f']
@@ -1211,7 +1217,7 @@ def DiffFDNP(f, *args, **opts):
     else:
         getcol = lambda i: seed[:,i]
         n, ndd = seed.shape
-    
+
     Jac = np.zeros((r.size, ndd))
     for i in range(ndd):
         v1.flat[:] = v.flat + h * getcol(i)
