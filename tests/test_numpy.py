@@ -22,7 +22,6 @@ def almostEqFD(r1, r2):
 
 def almostEq(r1, r2, tol=tolAD):
     d = relNormMax(r1, r2)
-    print('rel error', d)
     return d < tol
 
 

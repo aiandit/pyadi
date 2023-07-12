@@ -17,7 +17,7 @@ def mkreq(x):
     re.headers['X-Test'] = f'{x}'
 #    re.prepare()
 
-    print(re)
+    #print(re)
 
     return x+2
 
@@ -25,13 +25,15 @@ class TestPyTracer(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print('SETUP Class')
+        # print('SETUP Class')
         pyfad.initRules(rules='pyfad.trace,pyfad.dummyad,tr2=pyfad.trace', tracecalls=True)
         cls.handle_ = pyfad.getHandle('pyfad.trace')
         cls.handle = lambda x, *args, **kw: cls.handle_(*args, **kw)
 
         cls.handle2_ = pyfad.getHandle('tr2')
         cls.handle2 = lambda x, *args, **kw: cls.handle2_(*args, **kw)
+
+        cls.verbose = 0
 
     def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
@@ -71,10 +73,12 @@ class TestPyTracer(unittest.TestCase):
 
     def test_tr_verbose(self):
         hist = pyfad.getHandle('pyfad.trace')(get='hist')
-        print('** Get trace history: ', hist)
+        if self.verbose:
+            print('** Get trace history: ', hist)
         dres, res = self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234], verbose=True)
         hist = pyfad.getHandle('pyfad.trace')(get='hist')
-        print('Get trace history: ', hist)
+        if self.verbose:
+            print('Get trace history: ', hist)
 
     def startStopExecution(self, handle, cvsleep, delay=1e-1):
         while True:
@@ -115,12 +119,14 @@ class TestPyTracer(unittest.TestCase):
         self.handle(done=True)
         cvsleep.release()
         tr.join()
-        print('Start/Stop thread joined, finish.')
+        if self.verbose:
+            print('Start/Stop thread joined, finish.')
 
     def _test_tr_loadast(self):
 
-        print('Test function', ftrace.floadast(0))
-        print('Test gunction', ftrace.gunparse(ftrace.floadast(0)))
+        if self.verbose:
+            print('Test function', ftrace.floadast(0))
+            print('Test gunction', ftrace.gunparse(ftrace.floadast(0)))
 
         self.do_sourceDiff_f_xyz(ftrace.floadast, args=[0.234])
         self.do_sourceDiff_f_xyz(ftrace.floadast, args=[0.234])

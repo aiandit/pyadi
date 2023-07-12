@@ -167,12 +167,16 @@ class Plane2(Root):
     velocity = 100
     gas = 1e2
     consumption = 10
+    verbose = 0
     def __init__(self, c, **kw):
         self.consumption = c
+        self.verbose = kw.get('verbose', 0)
         super(Plane2, self).__init__(**kw)
-        print(f'Plane2.init v={self.velocity}')
+        if self.verbose > 0:
+            print(f'Plane2.init v={self.velocity}')
     def fly(self, t):
-        print(f'Plane2.fly t={t} v={self.velocity}')
+        if self.verbose > 0:
+            print(f'Plane2.fly t={t} v={self.velocity}')
         dist = self.velocity * t
         self.distance += dist
         self.gas -= self.consumption * dist
@@ -183,30 +187,34 @@ class Plane3(Plane2):
     def __init__(self, h, **kw):
         sinit = super(Plane3, self).__init__(**kw)
         self.heading = h
-        print(f'Plane3.init v={self.velocity}')
+        if self.verbose:
+            print(f'Plane3.init v={self.velocity}')
     def fly(self, t):
-        print(f'Plane3.fly t={t} v={self.velocity}')
+        if self.verbose:
+            print(f'Plane3.fly t={t} v={self.velocity}')
         vel = self.velocity
         self.velocity += -self.wind * atan(self.heading)
         super(Plane3, self).fly(t)
         self.velocity = vel
 
-def fplane2(x):
+def fplane2(x, **kw):
     y = x*x
     o = Plane2(y)
     o.fly(y)
     r = o.distance + o.gas
-    print('Plane fly dist', o.distance)
+    if kw.get('verbose', 0) > 0:
+        print('Plane2 fly dist', o.distance)
     return r
 
 
-def fplane3(x):
+def fplane3(x, **kw):
     y = x*2
     l = [x, x*x, x*x*x ]
     o = Plane3(h=y, c=x)
     r = [ o.fly(t) for t in l ]
     r = o.distance + o.gas + o.heading + o.wind
-    print('Plane fly dist', o.distance, o.heading)
+    if kw.get('verbose', 0) > 0:
+        print('Plane3 fly dist', o.distance, o.heading)
     return r
 
 class Plane4(Plane2):
@@ -215,21 +223,24 @@ class Plane4(Plane2):
     def __init__(self, h, **kw):
         sinit = super().__init__(**kw)
         self.heading = h
-        print(f'Plane3.init v={self.velocity}')
+        if self.verbose:
+            print(f'Plane4.init v={self.velocity}')
     def fly(self, t):
-        print(f'Plane3.fly t={t} v={self.velocity}')
+        if self.verbose:
+            print(f'Plane4.fly t={t} v={self.velocity}')
         vel = self.velocity
         self.velocity += -self.wind * atan(self.heading)
         super().fly(t)
         self.velocity = vel
 
-def fplane4(x):
+def fplane4(x, **kw):
     y = x*2
     l = [x, x*x, x*x*x ]
     o = Plane4(h=y, c=x)
     r = [ o.fly(t) for t in l ]
     r = o.distance + o.gas + o.heading + o.wind
-    print('Plane fly dist', o.distance, o.heading)
+    if kw.get('verbose', 0) > 0:
+        print('Plane4 fly dist', o.distance, o.heading)
     return r
 
 def gl_sum(x):
@@ -359,20 +370,23 @@ def fdict5(x):
         s += gl_sum(d2[k])
     return s
 
-def fprint(x):
+def fprint(x, **kw):
     l = [f1(x), 2*x, 3*x]
-    print(l)
+    if kw.get('verbose', 0) > 0:
+        print(l)
     assert len(l) == 3
     if x == 0:
         raise(ValueError())
     return gl_sum2(l)
 
-def fprint2(x):
+def fprint2(x, **kw):
     l = [x, x*x, x*x*x]
-    print(l)
-    print(f'The first element of l is {l[0]}')
+    if kw.get('verbose', 0) > 1:
+        print(l)
+        print(f'The first element of l is {l[0]}')
     for i in range(len(l)):
-        print(f'The {i}-th element of l is {l[i]}')
+        if kw.get('verbose', 0) > 1:
+            print(f'The {i}-th element of l is {l[i]}')
     return sum(l)
 
 def g2(x,y): return x*y
@@ -728,25 +742,21 @@ def glist2(a,b,c):
 def fcalltpl(x):
     l = [x, x*x, x*x*x]
     r1, r2, r3 = gtpl(*l)
-    print(f'fcalltpl: {r1} {r2} {r3}')
     return r1+r2+r3
 
 def fcalltpl2(x):
     l = [x, x*x, x*x*x]
     r = gtpl2(*l)
-    print(f'fcalltpl: {r}')
     return gl_sum(r)
 
 def fcallglist(x):
     l = [x, x*x, x*x*x]
     r1, r2, r3 = glist(*l)
-    print(f'fcalllist: {r1} {r2} {r3}')
     return r1+r2+r3
 
 def fcallglist2(x):
     l = [x, x*x, x*x*x]
     r = glist2(*l)
-    print(f'fcalllist: {r}')
     return gl_sum(r)
 
 def glong3(l):
