@@ -4,7 +4,7 @@ from . import *
 from astunparse import unparse, unparse2j, unparse2x, loadastpy
 
 def pycanon():
-    run(lambda x, y, **kw: unparse(normalize(canonicalize(loadastpy(x, **kw)), **kw)),
+    run(lambda x, y, **kw: unparse(canonicalize(normalize(loadastpy(x, **kw)), **kw)),
         prog="pycanon", description="Canonicalize Python source code")
 
 def pydiff():
