@@ -58,11 +58,13 @@ class ASTVisitorFMAD(ASTVisitorID):
     active_fields = []
     active_methods = []
     localvars = []
+    verbose = 0
 
     def __call__(self, tree):
         self.localvars, self.localfuncs = ASTVisitorLocals()(tree)
         self.active_methods += self.localfuncs
-        print('LOCALS', self.localvars)
+        if self.verbose > 1:
+            print(f'Locals of {tree.name}', self.localvars)
 
         self.result = self.dispatch(tree)
         return self.result
@@ -526,10 +528,11 @@ def diff2pys(intree, visitor, **kw):
 #   print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
     intree = normalize(intree.clone(), **kw)
     intree = canonicalize(intree)
-#    intree = resolvetmpvars(intree)
-#    print('canon', unparse2j(intree, indent=1), file=open('canon.json', 'w'))
-#    print('canon', unparse(intree), file=open('canon.py', 'w'))
-    print('canon', unparse(intree))
+    #    intree = resolvetmpvars(intree)
+    #    print('canon', unparse2j(intree, indent=1), file=open('canon.json', 'w'))
+    #    print('canon', unparse(intree), file=open('canon.py', 'w'))
+    if kw.get('verbose', 0) > 1:
+        print('Preprocessed code for {intree.name}:', unparse(intree))
 #    print('canon', unparse2j(intree, indent=1), file=open('norm.json', 'w'))
 #    print('canon', unparse(intree), file=open('norm.py', 'w'))
 #    print('canon', unparse(intree))
@@ -537,7 +540,8 @@ def diff2pys(intree, visitor, **kw):
 #    print('outtree', unparse2j(outtree, indent=1), file=open('outtree.json', 'w'))
 #    outtree = resolvetmpvars(outtree)
     outtree = unnormalize(outtree.clone(), **kw)
-    print('outtree', unparse2x(outtree, indent=1), file=open('outtree.xml', 'w'))
+    if kw.get('dump', 0):
+        print(unparse2x(outtree, indent=1), file=open(self.dumpFile('outtree.xml'), 'w'))
     return outtree
 
 
@@ -598,7 +602,8 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
 
 #    dsrc = f"{importstr}\n{source}\n{collectstr}"
     dsrc = f"{source}\n{collectstr}"
-    print(f"{source}")
+    if kw.get('verbose', 0):
+        print(f"{source}")
     sfname = ""
     if Debug or True:
         tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
@@ -649,8 +654,8 @@ def difffunction(func, active=[], **kw):
         #setattr(sys.modules[mod], dfunc.__name__, dfunc)
         #print(f'Produced AD function: {dfunc.__qualname__}, added to module {mod}')
     except BaseException as ex:
-        print(unparse2j(dsrc, indent=1), file=open('d_failed.json', 'w'))
-        print(unparse(dsrc), file=open('d_failed.py', 'w'))
+        print(unparse2j(dsrc, indent=1), file=open(dumpFile('d_failed.json'), 'w'))
+        print(unparse(dsrc), file=open(dumpFile('d_failed.py'), 'w'))
         print(f"""Failed to load diff code, exception:
 {ex}
 Source:
@@ -845,7 +850,8 @@ def DoDiffFunction(function, **opts):
                 function = clos[-1].cell_contents
 
     adfun = processRules(function, opts)
-    print(f'adfun produced for {fqname(function)}: {adfun.__qualname__}')
+    if opts.get('verbose', 0):
+        print(f'AD function produced for {fqname(function)}: {adfun.__qualname__}')
 
     def theADFun(*ADargs, **kw):
 

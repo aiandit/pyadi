@@ -71,15 +71,15 @@ def D_builtins_print(r, *args):
     return 0
 
 def D_builtins_super(r, *args):
-    print('D_super', *args)
+    #print('D_super', *args)
     return super(*args[0::2])
 
 def E_builtins_super___init__(*args, **kw):
-    print('E_super___init___builtins', *args)
+    #print('E_super___init___builtins', *args)
     return args[0], args[1]
 
 def E_builtins_object___init__(*args, **kw):
-    print('E_object___init___builtins', *args)
+    #print('E_object___init___builtins', *args)
     return args[0], args[1]
 
 def D_builtins_dict(r, *args, **d_kw):
@@ -93,6 +93,9 @@ def D_builtins_dict_keys(r, dx, x):
 
 def D_builtins_dict_values(r, dx, x):
     return dx.values()
+
+def D_builtins_dict_get(r, dx, x, dk, k, dd, d):
+    return dx.get(dk, dd)
 
 def D_builtins_list(r, dx, x):
     return list(dx)

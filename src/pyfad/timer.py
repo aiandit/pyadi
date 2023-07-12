@@ -3,12 +3,13 @@ import time
 events = {}
 class Timer():
     pref = ['m', 'µ', 'n', 'p']
-    def __init__(self, func, kind):
+    def __init__(self, func, kind, verbose=0, **kw):
         self.func = func
         self.kind = kind
         self.t0 = 0
         self.t1 = 0
         self.active = False
+        self.verbose = verbose
     def __enter__(self):
         self.t0 = time.time()
         self.active = True
@@ -16,13 +17,15 @@ class Timer():
         self.t1 = time.time()
         self.active = False
         self.register()
-        print(f'Timer {self.func} {self.kind}: {self}')
+        if self.verbose > 1:
+            print(f'Timer {self.func} {self.kind}: {self}')
         if self.kind == 'adrun':
             ev = self.getev(self.func, 'run')
             if ev:
                 f = self.millis() / ev['t']
                 ot = self.fmt(ev['t'])
-                print(f'AD factor {self.func}: {self} / {ot} = {f:.2f}')
+                if self.verbose > 0:
+                    print(f'AD factor {self.func}: {self} / {ot} = {f:.2f}')
 
     def millis(self):
         return 1e3*((time.time() if self.active else self.t1) - self.t0)

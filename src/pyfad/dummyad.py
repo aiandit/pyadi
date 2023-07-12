@@ -16,11 +16,11 @@ call2 = ['super']
 def mkCall(f):
     def run(*args, **kw):
         d_kw, kw = unjnd(kw)
-        print(f'Run function {f.__name__} ({args}), kw={kw}, d_kw={d_kw}')
+        # print(f'Run function {f.__name__} ({args}), kw={kw}, d_kw={d_kw}')
         dres = f(*args[1::2], **kw)
         dres = dzeros(dres)
         res = f(*args[1::2], **kw)
-        print(f'dzeros {res} {dres}')
+        # print(f'dzeros {res} {dres}')
         return dres, res
     return run
 
@@ -41,7 +41,7 @@ def decorator(**opts):
 
     def inner(done, key, f, *args, **kw):
 
-        print(f'D1 {f.__qualname__} before')
+        # print(f'D1 {f.__qualname__} before')
 
         if f.__name__ in call2:
             return mkCall2(f)
@@ -51,7 +51,7 @@ def decorator(**opts):
 
         res = done(key)
 
-        print(f'D2 {f.__qualname__} after')
+        # print(f'D1 {f.__qualname__} after')
 
         return res
 

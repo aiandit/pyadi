@@ -29,7 +29,7 @@ def dzeros(args, lev=0):
             for a in fnames:
                 setattr(args, a, dzeros(getattr(args, a), lev))
         except BaseException as ex:
-            print(ex)
+            # print(ex)
             pass
         return args
     return args

@@ -74,10 +74,11 @@ def isbuiltin(func):
 
 
 modastcache = {}
-def getmoddict(mod):
+def getmoddict(mod, **opts):
     modfile = getattr(sys.modules.get(mod, {}), '__file__', None)
     if modfile is None or modfile.endswith('.so'):
-        print(f'No source for module {mod}')
+        if opts.get('verbose', 0):
+            print(f'No source for module {mod}')
         raise NoSource(f'No source for module {mod}')
     if mod in modastcache:
         centry = modastcache[mod]
@@ -92,16 +93,19 @@ def getmoddict(mod):
         moddict = ASTVisitorDict()(tree)
         modastcache[mod] = {'name': mod, "file": modfile, "data": (tree, imports, modules), "dict": moddict}
         resolveImports(mod, modfile, moddict, imports, modules)
-        print(f'Load and parse module {mod} source from {modfile}')
+        if opts.get('verbose', 0):
+            print(f'Load and parse module {mod} source from {modfile}')
         t1 = time.time()
-        print(f'Load and parse module {mod} source from {modfile}: {1e3*(t1-t0):.1f} ms')
+        if opts.get('verbose', 0):
+            print(f'Load and parse module {mod} source from {modfile}: {1e3*(t1-t0):.1f} ms')
     return moddict, imports, modules
 
 
-def resolveImports(mod, modfile, moddict, imports, modules):
+def resolveImports(mod, modfile, moddict, imports, modules, **opts):
     pkgs = mod.split('.')
     moduleImports = {}
-    print(f'Resolve imports for {mod}, {modfile}')
+    if opts.get('verbose', 0):
+        print(f'Resolve imports for {mod}, {modfile}')
     # print(f'Resolve imports for {mod}, {modfile}:, imports={imports}, modules={modules}')
     # print(f'moddict={moddict.keys()}')
     for name in imports:
@@ -112,7 +116,8 @@ def resolveImports(mod, modfile, moddict, imports, modules):
             if imod not in moduleImports:
                 moduleImports[imod] = {}
             moduleImports[imod].update({ name:  impentry[imod] })
-    print(f'moduleImports={moduleImports}')
+    if opts.get('verbose', 0) > 1:
+        print(f'moduleImports={moduleImports}')
     for imod in moduleImports:
         modname, level = imod
         if modname is None:
@@ -125,7 +130,8 @@ def resolveImports(mod, modfile, moddict, imports, modules):
             prepkgs = pkgs if ilevel <= 0 else pkgs[0:-ilevel]
             prepkgs += [modname]
             modname_ = '.'.join(prepkgs)
-            print(f'Get local import {modname}, {level}, {ilevel}, {pkgs} => {modname_}')
+            if opts.get('verbose', 0) > 1:
+                print(f'Get local import {modname}, {level}, {ilevel}, {pkgs} => {modname_}')
             modname = modname_
         try:
             impd, _, _ = getmoddict(modname)
@@ -135,14 +141,17 @@ def resolveImports(mod, modfile, moddict, imports, modules):
         imodimps = moduleImports[imod]
         for name, impname in imodimps.items():
             if name == "*":
-                print(f'Import {impname} from import module {modname} as {name} into {mod}')
+                if opts.get('verbose', 0) > 0:
+                    print(f'Import {impname} from import module {modname} as {name} into {mod}')
                 moddict.update(impd)
             else:
                 if impname in impd:
-                    print(f'Import {impname} from module {modname} into {mod} as {name}')
+                    if opts.get('verbose', 0) > 0:
+                        print(f'Import {impname} from module {modname} into {mod} as {name}')
                     moddict[name] = impd[impname]
                 else:
-                    print(f'Import {impname} from module {modname} into {mod} as {name} is likely a module.')
+                    if opts.get('verbose', 0) > 0:
+                        print(f'Import {impname} from module {modname} into {mod} as {name} is likely a module.')
     return moddict
 
 
