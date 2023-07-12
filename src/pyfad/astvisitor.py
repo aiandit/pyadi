@@ -398,12 +398,15 @@ def resolvetmpvars(tree, **kw):
 class ASTPatchSuper(ASTLocalAction):
 
     def Begin(self, tree):
-        self.seen = {}
+        self.func = None
 
     def Before(self, tree):
-        if tree._class == "Call" and getattr(tree.func, 'id', '') == "super":
+        if tree._class == "FunctionDef":
+            self.func = tree
+        elif tree._class == "Call" and getattr(tree.func, 'id', '') == "super":
+            selfname = self.func.args.args[0].arg
             if len(tree.args) == 0:
-                tree.args = [Attribute(Name('self'), '__class__'), Name('self')]
+                tree.args = [Attribute(Name(selfname), '__class__'), Name(selfname)]
             return (tree, True)
 
 
