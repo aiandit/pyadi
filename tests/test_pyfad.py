@@ -66,6 +66,7 @@ class TestPyfad(unittest.TestCase):
         pyfad.initRules(rules='ad=pyfad.forwardad')
         pyfad.clear()
         cls.verbose = 0
+        cls.dump = 0
 
     def assertEq(self, f, r1, r2):
         if not almostEq(r1, r2):
@@ -87,24 +88,24 @@ class TestPyfad(unittest.TestCase):
         self.assertTrue(self.assertEq(func, func(*args), res))
 
     def checkDer(self, func, args, dx, seed=1, active=[], **kw):
-        (der, r) = pyfad.DiffFD(func, *args, seed=seed, active=active, h=fdH)
+        (der, r) = pyfad.DiffFD(func, *args, seed=seed, active=active, h=fdH, verbose=self.verbose, dump=self.dump)
         if self.verbose > 0:
             print('cd', (der, dx))
         self.assertTrue(self.assertEqFD(func, dx, der))
 
     def test_D_f1(self):
-        df = pyfad.D(f1)
+        df = pyfad.D(f1, verbose=self.verbose, dump=self.dump)
         if self.verbose > 0:
             print('test f1', df)
 
     def test_Diff_f1(self):
-        df = pyfad.Diff(f1)
+        df = pyfad.Diff(f1, verbose=self.verbose, dump=self.dump)
         if self.verbose > 0:
             print('test2', df)
 
     axyz = ['x', 'y', 'z']
     def test_D_f1_active(self):
-        df = pyfad.D(f1, active=self.axyz)
+        df = pyfad.D(f1, active=self.axyz, verbose=self.verbose, dump=self.dump)
         if self.verbose > 0:
             print('test f1', df)
             print('test f1 f', pyfad.py(f1))
@@ -112,7 +113,7 @@ class TestPyfad(unittest.TestCase):
 
     def do_call_xyz(self, func, args):
         y = func(*args)
-        df = pyfad.D(func, active=self.axyz)
+        df = pyfad.D(func, active=self.axyz, verbose=self.verbose, dump=self.dump)
         if self.verbose > 0:
             print('df', df)
         args = list(args)
@@ -141,7 +142,7 @@ class TestPyfad(unittest.TestCase):
     def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
             args = [0.1,0.2,0.3]
-        (d_r, r) = pyfad.DiffFor(func, *args, **kw)
+        (d_r, r) = pyfad.DiffFor(func, *args, **kw, verbose=self.verbose, dump=self.dump)
         self.checkDer(func, args, d_r)
         self.checkResult(func, args, r)
         return (d_r, r)
@@ -204,13 +205,13 @@ class TestPyfad(unittest.TestCase):
     def test_DiffFD_sin(self):
         f = fx.fsin
         x = 2
-        dr, r = pyfad.DiffFD(f, x)
+        dr, r = pyfad.DiffFD(f, x, verbose=self.verbose, dump=self.dump)
         self.assertTrue(self.assertEqFD(f, dr, math.cos(x)))
 
     def test_DiffFD_cos(self):
         f = fx.fcos
         x = 2
-        dr, r = pyfad.DiffFD(f, x)
+        dr, r = pyfad.DiffFD(f, x, verbose=self.verbose, dump=self.dump)
         self.assertTrue(self.assertEqFD(f, dr, -math.sin(x)))
 
     def test_DiffFD_partial(self):

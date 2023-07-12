@@ -18,6 +18,7 @@ class TestPyfDummyad(test_pyfad.TestPyfad):
         pyfad.clear()
         pyfad.initRules(rules='pyfad.dummyad')
         cls.verbose = 0
+        cls.dump = 0
 
     def checkDer(self, func, args, dx, seed=1, active=[]):
         self.assertTrue(True)
