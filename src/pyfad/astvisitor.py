@@ -249,14 +249,14 @@ class ASTCanonicalizer:
         result = self.dispatch(tree)
         return result
 
-    def edispatch(self, tree):
+    def edispatch(self, tree, val=None):
 #        print('edisp', tree)
         if type(tree) == type([]):
             raise(BaseException('error'))
             res = list(map(self.edispatch, tree))
         elif isinstance(tree, ASTNode):
             tmpv = mkTmp('c')
-            tmpas = Assign(tmpv, self.dispatch(tree.clone()))
+            tmpas = Assign(tmpv, self.dispatch(tree.clone()) if val is None else val)
             self._list.append(tmpas)
 #            print('new tmp', repr(tmpas))
             res = tree
@@ -308,6 +308,10 @@ class ASTCanonicalizer:
                 if iscanon(tree.operand):
                     (tl, tmpvar) = self.edispatch(tree.operand)
                     tree.operand = tmpvar
+
+            elif tree._class == "BinOp" and tree.op == "**":
+                (tl, tmpvar) = self.edispatch(tree.clone(), val=tree)
+                tree = tmpvar
 
             elif tree._class == "BinOp":
                 if iscanon(tree.left):
