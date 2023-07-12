@@ -243,6 +243,32 @@ def fplane4(x, **kw):
         print('Plane4 fly dist', o.distance, o.heading)
     return r
 
+class Plane5(Plane2):
+    heading = 0
+    wind = 0
+    def __init__(this, h, **kw):
+        sinit = super().__init__(**kw)
+        this.heading = h
+        if this.verbose:
+            print(f'Plane5.init v={this.velocity}')
+    def fly(this, t):
+        if this.verbose:
+            print(f'Plane5.fly t={t} v={this.velocity}')
+        vel = this.velocity
+        this.velocity += -this.wind * atan(this.heading)
+        super().fly(t)
+        this.velocity = vel
+
+def fplane5(x, **kw):
+    y = x*2
+    l = [x, x*x, x*x*x ]
+    o = Plane5(h=y, c=x)
+    r = [ o.fly(t) for t in l ]
+    r = o.distance + o.gas + o.heading + o.wind
+    if kw.get('verbose', 0) > 0:
+        print('Plane5 fly dist', o.distance, o.heading)
+    return r
+
 def gl_sum(x):
     s = 0
     for i in range(len(x)):
