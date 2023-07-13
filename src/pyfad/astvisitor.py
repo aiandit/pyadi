@@ -296,10 +296,16 @@ class ASTCanonicalizer:
                 tree.generators = [self.dispatch(tree.generators)]
                 return tree
 
+            elif tree._class == "Subscript":
+                if iscanon(tree.value):
+                    (tl, tmpvar) = self.edispatch(tree.value)
+                    tree.value = tmpvar
+                return tree
+
             for k in fields(tree):
                 setattr(tree, k, self.dispatch(getattr(tree, k)))
 
-            if tree._class == "AugAssign" or tree._class == "Subscript" or tree._class == "Attribute":
+            if tree._class == "AugAssign" or tree._class == "Attribute": #  or tree._class == "Subscript" (handled above)
                 if iscanon(tree.value):
                     (tl, tmpvar) = self.edispatch(tree.value)
                     tree.value = tmpvar
