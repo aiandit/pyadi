@@ -37,3 +37,20 @@ def ftest(x):
     M2 = np.matmul(M, 2*M)
     r = np.linalg.norm(np.diag(M2))
     return r
+
+def fexp(x):
+    v = x[0]
+    z = np.exp(v)
+    return z
+
+def fexp2(x):
+    v = x[0]
+    w = x[1]
+    z = np.exp(complex(v, w))
+    return z
+
+def fexp3(x):
+    v = x[0]
+    w = x[1]
+    z = np.exp(v + 1j * w)
+    return z

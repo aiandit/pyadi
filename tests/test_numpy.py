@@ -31,7 +31,7 @@ class WrongResult(BaseException): pass
 
 def sqsum(r1):
     s1 = sum([v*v for v in r1])
-    return math.sqrt(s1)
+    return np.sqrt(s1)
 
 
 def relNormMaxNP(r1, r2):
@@ -136,13 +136,18 @@ class TestNumpy(unittest.TestCase):
 
 
     def test_cylfit(self):
-        v0 = np.array([1.001, 0, 0])
-        #v0 = np.array([1.1, 0.01, 0.01])
+
+        R0 = 1
+        theta0 = 1.25 * math.pi / 180
+        phi0 = 45 * math.pi / 180
+
+        v0 = np.array([R0 + 0.01, 0, 0])
+        # v0 = np.array([R0, theta0, phi0])
         obj, handle = cylfit.cylfit_obj()
 
-        N = int(1e3)**2
+        N = int(1e1)**2
 
-        demopts = cylfit.mkCylData(N)
+        demopts = cylfit.mkCylData(N, theta0, phi0)
 
         handle()['points'] = demopts
 

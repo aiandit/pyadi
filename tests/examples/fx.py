@@ -1,4 +1,4 @@
-from math import sin, cos, tan, asin, acos, atan, log, sqrt
+from math import sin, cos, tan, asin, acos, atan, log, exp, sqrt
 
 import math
 import math as m2
@@ -32,6 +32,10 @@ def fsqrt(x):
     if x < 0:
         x = -x
     z = sqrt(x)
+    return z
+
+def fexp(x):
+    z = exp(x)
     return z
 
 def flog(x):
@@ -846,3 +850,30 @@ glob_t = [1,2,3],
 def fglob(x):
     r1, r2, r3 = glist(*glob_l)
     return r1+r2+r3
+
+def _flmult(x):
+    l = [x] * 3
+    l[1] = x*x
+    l[2] = x*x*x
+    z = gl_sum(x)
+    return z
+
+def _flitemassign(x):
+    l = [1, 1, 1]
+    l[0] += x
+    l[1] -= x
+    l[2] *= x
+    z = gl_sum(l)
+    return z
+
+def _faugass(x):
+    l = list([1, 1, 1, 1, 1, 1, 1])
+    l[0] += x
+    l[1] -= x
+    l[2] *= x
+    l[3] /= x
+    l[4] //= x
+    l[5] %= x
+    l[6] **= x
+    z = gl_sum(l)
+    return z
