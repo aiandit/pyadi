@@ -179,11 +179,30 @@ def D_numpy_matmul(r, dx, x, dy, y):
 def E_builtins_ndarray_copy(*args, **kw):
     return args[0].copy(),  args[1].copy()
 
-def D_numpy_sum(r, dx, x):
-    return np.sum(dx)
+def E_builtins_ndarray_reshape(*args, **kw):
+    return args[0].reshape(*args[3::2]),  args[1].reshape(*args[3::2])
+
+def E_numpy_sum(dx, x, **kw):
+    d_kw, kw = unjnd(kw)
+    return np.sum(dx, **kw), np.sum(x, **kw)
 
 def D_numpy_diag(r, dx, x):
     return np.diag(dx)
 
+def D_numpy_array(r, dx, x):
+    return np.array(dx)
+
 def D_numpy_linalg_norm(r, dx, x):
     return np.sum(x * dx) / r
+
+def D_numpy_sqrt(r, dx, x):
+    return 0.5 * dx / r
+
+def D_numpy_sin(r, dx, x):
+    return dx * np.cos(x)
+
+def D_numpy_cos(r, dx, x):
+    return dx * -np.sin(x)
+
+def D_numpy_tan(r, dx, x):
+    return dx / np.cos(x)**2
