@@ -609,7 +609,7 @@ def roundtrip2JID(fname):
 def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'pyfad': 'D'}], vars=['x'], **kw):
 
     importstr = '\n'.join([f'import {name}' if isinstance(name, str) else ('\n'.join([f'from {k} import {v}' for k, v in name.items()])) for name in imports])
-    collectstr = '\n'.join([f'data["{name}"] = {name}' for name in vars])
+    collectstr = '\n'.join([f'_pyfad_data["{name}"] = {name}' for name in vars])
 
 #    dsrc = f"{importstr}\n{source}\n{collectstr}"
     dsrc = f"{source}\n{collectstr}"
@@ -639,11 +639,11 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
         if not sfname:
             shutil.rmtree(tmpsdir)
 
-    gvars = globals() | fglobals | {'data': {}}
-    # print(f'exec compiled diff function code in file {sfname} with globals={(fglobals | globals() | gvars).keys()} locals={flocals}')
+    gvars = globals() | fglobals | {'_pyfad_data': {}}
+    #print(f'exec compiled diff function code in file {sfname} with globals={(gvars).keys()} locals={flocals}')
     exec(res, gvars, flocals)
 
-    result = {name: gvars["data"][name] for name in vars}
+    result = {name: gvars["_pyfad_data"][name] for name in vars}
     gvars |= result
     return result
 
