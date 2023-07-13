@@ -14,13 +14,13 @@ def dzeros(args, lev=0):
     elif isinstance(args, dict):
         return {f: dzeros(v, lev) for f, v in args.items()}
     elif hasattr(args, 'flat'):
-        return np.zeros(args.shape)
+        return np.zeros(args.shape, dtype=args.dtype)
     elif isinstance(args, int):
         return 0
     elif isinstance(args, float):
-        return 0.0
+        return 0
     elif isinstance(args, complex):
-        return complex(0.0)
+        return complex(0)
     elif isinstance(args, str) or isinstance(args, bytes) or isinstance(args, bytearray):
         return args
     elif isinstance(args, object):
