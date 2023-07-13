@@ -66,7 +66,7 @@ class ASTVisitorFMAD(ASTVisitorID):
     def __call__(self, tree):
         self.localvars, self.localfuncs = ASTVisitorLocals()(tree)
         self.active_methods += self.localfuncs
-        if self.verbose > 1:
+        if self.verbose > 2:
             print(f'Locals of {tree.name}', self.localvars)
 
         self.result = self.dispatch(tree)
