@@ -67,6 +67,7 @@ class TestPyfad(unittest.TestCase):
         pyfad.clear()
         cls.verbose = 0
         cls.dump = 0
+        cls.opts = {}
 
     def assertEq(self, f, r1, r2):
         if not almostEq(r1, r2):
@@ -88,7 +89,7 @@ class TestPyfad(unittest.TestCase):
         self.assertTrue(self.assertEq(func, func(*args), res))
 
     def checkDer(self, func, args, dx, seed=1, active=[], **kw):
-        (der, r) = pyfad.DiffFD(func, *args, seed=seed, active=active, h=fdH, verbose=self.verbose, dump=self.dump)
+        (der, r) = pyfad.DiffFD(func, *args, seed=seed, active=active, h=fdH, verbose=self.verbose, dump=self.dump, **self.opts)
         if self.verbose > 0:
             print('cd', (der, dx))
         self.assertTrue(self.assertEqFD(func, dx, der))
@@ -142,7 +143,7 @@ class TestPyfad(unittest.TestCase):
     def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
             args = [0.1,0.2,0.3]
-        (d_r, r) = pyfad.DiffFor(func, *args, **kw, verbose=self.verbose, dump=self.dump)
+        (d_r, r) = pyfad.DiffFor(func, *args, **kw, verbose=self.verbose, dump=self.dump, **self.opts)
         self.checkDer(func, args, d_r)
         self.checkResult(func, args, r)
         return (d_r, r)

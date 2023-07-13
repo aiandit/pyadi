@@ -6,7 +6,7 @@ import numpy as np
 from itertools import chain
 
 import pyfad
-from .examples import fxyz, fx, fgen, swirl, fnp, cylfit
+from .examples import fxyz, fx, fgen, swirl, fnp, cylfit, cylfit2
 from .examples.fx import f1 as f1alt,  f2 as f2alt
 
 pyfad.Debug = True
@@ -62,6 +62,7 @@ class TestNumpy(unittest.TestCase):
         # pyfad.initRules(rules='t1=pyfad.trace,t2=pyfad.trace,t3=pyfad.trace,ad=pyfad.forwardad')
         pyfad.initRules(rules='ad=pyfad.forwardad')
         pyfad.clear()
+        cls.opts = {}
         cls.verbose = 0
         cls.dump = 0
 
@@ -93,7 +94,7 @@ class TestNumpy(unittest.TestCase):
     def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
             args = [1,2,3]
-        (d_r, r) = pyfad.DiffFor(func, *args, **kw, verbose=self.verbose, dump=self.dump)
+        (d_r, r) = pyfad.DiffFor(func, *args, **kw, verbose=self.verbose, dump=self.dump, **self.opts)
         self.checkDer(func, args, d_r)
         self.checkResult(func, args, r)
         return (d_r, r)
@@ -106,7 +107,6 @@ class TestNumpy(unittest.TestCase):
     def test_swirl(self):
         init = swirl.initialize_starting_point(1)
         seed = np.random.rand(init.size + 1)
-        self.do_sourceDiff_f_xyz(swirl.swirl, args=[init, 1e-2], replaceops=True)
         self.do_sourceDiff_f_xyz(swirl.swirl, args=[init, 1e-2])
 
     def test_fsqr(self):
@@ -140,19 +140,29 @@ class TestNumpy(unittest.TestCase):
         R0 = 1
         theta0 = 1.25 * math.pi / 180
         phi0 = 45 * math.pi / 180
+        #theta0 = math.pi/4
+        #phi0 = 0
 
-        v0 = np.array([R0 + 0.01, 0, 0])
-        # v0 = np.array([R0, theta0, phi0])
+        # v0 = np.array([R0 + 0.01, 0, 0])
+        v0 = np.array([R0 + 1e-6, theta0, phi0])
         obj, handle = cylfit.cylfit_obj()
+        obj2, handle2 = cylfit2.cylfit_obj()
 
-        N = int(1e1)**2
+        N = int(1e3)**2
 
         demopts = cylfit.mkCylData(N, theta0, phi0)
+        demopts2 = cylfit2.mkCylData(N, theta0, phi0)
+
+        self.assertTrue(almostEq(demopts, demopts2))
 
         handle()['points'] = demopts
+        handle2()['points'] = demopts
 
         r0 = obj(v0)
-        print('r0', r0)
+        r02 = obj2(v0)
+        # print('r0', r0)
+        self.assertTrue(almostEq(r0, r02))
 
         (dr, r) = self.do_sourceDiff_f_xyz(obj, args=[v0])
+        (dr, r) = self.do_sourceDiff_f_xyz(obj2, args=[v0])
         print(dr, r)
