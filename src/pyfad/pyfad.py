@@ -327,7 +327,8 @@ class ASTVisitorFMAD(ASTVisitorID):
         if t.value._class in self.tupleDiff:
             t.targets = [Tuple(self.ddispatch([t.clone() for t in t.targets]) + self.dispatch(t.targets))]
         else:
-            t.targets = [self.ddispatch(s.clone()) if self.isLocal(s) else Name('_') for s in t.targets ]
+            #t.targets = [self.ddispatch(s.clone()) if self.isLocal(s) else Name('_') for s in t.targets ]
+            t.targets = [self.ddispatch(s.clone()) for s in t.targets ]
         isList = t.value._class == "List" or t.value._class == "Dict"
         t.value = self.ddispatch(t.value)
         if isList:
