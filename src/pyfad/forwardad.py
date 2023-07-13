@@ -160,6 +160,9 @@ def D_math_atan(r, dx, x):
     return dx / (1 + x**2)
 
 
+def D_math_exp(r, dx, x):
+    return r * dx
+
 def D_math_log(r, dx, x):
     return dx / x
 
@@ -182,6 +185,9 @@ def E_builtins_ndarray_copy(*args, **kw):
 def E_builtins_ndarray_reshape(*args, **kw):
     return args[0].reshape(*args[3::2]),  args[1].reshape(*args[3::2])
 
+def D_numpy_hstack(r, dx, x):
+    return np.hstack(dx)
+
 def E_numpy_sum(dx, x, **kw):
     d_kw, kw = unjnd(kw)
     return np.sum(dx, **kw), np.sum(x, **kw)
@@ -194,6 +200,18 @@ def D_numpy_array(r, dx, x):
 
 def D_numpy_linalg_norm(r, dx, x):
     return np.sum(x * dx) / r
+
+def D_numpy_real(r, dx, x):
+    return np.real(dx)
+
+def D_numpy_imag(r, dx, x):
+    return np.imag(dx)
+
+def D_numpy_exp(r, dx, x):
+    return r * dx
+
+def D_numpy_log(r, dx, x):
+    return dx / x
 
 def D_numpy_sqrt(r, dx, x):
     return 0.5 * dx / r
