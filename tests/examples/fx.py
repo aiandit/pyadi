@@ -69,7 +69,7 @@ def fmod(x):
     s = r % x
     t = s % 2
     z = 2 % t
-    return z
+    return r + s + t + z
 
 def fmod2(x):
     r = -sin(x)
@@ -81,9 +81,9 @@ def fpow(x):
         x = -x
     r = sin(x)
     s = r ** x
-    t = s ** 2
-    z = 2 ** t
-    return z
+    t = r ** 2
+    z = 2 ** r
+    return r + s + t + z
 
 def gbabylonian(x, y=1):
     if abs(y**2 - x) < 1e-7:
@@ -832,3 +832,17 @@ def fdeco2(x):
     l = [x, x*x, x*x*x]
     r = gdeco2(l)
     return r
+
+glob_dict = {
+    'd': {'a': 1, 'b': 2},
+    'l': [1,2,3],
+    'v': math.pi
+}
+
+glob_l = [1,2,3]
+
+glob_t = [1,2,3],
+
+def fglob(x):
+    r1, r2, r3 = glist(*glob_l)
+    return r1+r2+r3
