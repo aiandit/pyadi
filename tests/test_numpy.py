@@ -6,7 +6,7 @@ import numpy as np
 from itertools import chain
 
 import pyfad
-from .examples import fxyz, fx, fgen, swirl, fnp
+from .examples import fxyz, fx, fgen, swirl, fnp, cylfit
 from .examples.fx import f1 as f1alt,  f2 as f2alt
 
 pyfad.Debug = True
@@ -63,6 +63,7 @@ class TestNumpy(unittest.TestCase):
         pyfad.initRules(rules='ad=pyfad.forwardad')
         pyfad.clear()
         cls.verbose = 0
+        cls.dump = 0
 
     def assertEq(self, f, r1, r2):
         if not almostEq(r1, r2):
@@ -92,7 +93,7 @@ class TestNumpy(unittest.TestCase):
     def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
             args = [1,2,3]
-        (d_r, r) = pyfad.DiffFor(func, *args, **kw)
+        (d_r, r) = pyfad.DiffFor(func, *args, **kw, verbose=self.verbose, dump=self.dump)
         self.checkDer(func, args, d_r)
         self.checkResult(func, args, r)
         return (d_r, r)
@@ -132,3 +133,21 @@ class TestNumpy(unittest.TestCase):
 
     def test_fnp2(self):
         self.runtest_fxyz(args=([0.234, 1.234, 4.321e-3], ))
+
+
+    def test_cylfit(self):
+        v0 = np.array([1.001, 0, 0])
+        #v0 = np.array([1.1, 0.01, 0.01])
+        obj, handle = cylfit.cylfit_obj()
+
+        N = int(1e3)**2
+
+        demopts = cylfit.mkCylData(N)
+
+        handle()['points'] = demopts
+
+        r0 = obj(v0)
+        print('r0', r0)
+
+        (dr, r) = self.do_sourceDiff_f_xyz(obj, args=[v0])
+        print(dr, r)
