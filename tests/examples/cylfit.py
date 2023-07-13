@@ -1,7 +1,9 @@
 import numpy as np
+import pyfad
 
 # https://stackoverflow.com/questions/48265646/rotation-of-a-vector-python
 # vectorized
+
 
 def x_rotation(vector,theta):
     """Rotates (N,3) array around x-axis, take -theta because we multiply from the right"""
@@ -54,7 +56,7 @@ def cylfit_obj():
 
         r = np.linalg.norm(dists)
 
-        print(f'res = {r}')
+        # print(f'res = {r}')
         return r
 
     def handle():
@@ -79,29 +81,165 @@ def mkCylData(N=10000, theta=0, phi=0):
     zaxis = np.zeros((1, 3))
     zaxis[0,2] = 1
     Ns = int(np.sqrt(N))
+    N = Ns ** 2
     phis = np.linspace(0, 2*np.pi, Ns)
     heights = np.linspace(-1, 1, Ns)
     PP, HH = np.meshgrid(phis, heights)
     cpts = np.hstack([ np.ones((N,1)), PP.reshape((N,1)), HH.reshape((N,1)) ])
     pts = cyl2xyz(cpts)
     pts = z_rotation(x_rotation(pts, theta), phi)
+    print('pts generated')
     return pts
 
-def runopt():
+
+def relNormMax(r1, r2):
+    n1 = np.linalg.norm(r1)
+    n2 = np.linalg.norm(r2)
+    nd = np.linalg.norm(r1 - r2)
+    divi = max(n1, n2)
+    if divi == 0: divi = 1
+    return nd / divi
+
+
+def runopt(fprime=None):
     import scipy as sc
 
-    v0 = np.array([1, 0, 0])
-    #v0 = np.array([1.1, 0.01, 0.01])
+    R0 = 1.1
+    theta0 = 0.1
+    phi0 = np.pi/2
+
+    # v0 = np.array([1, 0, 0])
+    v0 = np.array([1.1, 0.01, 0.01])
     obj, handle = cylfit_obj()
 
     N = int(1e3)**2
 
-    demopts = mkCylData(N)
+    demopts = mkCylData(N, theta0, phi0)
 
     handle()['points'] = demopts
 
-    res = sc.optimize.fmin_cg(obj, v0, full_output=True)
+    print('start cg')
+    res = sc.optimize.fmin_cg(obj, v0, fprime=fprime, full_output=True)
     print(res)
 
+    sol, *rem = res
+
+    rsol = obj(sol)
+
+    errsol = relNormMax(sol, np.array([R0, theta0, phi0]))
+    print(f'CG solution {sol}, expected {[R0, theta0, phi0]}')
+    print(f'CG solution error {errsol}, final objective {rsol}')
+
+def runopt_ad():
+
+    obj, handle = cylfit_obj()
+
+    def grad(*args, **kw):
+        (dr, r) = pyfad.DiffFor(obj, *args)
+        x = args[0]
+        N = x.size
+        g = np.zeros((N,))
+        for i in range(N):
+            g[i] = dr[i]
+        return g
+
+    return runopt(grad)
+
+
+def runuopt(fprime=None):
+    import uopt.uopt
+    import scipy as sc
+
+    def fobj(x, y, udata):
+        y[:] = obj(x)
+
+    def gobj(x, y, g, udata):
+        (dr, r) = pyfad.DiffFor(obj, x)
+        y[:] = r
+        for i in range(x.size):
+            g[i] = dr[i]
+        return g, r
+
+    R0 = 1.1
+    theta0 = 0.1
+    phi0 = np.pi/2
+
+    # v0 = np.array([1, 0, 0])
+    v0 = np.array([1.1, 0.01, 0.01])
+    obj, handle = cylfit_obj()
+
+    N = int(1e3)**2
+
+    demopts = mkCylData(N, theta0, phi0)
+
+    handle()['points'] = demopts
+
+    r0 = obj(v0)
+
+    vs = v0.copy()
+    rs = r0.copy()
+
+    print('start uopt')
+    res = uopt.uopt.uopt(v0, vs, rs, fobj, gobj)
+    print(res)
+
+    sol, *rem = res
+
+    rsol = obj(sol)
+
+    errsol = relNormMax(sol, np.array([R0, theta0, phi0]))
+    print(f'CG solution {sol}, expected {[R0, theta0, phi0]}')
+    print(f'CG solution error {errsol}, final objective {rsol}')
+
+
+def runusolve(fprime=None):
+    import uopt.usolve
+    import scipy as sc
+
+    def fobj(x, y, udata):
+        y[:] = obj(x)
+
+    def gobj(x, y, g, udata):
+        (dr, r) = pyfad.DiffFor(obj, x)
+        y[:] = r
+        for i in range(x.size):
+            g[i] = dr[i]
+        return g, r
+
+    R0 = 1.1
+    theta0 = 0.1
+    phi0 = np.pi/2
+
+    # v0 = np.array([1, 0, 0])
+    v0 = np.array([1.1, 0.01, 0.01])
+    obj, handle = cylfit_obj()
+
+    N = int(1e3)**2
+
+    demopts = mkCylData(N, theta0, phi0)
+
+    handle()['points'] = demopts
+
+    r0 = obj(v0)
+
+    vs = v0.copy()
+    rs = r0.copy()
+
+    print('start uopt')
+    res = uopt.uopt.uopt(v0, vs, rs, fobj, gobj)
+    print(res)
+
+    sol, *rem = res
+
+    rsol = obj(sol)
+
+    errsol = relNormMax(sol, np.array([R0, theta0, phi0]))
+    print(f'CG solution {sol}, expected {[R0, theta0, phi0]}')
+    print(f'CG solution error {errsol}, final objective {rsol}')
+
+
 if __name__ == "__main__":
+    runusolve()
+    runuopt()
+    runopt_ad()
     runopt()
