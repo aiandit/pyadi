@@ -508,7 +508,7 @@ class ASTReplaceOpsInvert(ASTLocalAction):
                 else:
                     transformed = False
                     res = tree
-            except ValueError:
+            except KeyError:
                 transformed = False
                 res = tree
             if transformed:
