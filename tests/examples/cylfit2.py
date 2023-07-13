@@ -6,7 +6,7 @@ def dorot(vector, ind, theta):
     N, _ = vector.shape
     assert _ == 3
     tmp = vector[:,(ind+1)%3] + 1j * vector[:,(ind+2)%3]
-    tmp = R * tmp
+    tmp = tmp * R
     hstack = list([0, 0, 0])
     hstack[(ind+0)%3] = vector[:,(ind+0)%3]
     hstack[(ind+1)%3] = np.real(tmp)
@@ -42,14 +42,13 @@ def cylfit_obj():
         zaxis[0,2] = 1
         caxis = z_rotation(x_rotation(zaxis, theta), phi)
         caxis = caxis.reshape((1,3))
-        print(f'caxis: {caxis}')
+        # print(f'caxis: {caxis}')
 
         pts = data['points']
         N, _ = pts.shape
         assert _ == 3
 
         ptoffs = np.sum(caxis * pts, axis=1)
-        print(f'ptoffs: {ptoffs}')
         ptoffs = ptoffs.reshape((N, 1))
         ptinters = ptoffs * caxis
 
@@ -63,7 +62,7 @@ def cylfit_obj():
 
         r = np.linalg.norm(dists)
 
-        print(f'res = {r}')
+        # print(f'res = {r}')
         return r
 
     def handle():

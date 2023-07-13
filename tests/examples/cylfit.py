@@ -1,30 +1,22 @@
 import numpy as np
 
-def dorot(vector, ind, theta):
-    """Rotates (N,3) vector array around axis ind by theta"""
-    R = np.exp(1j * theta)
-    N, _ = vector.shape
-    assert _ == 3
-    tmp = vector[:,(ind+1)%3] + 1j * vector[:,(ind+2)%3]
-    tmp = R * tmp
-    hstack = list([0, 0, 0])
-    hstack[(ind+0)%3] = vector[:,(ind+0)%3]
-    hstack[(ind+1)%3] = np.real(tmp)
-    hstack[(ind+2)%3] = np.imag(tmp)
-    res = np.hstack([ col.reshape(N,1) for col in hstack ])
-    return res
+# https://stackoverflow.com/questions/48265646/rotation-of-a-vector-python
+# vectorized
 
 def x_rotation(vector,theta):
-    """Rotates (N,3) vector array around x-axis"""
-    return dorot(vector, 0, theta)
+    """Rotates (N,3) array around x-axis, take -theta because we multiply from the right"""
+    R = np.array([[1,0,0],[0,np.cos(-theta),-np.sin(-theta)],[0, np.sin(-theta), np.cos(-theta)]])
+    return vector @ R
 
 def y_rotation(vector,theta):
-    """Rotates (N,3) vector array around y-axis"""
-    return dorot(vector, 1, theta)
+    """Rotates (N,3) array around y-axis, take -theta because we multiply from the right"""
+    R = np.array([[np.cos(-theta),0,np.sin(-theta)],[0,1,0],[-np.sin(-theta), 0, np.cos(-theta)]])
+    return vector @ R
 
 def z_rotation(vector,theta):
-    """Rotates (N,3) vector array around z-axis"""
-    return dorot(vector, 2, theta)
+    """Rotates (N,3) array around z-axis, take -theta because we multiply from the right"""
+    R = np.array([[np.cos(-theta), -np.sin(-theta),0],[np.sin(-theta), np.cos(-theta),0],[0,0,1]])
+    return vector @ R
 
 
 def cylfit_obj():
@@ -38,18 +30,17 @@ def cylfit_obj():
         theta = x[1]
         phi = x[2]
 
-        zaxis = np.zeros((1,3))
-        zaxis[0,2] = 1
+        zaxis = np.zeros(3,)
+        zaxis[2] = 1
         caxis = z_rotation(x_rotation(zaxis, theta), phi)
         caxis = caxis.reshape((1,3))
-        print(f'caxis: {caxis}')
 
         pts = data['points']
         N, _ = pts.shape
         assert _ == 3
 
         ptoffs = np.sum(caxis * pts, axis=1)
-        print(f'ptoffs: {ptoffs}')
+
         ptoffs = ptoffs.reshape((N, 1))
         ptinters = ptoffs * caxis
 
