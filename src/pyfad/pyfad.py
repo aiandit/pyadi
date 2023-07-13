@@ -392,8 +392,13 @@ class ASTVisitorFMAD(ASTVisitorID):
         elif op == '%':
             t = dx
         elif op == '**':
-            quot = BinOp('/', y, x)
-            t = BinOp('*', quot, dx)
+            if y._class == "Constant":
+                if y.value == 2:
+                    t = BinOp('*', BinOp('*', y, x), dx)
+                else:
+                    t = BinOp('*', BinOp('*', y, BinOp('**', x, Constant(y.value -1))), dx)
+            else:
+                t = BinOp('*', BinOp('*', y, BinOp('**', x, BinOp('-', y,  Constant(1)))), dx)
         return t
 
     def mkOpPartialR(self, op, r, dy, x, y):
@@ -406,6 +411,7 @@ class ASTVisitorFMAD(ASTVisitorID):
             t = BinOp('*', BinOp('*', Call('math.floor', [quot]), Constant(-1)), dy)
         elif op == '**':
             t = BinOp('*', Call('log', [x]), dy)
+            t = BinOp('*', self.tmpval, t)
         return t
 
     def _DBinOp(self, t):
@@ -465,8 +471,6 @@ class ASTVisitorFMAD(ASTVisitorID):
                 t = lfact_
 
         elif t.op == '**':
-            fact = self.mkOpPartialC('**', self.tmpval, None, t.left, t.right)
-
             if isdiff(t.left):
                 lder = self.mkOpPartialL('**', None, left, t.left, t.right)
 
@@ -477,10 +481,11 @@ class ASTVisitorFMAD(ASTVisitorID):
                     term = BinOp('+', lder, rder)
                 else:
                     term = rder
+
             elif isdiff(t.left):
                 term = lder
 
-            t = BinOp('*', fact, term)
+            t = term
 
         elif t.op == '+' or t.op == '-':
             if nodiff(t.left):
