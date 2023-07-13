@@ -659,7 +659,15 @@ def difffunction(func, active=[], **kw):
     try:
         fkey = dpref_ + func.__name__
         # globals = func.__globals__ if not isinstance(func, type) else func.__init__.__globals__
-        dfunc = execompile(dsrc, vars=[fkey], fglobals=func.__globals__, **kw)
+        gvars = func.__globals__
+        clos = getattr(func, '__closure__', None)
+        if clos is not None:
+            code = func.__code__
+            cl_data = { code.co_freevars[i]: clos[i].cell_contents for i in range(len(clos)) }
+            if kw.get('verbose', 0) > 1:
+                print(f'Function {func} has a closure: {cl_data.keys()}')
+            gvars |= cl_data
+        dfunc = execompile(dsrc, vars=[fkey], fglobals=gvars, **kw)
         dfunc = dfunc[fkey]
         # mod, modfile = getmodule(dfunc)
         #setattr(sys.modules[mod], dfunc.__name__, dfunc)
@@ -847,7 +855,7 @@ def DoDiffFunction(function, **opts):
         if not isbuiltin(function.__init__):
             constr = function = function.__init__
         else:
-            #print(f'SD: type {function.__name__} has a builtin cosntructor !')
+            #print(f'SD: type {function.__name__} has a builtin constructor !')
             pass
     else:
         clos = getattr(function, '__closure__', None)
@@ -855,10 +863,13 @@ def DoDiffFunction(function, **opts):
             if isinstance(clos[-1].cell_contents, type):
                 # print(f'Function {function} is a method, {function.__closure__[-1]}')
                 pass
-            else:
+            elif callable(clos[-1].cell_contents):
                 # print(f'Function {function} has a closure!, {function.__closure__[-1]}')
                 deco = function
                 function = clos[-1].cell_contents
+            else:
+                # handled only in case of source diff, later
+                pass
 
     adfun = processRules(function, opts)
     if opts.get('verbose', 0):
