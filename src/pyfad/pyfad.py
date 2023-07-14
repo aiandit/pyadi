@@ -109,13 +109,14 @@ class ASTVisitorFMAD(ASTVisitorID):
 
     def diffStmtList(self, body):
         nbody = []
+        self.tmpval = None
         for item in body:
             if item._class == "Assign":
-                if item.value._class == "BinOp" and item.value.op == "**":
+                if item.value._class == "BinOp" and item.value.op == "**" and isdiff(item.value.right):
                     self.tmpval = mkTmp('s')
                     nbody += [Assign(self.tmpval, self.mkOpPartialC("**", None, None, item.value.left, item.value.right))]
                 nbody += [self.ddispatch(item.clone())]
-                if item.value._class == "BinOp" and item.value.op == "**":
+                if item.value._class == "BinOp" and item.value.op == "**" and isdiff(item.value.right):
                     nbody += [Assign(item.targets, self.tmpval)]
                     self.tmpval = None
                     continue
@@ -125,8 +126,33 @@ class ASTVisitorFMAD(ASTVisitorID):
                 nbody += [self._DFunctionDef(item.clone())]
                 nbody += [item]
             elif item._class == "AugAssign" or item._class == "FunctionDef":
-                nbody += [self.ddispatch(item.clone())]
-                nbody += [self.dispatch(item)]
+                if item.op == "**" and isdiff(item.value):
+                    self.tmpval = mkTmp('s')
+                    nbody += [Assign(self.tmpval, self.mkOpPartialC("**", None, None, item.target, item.value))]
+
+                if item.op in ['+', '-']:
+                    if isdiff(item.value):
+                        nbody += [self.ddispatch(item.clone())]
+                elif item.op == '|':
+                    nbody += [self.ddispatch(item.clone())]
+                elif item.op == '//':
+                    nbody += [Assign(self.ddispatch(item.target.clone()), Constant(0))]
+                else:
+                    if item.op == '*' or item.op == '@' or item.op == '/':
+                        nbody += [AugAssign(item.op, self.ddispatch(item.target.clone()), item.value)]
+                    elif item.op == '**':
+                        nbody += [AugAssign('*', self.ddispatch(item.target.clone()), self.mkOpPartialL1(item.op, None, item.target, item.value))]
+                    if isdiff(item.value):
+                        op = '+'
+                        rhspartial = self.mkOpPartialR(item.op, None, self.ddispatch(item.value.clone()), item.target, item.value)
+                        if rhspartial._class == "UnaryOp":
+                            op = rhspartial.op
+                            rhspartial = rhspartial.operand
+                        nbody += [AugAssign(op, self.ddispatch(item.target.clone()), rhspartial)]
+                if item.op == "**" and self.tmpval is not None:
+                    nbody += [Assign(item.target, self.tmpval)]
+                else:
+                    nbody += [item]
             elif self.isnodiffExpr(item):
                 nbody += [self.dispatch(item)]
             else:
@@ -386,32 +412,42 @@ class ASTVisitorFMAD(ASTVisitorID):
                 t = r
         return t
 
+    def mkOpPartialL1(self, op, r, x, y):
+        if op == '**':
+            if y._class == "Constant":
+                if y.value == 2:
+                    t = BinOp('*', y, x)
+                else:
+                    t = BinOp('*', y, BinOp('**', x, Constant(y.value -1)))
+            else:
+                t = BinOp('*', y, BinOp('**', x, BinOp('-', y,  Constant(1))))
+        else:
+            raise ValueError()
+        return t
+
     def mkOpPartialL(self, op, r, dx, x, y):
         if op == '/':
             t = BinOp('/', dx, y)
         elif op == '%':
             t = dx
         elif op == '**':
-            if y._class == "Constant":
-                if y.value == 2:
-                    t = BinOp('*', BinOp('*', y, x), dx)
-                else:
-                    t = BinOp('*', BinOp('*', y, BinOp('**', x, Constant(y.value -1))), dx)
-            else:
-                t = BinOp('*', BinOp('*', y, BinOp('**', x, BinOp('-', y,  Constant(1)))), dx)
+            p1 = self.mkOpPartialL1(op, r, x, y)
+            t = BinOp('*', p1, dx)
         return t
 
     def mkOpPartialR(self, op, r, dy, x, y):
-        if op == '/':
+        if op == '*' or op == '@':
+            t = BinOp(op, x, dy)
+        elif op == '/':
             sq = BinOp('**', y, Constant(2))
             right_ = BinOp('*', x, dy)
             t = UnaryOp('-', BinOp('/', right_, sq))
         elif op == '%':
             quot = BinOp('/', x, y)
-            t = BinOp('*', BinOp('*', Call('math.floor', [quot]), Constant(-1)), dy)
+            t = UnaryOp('-', BinOp('*', Call('math.floor', [quot]), dy))
         elif op == '**':
             t = BinOp('*', Call('log', [x]), dy)
-            t = BinOp('*', self.tmpval, t)
+            t = BinOp('*', self.tmpval if self.tmpval is not None else BinOp('**', x, y), t)
         return t
 
     def _DBinOp(self, t):
