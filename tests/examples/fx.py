@@ -866,14 +866,33 @@ def _flitemassign(x):
     z = gl_sum(l)
     return z
 
-def _faugass(x):
-    l = list([1, 1, 1, 1, 1, 1, 1])
-    l[0] += x
-    l[1] -= x
-    l[2] *= x
-    l[3] /= x
-    l[4] //= x
-    l[5] %= x
-    l[6] **= x
+def faugass(x):
+    if x < 0:
+        x = -x
+    y = x*x
+    l = list([x,x,x,x,x,x,x,x])
+    l[0] += y
+    l[1] -= y
+    l[2] *= y
+#    l[3] @= y
+    l[4] /= y
+    l[5] //= y
+    l[6] %= y
+    l[7] **= y
+    z = gl_sum(l)
+    return z
+
+def faugass2(x):
+    if x < 0:
+        x = -x
+    l = list([x,x,x,x,x,x,x,x])
+    l[0] += 2.5
+    l[1] -= 2.5
+    l[2] *= 2.5
+#    l[3] @= 2.5
+    l[4] /= 2.5
+    l[5] //= 2.5
+    l[6] %= 2.5
+    l[7] **= 2.5
     z = gl_sum(l)
     return z
