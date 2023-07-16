@@ -145,13 +145,13 @@ class TestNumpy(unittest.TestCase):
 
         # v0 = np.array([R0 + 0.01, 0, 0])
         v0 = np.array([R0 + 1e-6, theta0, phi0])
-        obj, handle = cylfit.cylfit_obj()
+        objComps, obj, handle = cylfit.cylfit_obj()
         obj2, handle2 = cylfit2.cylfit_obj()
 
         N = int(1e3)**2
 
-        demopts = cylfit.mkCylData(N, theta0, phi0)
-        demopts2 = cylfit2.mkCylData(N, theta0, phi0)
+        demopts = cylfit.mkCylData(N, R0, theta0, phi0)
+        demopts2 = cylfit2.mkCylData(N, R0, theta0, phi0)
 
         self.assertTrue(almostEq(demopts, demopts2))
 

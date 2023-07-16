@@ -83,14 +83,14 @@ def cyl2xyz(cx):
     cres = cx[:,0] * np.exp(1j * cx[:,1])
     return np.hstack([np.real(cres).reshape((N,1)), np.imag(cres).reshape((N,1)), cx[:,2].reshape((N,1))])
 
-def mkCylData(N=10000, theta=0, phi=0):
+def mkCylData(N=10000, R0=1, theta=0, phi=0):
     zaxis = np.zeros((1, 3))
     zaxis[0,2] = 1
     Ns = int(np.sqrt(N))
     phis = np.linspace(0, 2*np.pi, Ns)
     heights = np.linspace(-1, 1, Ns)
     PP, HH = np.meshgrid(phis, heights)
-    cpts = np.hstack([ np.ones((N,1)), PP.reshape((N,1)), HH.reshape((N,1)) ])
+    cpts = np.hstack([ R0*np.ones((N,1)), PP.reshape((N,1)), HH.reshape((N,1)) ])
     pts = cyl2xyz(cpts)
     pts = z_rotation(x_rotation(pts, theta), phi)
     return pts

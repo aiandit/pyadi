@@ -65,7 +65,7 @@ class TestPyfad(unittest.TestCase):
         # pyfad.initRules(rules='t1=pyfad.trace,t2=pyfad.trace,t3=pyfad.trace,ad=pyfad.forwardad')
         pyfad.initRules(rules='ad=pyfad.forwardad')
         pyfad.clear()
-        cls.verbose = 0
+        cls.verbose = 2
         cls.dump = 0
         cls.opts = {}
 

@@ -26,7 +26,7 @@ def cylfit_obj():
 
     data['points'] = np.random.rand(100, 3) - 0.5
 
-    def obj(x):
+    def objComps(x):
 
         R = x[0]
         theta = x[1]
@@ -54,19 +54,25 @@ def cylfit_obj():
         assert pdvs.shape == (N,3)
         assert dists.shape == (N,)
 
+        return dists
+
+    def objv(x):
+
+        dists = objComps(x)
+
         r = np.linalg.norm(dists)
 
-        # print(f'res = {r}')
+        print(f'res = {r}')
         return r
 
     def handle():
         return data
 
-    return obj, handle
+    return objComps, objv, handle
 
 
 def run():
-    obj, handle = cylfit_obj()
+    objComps, obj, handle = cylfit_obj()
     v0 = np.array([1.1, 0.01, 0.01])
     r = obj(v0)
     print (r)
@@ -77,7 +83,7 @@ def cyl2xyz(cx):
     cres = cx[:,0] * np.exp(1j * cx[:,1])
     return np.hstack([np.real(cres).reshape((N,1)), np.imag(cres).reshape((N,1)), cx[:,2].reshape((N,1))])
 
-def mkCylData(N=10000, theta=0, phi=0):
+def mkCylData(N=10000, R0=1, theta=0, phi=0):
     zaxis = np.zeros((1, 3))
     zaxis[0,2] = 1
     Ns = int(np.sqrt(N))
@@ -85,7 +91,7 @@ def mkCylData(N=10000, theta=0, phi=0):
     phis = np.linspace(0, 2*np.pi, Ns)
     heights = np.linspace(-1, 1, Ns)
     PP, HH = np.meshgrid(phis, heights)
-    cpts = np.hstack([ np.ones((N,1)), PP.reshape((N,1)), HH.reshape((N,1)) ])
+    cpts = np.hstack([ R0 * np.ones((N,1)), PP.reshape((N,1)), HH.reshape((N,1)) ])
     pts = cyl2xyz(cpts)
     pts = z_rotation(x_rotation(pts, theta), phi)
     print('pts generated')
@@ -110,11 +116,11 @@ def runopt(fprime=None):
 
     # v0 = np.array([1, 0, 0])
     v0 = np.array([1.1, 0.01, 0.01])
-    obj, handle = cylfit_obj()
+    objComps, obj, handle = cylfit_obj()
 
     N = int(1e3)**2
 
-    demopts = mkCylData(N, theta0, phi0)
+    demopts = mkCylData(N, R0, theta0, phi0)
 
     handle()['points'] = demopts
 
@@ -132,7 +138,7 @@ def runopt(fprime=None):
 
 def runopt_ad():
 
-    obj, handle = cylfit_obj()
+    objComps, obj, handle = cylfit_obj()
 
     def grad(*args, **kw):
         (dr, r) = pyfad.DiffFor(obj, *args)
@@ -150,11 +156,18 @@ def runuopt(fprime=None):
     import uopt.uopt
     import scipy as sc
 
-    def fobj(x, y, udata):
-        y[:] = obj(x)
+    objComps, obj1, handle = cylfit_obj()
 
-    def gobj(x, y, g, udata):
-        (dr, r) = pyfad.DiffFor(obj, x)
+    def fobj_uopt(x, y, udata):
+        print(f'fobj_uopt(x) = x={x.shape}, y={y.shape}')
+        r = obj1(x)
+        y[:] = r
+        print(f'obj={obj1.__qualname__} fobj(x) = r={type(r)},{r.shape}')
+
+    def gobj_uopt(x, y, g, udata):
+        print(f'gobj_uopt {obj1.__qualname__} (x) = x={x.shape}, y={y.shape}, g={g.shape}')
+        (dr, r) = pyfad.DiffFor(obj1, x, verbose=2)
+        print(f'obj={obj1.__qualname__} gobj(x) = r={type(r)},{r.shape}')
         y[:] = r
         for i in range(x.size):
             g[i] = dr[i]
@@ -166,21 +179,20 @@ def runuopt(fprime=None):
 
     # v0 = np.array([1, 0, 0])
     v0 = np.array([1.1, 0.01, 0.01])
-    obj, handle = cylfit_obj()
 
     N = int(1e3)**2
 
-    demopts = mkCylData(N, theta0, phi0)
+    demopts = mkCylData(N, R0, theta0, phi0)
 
     handle()['points'] = demopts
 
-    r0 = obj(v0)
+    r0 = obj1(v0)
 
     vs = v0.copy()
     rs = r0.copy()
 
     print('start uopt')
-    res = uopt.uopt.uopt(v0, vs, rs, fobj, gobj)
+    res = uopt.uopt.uopt(v0, vs, rs, fobj_uopt, gobj_uopt)
     print(res)
 
     sol, *rem = res
@@ -193,43 +205,60 @@ def runuopt(fprime=None):
 
 
 def runusolve(fprime=None):
-    import uopt.usolve
+    import uopt.uopt
     import scipy as sc
 
+    objComps, obj, handle = cylfit_obj()
+
     def fobj(x, y, udata):
-        y[:] = obj(x)
+        y[:] = objComps(x)
+        print(f'obj(x) = {np.linalg.norm(y)}')
 
     def gobj(x, y, g, udata):
-        (dr, r) = pyfad.DiffFor(obj, x)
+        (dr, r) = pyfad.DiffFor(objComps, x)
         y[:] = r
         for i in range(x.size):
-            g[i] = dr[i]
-        return g, r
+            g[:,i] = dr[i]
+        print(f'gobj(x) = {np.linalg.norm(y)}')
+
+    def gvobj(x, y, dx, g, udata):
+        (dr, r) = pyfad.DiffFor(objComps, x, seed=[dx])
+        y[:] = r
+        N, Ndd = dx.shape
+        for i in range(Ndd):
+            g[:,i] = dr[i]
+        print(f'gvobj(x) = {np.linalg.norm(y)}')
+
 
     R0 = 1.1
     theta0 = 0.1
     phi0 = np.pi/2
 
     # v0 = np.array([1, 0, 0])
-    v0 = np.array([1.1, 0.01, 0.01])
-    obj, handle = cylfit_obj()
+    v0 = np.array([1, 0.01, 0.01])
 
     N = int(1e3)**2
 
-    demopts = mkCylData(N, theta0, phi0)
+    demopts = mkCylData(N, R0, theta0, phi0)
 
     handle()['points'] = demopts
 
-    r0 = obj(v0)
+    r0 = objComps(v0)
 
     vs = v0.copy()
     rs = r0.copy()
 
-    print('start uopt')
-    res = uopt.uopt.uopt(v0, vs, rs, fobj, gobj)
-    print(res)
+    print('start usolve')
+    res = uopt.uopt.usolve(v0, vs, rs, fobj, gobj, gvobj)
+    print('usolve result', res, vs)
 
-    sol, *rem = res
+    sol = vs
+
+    sol[1] *= -1
+    sol[2] *= -1
+
+    sol[1] %= np.pi
+    sol[2] %= np.pi
 
     rsol = obj(sol)
 
@@ -239,7 +268,7 @@ def runusolve(fprime=None):
 
 
 if __name__ == "__main__":
-    runusolve()
+    # runusolve()
     runuopt()
-    runopt_ad()
-    runopt()
+    #runopt_ad()
+    #runopt()
