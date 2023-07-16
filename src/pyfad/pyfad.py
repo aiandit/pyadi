@@ -690,19 +690,25 @@ def Dpy(func, active=[], **kw):
     return dtree
 
 
+def mkClosDict(function):
+    clos = getattr(function, '__closure__', None)
+    cl_data = {}
+    if clos is not None:
+        code = function.__code__
+        cl_data = { code.co_freevars[i]: clos[i].cell_contents for i in range(len(clos)) }
+    return cl_data
+
+
 def difffunction(func, active=[], **kw):
     dsrc = Dpy(func, active, **kw)
+    cl_data = mkClosDict(func)
+    if cl_data and kw.get('verbose', 0) > 1:
+        print(f'DiffFor: Function {func} has a closure: {cl_data.keys()}')
+
     try:
         fkey = dpref_ + func.__name__
         # globals = func.__globals__ if not isinstance(func, type) else func.__init__.__globals__
-        gvars = func.__globals__
-        clos = getattr(func, '__closure__', None)
-        if clos is not None:
-            code = func.__code__
-            cl_data = { code.co_freevars[i]: clos[i].cell_contents for i in range(len(clos)) }
-            if kw.get('verbose', 0) > 1:
-                print(f'Function {func} has a closure: {cl_data.keys()}')
-            gvars |= cl_data
+        gvars = func.__globals__ | kw.get('globals', {}) | cl_data
         dfunc = execompile(dsrc, vars=[fkey], fglobals=gvars, **kw)
         dfunc = dfunc[fkey]
         # mod, modfile = getmodule(dfunc)
@@ -899,8 +905,8 @@ def DoDiffFunction(function, **opts):
             if isinstance(clos[-1].cell_contents, type):
                 # print(f'Function {function} is a method, {function.__closure__[-1]}')
                 pass
-            elif callable(clos[-1].cell_contents):
-                # print(f'Function {function} has a closure!, {function.__closure__[-1]}')
+            elif callable(clos[-1].cell_contents) and len(getast(clos[-1].cell_contents)[0].decorator_list) > 0:
+                # print(f'Function {function} has a closure and is decoratored, {function.__closure__[-1]}')
                 deco = function
                 function = clos[-1].cell_contents
             else:
