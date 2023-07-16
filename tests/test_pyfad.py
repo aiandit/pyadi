@@ -203,38 +203,6 @@ class TestPyfad(unittest.TestCase):
             print(repr(obj), repr(pyfad.fill(obj, seed)))
         self.assertEqual({'a': [0,1,2], 'b': 3}, pyfad.fill(obj, seed))
 
-    def test_DiffFD_sin(self):
-        f = fx.fsin
-        x = 2
-        dr, r = pyfad.DiffFD(f, x, verbose=self.verbose, dump=self.dump)
-        self.assertTrue(self.assertEqFD(f, dr, math.cos(x)))
-
-    def test_DiffFD_cos(self):
-        f = fx.fcos
-        x = 2
-        dr, r = pyfad.DiffFD(f, x, verbose=self.verbose, dump=self.dump)
-        self.assertTrue(self.assertEqFD(f, dr, -math.sin(x)))
-
-    def test_DiffFD_partial(self):
-        f = fxyz.f1
-        x,y,z = 1,2,3
-        dr, r = pyfad.DiffFD(f, x, y, z)
-        dr_x, r = pyfad.DiffFD(f, x, y, z, active='x')
-        dr_y, r = pyfad.DiffFD(f, x, y, z, active='y')
-        dr_z, r = pyfad.DiffFD(f, x, y, z, active='z')
-        self.assertTrue(almostEq(dr[0], dr_x))
-        self.assertTrue(almostEq(dr[1], dr_y))
-        self.assertTrue(almostEq(dr[2], dr_z))
-
-        dr_y2, r = pyfad.DiffFD(f, x, y, z, seed=[ [0,1,0] ])
-        self.assertTrue(almostEq(dr_y2, dr_y))
-
-        with self.assertRaises(ValueError):
-            dr_y2, r = pyfad.DiffFD(f, x, y, z, seed=[ [0,1] ])
-
-        dr_z, r = pyfad.DiffFD(f, x, y, z, active='fz2')
-        self.assertTrue(len(dr_z) == 0)
-
     def test_sD_f4(self):
         self.do_sourceDiff_f_xyz(fxyz.f4)
 

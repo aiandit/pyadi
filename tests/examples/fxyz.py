@@ -19,6 +19,11 @@ def f4(x,y,z):
     r = x*f1(y*z*17,y*z,z)*f3(s, y, x)
     return r
 
+def f4a(x,y,z):
+    s = f2(z,y,x)
+    r = x*sin(f1(y*z/17,y*z,z)*f3(s, y, x))
+    return r
+
 def f5(x,y,z):
     r = x*sin(y)
     return r
