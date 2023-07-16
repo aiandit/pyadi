@@ -1106,6 +1106,8 @@ def DiffFor(function, *args, **opts):
 
     verbose = opts.get('verbose', 0)
     timings = opts.get('timings', True)
+    jacobian = opts.get('jacobian', True)
+
     if timings:
         with Timer(function.__qualname__, 'run', verbose=verbose-1) as t:
             result = function(*args)
@@ -1135,6 +1137,7 @@ def DiffFor(function, *args, **opts):
 
     if 'dx' in opts:
         dargs = dx
+        dresult, result = adfun(*zip(fill(dargs, s), args))
     else:
         if isgeneric(seed) and seed == 1:
             seed = createFullGradients(args)
