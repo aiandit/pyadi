@@ -1195,8 +1195,12 @@ def DiffFD(f, *args, **opts):
         func = f
     else:
         active = varspec(active)
-        sig = getsig(f)
-        inds = [sig.index(a) for a in sig if a in active]
+        if isinstance(active[0], str):
+            sig = getsig(f)
+            inds = [sig.index(a) for a in sig if a in active]
+        else:
+            inds = active
+
         fullargs = [v for v in args]
 
         def inner(*aargs):
@@ -1264,9 +1268,8 @@ def DiffFDNP(f, *args, **opts):
     assert(len(args) == 1)
 
     v = args[0]
-    v1 = v.copy()
-    v2 = v.copy()
     N = v.size
+    sh = v.shape
     h2 = h*2
     r = func(*args)
 
@@ -1282,8 +1285,9 @@ def DiffFDNP(f, *args, **opts):
 
     Jac = np.zeros((r.size, ndd))
     for i in range(ndd):
-        v1.flat[:] = v.flat + h * getcol(i)
-        v2.flat[:] = v.flat - h * getcol(i)
+        v1 = v + h * getcol(i).reshape(sh)
+        v2 = v - h * getcol(i).reshape(sh)
+
         r1 = func(v1)
         r2 = func(v2)
         Jac[:,i] = (r1.flat[:] - r2.flat[:])/h2
