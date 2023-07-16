@@ -62,7 +62,7 @@ def cylfit_obj():
 
         r = np.linalg.norm(dists)
 
-        print(f'res = {r}')
+        # print(f'res = {r}')
         return r
 
     def handle():
@@ -159,18 +159,15 @@ def runuopt(fprime=None):
     objComps, obj1, handle = cylfit_obj()
 
     def fobj_uopt(x, y, udata):
-        print(f'fobj_uopt(x) = x={x.shape}, y={y.shape}')
         r = obj1(x)
         y[:] = r
-        print(f'obj={obj1.__qualname__} fobj(x) = r={type(r)},{r.shape}')
 
     def gobj_uopt(x, y, g, udata):
-        print(f'gobj_uopt {obj1.__qualname__} (x) = x={x.shape}, y={y.shape}, g={g.shape}')
         (dr, r) = pyfad.DiffFor(obj1, x, verbose=2)
-        print(f'obj={obj1.__qualname__} gobj(x) = r={type(r)},{r.shape}')
         y[:] = r
         for i in range(x.size):
             g[i] = dr[i]
+        print(f'gobj(x) = r={r}, g={g}')
         return g, r
 
     R0 = 1.1
@@ -268,7 +265,11 @@ def runusolve(fprime=None):
 
 
 if __name__ == "__main__":
+    import sys
+    mode = sys.argv[1] if len(sys.argv) > 1 else 'usolve'
+    runf = getattr(sys.modules[__name__], 'run' + mode)
+    runf()
     # runusolve()
-    runuopt()
+    # runuopt()
     #runopt_ad()
     #runopt()
