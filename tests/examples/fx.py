@@ -837,6 +837,46 @@ def fdeco2(x):
     r = gdeco2(l)
     return r
 
+def mydeco3(f):
+    def inner(*args, **kw):
+        args = [ 2*args[0], *args[1:] ]
+        res = f(*args, **kw)
+        return sqrt(abs(res))
+    return inner
+
+@mydeco3
+def fdeco3(x):
+    return x*x
+
+def mydeco4(c):
+    def mkDeco(f):
+        def inner(*args, **kw):
+            args = [ c*args[0], *args[1:] ]
+            res = f(*args, **kw)
+            return sqrt(abs(res))
+        return inner
+    return mkDeco
+
+@mydeco4(2.3)
+def fdeco4(x):
+    return x*x
+
+def fdeco5(x):
+    fd = mydeco3(f1)
+    return fd(x)*x
+
+def fdeco6(x):
+    fd = mydeco4(2.75)(f1)
+    return fd(x)*x
+
+gfd1 = mydeco3(f1)
+def fdeco7(x):
+    return gfd1(x)*x
+
+gfd2 = mydeco4(2.75)(f1)
+def fdeco8(x):
+    return gfd2(x)*x
+
 glob_dict = {
     'd': {'a': 1, 'b': 2},
     'l': [1,2,3],
