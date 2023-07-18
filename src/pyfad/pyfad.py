@@ -582,7 +582,7 @@ def diff2pys(intree, visitor, **kw):
     #    print('canon', unparse2j(intree, indent=1), file=open('canon.json', 'w'))
     #    print('canon', unparse(intree), file=open('canon.py', 'w'))
     if kw.get('verbose', 0) > 1:
-        print(f'Preprocessed code for {intree.name}:', unparse(intree))
+        print(f'Preprocessed code for {getattr(intree, "name", "")}:', unparse(intree))
 #    print('canon', unparse2j(intree, indent=1), file=open('norm.json', 'w'))
 #    print('canon', unparse(intree), file=open('norm.py', 'w'))
 #    print('canon', unparse(intree))
