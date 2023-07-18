@@ -1,3 +1,6 @@
+# (c) 2023 AI & IT UG
+# Author: Johannes Willkomm jwillkomm@ai-and-it.de
+
 import sys, os, argparse
 
 from . import *

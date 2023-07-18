@@ -145,3 +145,6 @@ class AugAssign(ASTNode):
         self.op = op
         self.target = target
         self.value = value
+
+# (c) 2023 AI & IT UG
+# Author: Johannes Willkomm jwillkomm@ai-and-it.de

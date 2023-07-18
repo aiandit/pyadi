@@ -1298,3 +1298,6 @@ def DiffFDNP(f, *args, **opts):
         Jac[:,i] = (r1.flat[:] - r2.flat[:])/h2
 
     return Jac, r
+
+# (c) 2023 AI & IT UG
+# Author: Johannes Willkomm jwillkomm@ai-and-it.de

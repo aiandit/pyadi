@@ -52,3 +52,6 @@ class Timer():
             return events[key]
         except:
             pass
+
+# (c) 2023 AI & IT UG
+# Author: Johannes Willkomm jwillkomm@ai-and-it.de

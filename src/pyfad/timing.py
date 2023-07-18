@@ -30,3 +30,6 @@ def decorator(**opts):
         return timing
 
     return inner
+
+# (c) 2023 AI & IT UG
+# Author: Johannes Willkomm jwillkomm@ai-and-it.de

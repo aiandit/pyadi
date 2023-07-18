@@ -74,3 +74,6 @@ def decorator(**opts):
         return data
 
     return inner, get
+
+# (c) 2023 AI & IT UG
+# Author: Johannes Willkomm jwillkomm@ai-and-it.de

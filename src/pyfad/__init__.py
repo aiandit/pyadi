@@ -8,3 +8,6 @@ from .pyfad import getRuleModules, getHandle, initRules
 from .runtime import dzeros, unzd, joind, unjnd, DWith
 from .rules import setrule, delrule, getrules
 from .astvisitor import py, isbuiltin, normalize, canonicalize, NoSource
+
+# (c) 2023 AI & IT UG
+# Author: Johannes Willkomm jwillkomm@ai-and-it.de

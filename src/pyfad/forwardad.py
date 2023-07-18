@@ -246,3 +246,6 @@ def D_numpy_cos(r, dx, x):
 
 def D_numpy_tan(r, dx, x):
     return dx / np.cos(x)**2
+
+# (c) 2023 AI & IT UG
+# Author: Johannes Willkomm jwillkomm@ai-and-it.de

@@ -805,3 +805,6 @@ Result:
 if __name__ == "__main__":
     testdir()
 #run()
+
+# (c) 2023 AI & IT UG
+# Author: Johannes Willkomm jwillkomm@ai-and-it.de
