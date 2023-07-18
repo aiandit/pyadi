@@ -28,8 +28,7 @@ def run(parsefun, prog, description='What the program does'):
                         help='Write output to file')
     parser.add_argument('-g', '--debug', type=str, nargs='?', const='x',
                         help='Keep line number information')
-    parser.add_argument('-v', '--verbose',
-                        action='store_true')
+    parser.add_argument('-v', '--verbose', type=int, default=0, const=1, nargs='?')
 
     args = parser.parse_args()
 
