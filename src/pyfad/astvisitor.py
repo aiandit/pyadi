@@ -245,7 +245,6 @@ class ASTCanonicalizer:
 
     def __call__(self, tree):
         self._list = []
-        self.active = False
         result = self.dispatch(tree)
         return result
 
@@ -258,38 +257,42 @@ class ASTCanonicalizer:
             tmpv = mkTmp('c')
             tmpas = Assign(tmpv, self.dispatch(tree.clone()) if val is None else val)
             self._list.append(tmpas)
-#            print('new tmp', repr(tmpas))
+            # print('new tmp', repr(tmpas))
             res = tree
         else:
             res = tree
         return (res, tmpv)
 
+
+    def processStmts(self, stmts):
+        nbody = []
+        assert isinstance(stmts, list)
+        for stmt in stmts:
+            if stmt._class == "For":
+                self._list = []
+                stmt.iter = self.dispatch(stmt.iter)
+                nbody += self._list
+                self._list = []
+
+            self._list = []
+            pstmt = self.dispatch(stmt)
+            nbody += self._list
+            self._list = []
+            nbody += [pstmt]
+        return nbody
+
+
     def dispatch(self, tree):
         if type(tree) == type([]):
             res = list(map(self.dispatch, tree))
         elif isinstance(tree, ASTNode):
-#            print('visit', vars(tree))
+            # print('visit', vars(tree))
 
             if getattr(tree, 'body', None) is not None and tree._class != "Module" and tree._class != "IfExp" and tree._class != "Lambda":
-                nbody = []
-                for stmt in tree.body:
-                    if stmt._class == "For":
-                        self._list = []
-                        self.active = True
-                        stmt.iter = self.dispatch(stmt.iter)
-                        nbody += self._list
-                        self.active = False
 
-                    if getattr(stmt, 'body', None) is None:
-                        self._list = []
-                        self.active = True
-                        pstmt = self.dispatch(stmt)
-                        nbody += self._list
-                        nbody += [pstmt]
-                        self.active = False
-                    else:
-                        nbody += [self.dispatch(stmt)]
-                tree.body = nbody
+                tree.body = self.processStmts(tree.body)
+                if tree._class == "If":
+                    tree.orelse = self.processStmts(tree.orelse)
 
                 return tree
             elif tree._class == "DictComp" or tree._class == "ListComp":
