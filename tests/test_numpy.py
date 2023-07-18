@@ -165,4 +165,4 @@ class TestNumpy(unittest.TestCase):
 
         (dr, r) = self.do_sourceDiff_f_xyz(obj, args=[v0])
         (dr, r) = self.do_sourceDiff_f_xyz(obj2, args=[v0])
-        print(dr, r)
+        # print(dr, r)
