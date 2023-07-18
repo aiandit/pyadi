@@ -113,7 +113,6 @@ class TestPyTracer(unittest.TestCase):
         tr = threading.Thread(target=self.startStopExecution,
                               args=(self.handle, cvsleep, 8e-3))
         tr.start()
-        time.sleep(1)
         dres, res = self.do_sourceDiff_f_xyz(fx.flong, args=[0.234])
         hist = self.handle(get='hist')
         self.handle(done=True)
