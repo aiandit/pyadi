@@ -568,6 +568,11 @@ class ASTVisitorFMAD(ASTVisitorID):
         t.targets = dtargets + t.targets
         return t
 
+    def _DNonlocal(self, t):
+        dtargets = [ 'd_' + s for s in t.names ]
+        t.names = dtargets + t.names
+        return t
+
 
 def diff2pys(intree, visitor, **kw):
 #   print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
