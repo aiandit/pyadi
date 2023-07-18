@@ -1,10 +1,12 @@
 from astunparse.astnode import ASTNode, Constant, Name
 
+
 class keyword(ASTNode):
     def __init__(self, arg, value):
         self._class = 'keyword'
         self.arg = arg
         self.value = value
+
 
 class arguments(ASTNode):
     def __init__(self, args):
@@ -14,11 +16,13 @@ class arguments(ASTNode):
         self.vararg = None
         self.kwarg = None
 
+
 class arg(ASTNode):
     def __init__(self, arg):
         self._class = 'arg'
         self.arg = arg
         self.annotation = None
+
 
 class FunctionDef(ASTNode):
     def __init__(self, name, args, l):
@@ -28,16 +32,19 @@ class FunctionDef(ASTNode):
         self.body = l
         self.decorator_list = []
 
+
 class Lambda(ASTNode):
     def __init__(self, args, l):
         self._class = 'Lambda'
         self.args = arguments([arg(n) for n in args])
         self.body = l
 
+
 class Return(ASTNode):
     def __init__(self, val):
         self._class = 'Return'
         self.value = val
+
 
 class Assign(ASTNode):
     def __init__(self, l, r):
@@ -47,10 +54,12 @@ class Assign(ASTNode):
         self.targets = l
         self.value = r
 
+
 class List(ASTNode):
     def __init__(self, elts):
         self._class = 'List'
         self.elts = elts
+
 
 class Tuple(ASTNode):
     def __init__(self, elts):
@@ -121,12 +130,14 @@ class UnaryOp(ASTNode):
         self.op = op
         self.operand = value
 
+
 class BinOp(ASTNode):
     def __init__(self, op, left=None, right=None):
         self._class = "BinOp"
         self.op = op
         self.left = left
         self.right = right
+
 
 class AugAssign(ASTNode):
     def __init__(self, op, target=None, value=None):
