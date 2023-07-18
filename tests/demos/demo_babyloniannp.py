@@ -14,14 +14,15 @@ def fbabylonian(x):
     return r
 
 # define input value
-x = np.arange(1, 17)
+N = 3
+x = np.arange(1, N + 1)
 
 # compute function result
 r = fbabylonian(x)
 print(f'f{x}) = {r}')
 
 #compute derivative
-d_r, r = pyfad.DiffFor(fbabylonian, x, seed = [np.ones(16)])
-print(f'f{x}) = {r}')
-print(f'f\'{x}) = {d_r}, correct result is {0.5/r},\
+d_r, r = pyfad.DiffFor(fbabylonian, x, seed = [np.ones(N)])
+# print(f'f{x}) = {r}')
+print(f'f\'({x}) = {d_r},\n correct result is {0.5/r},\
  error {np.linalg.norm(d_r[0] - 0.5/r)}')
