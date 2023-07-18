@@ -122,7 +122,7 @@ class TestPyTracer(unittest.TestCase):
         if self.verbose:
             print('Start/Stop thread joined, finish.')
 
-    def _test_tr_loadast(self):
+    def test_tr_loadast(self):
 
         if self.verbose:
             print('Test function', ftrace.floadast(0))

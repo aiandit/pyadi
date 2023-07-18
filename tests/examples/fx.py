@@ -936,3 +936,78 @@ def faugass2(x):
     l[7] **= 2.5
     z = gl_sum(l)
     return z
+
+
+def mkcached():
+    cache = {}
+
+    def cached(f):
+
+        def inner(x):
+            nonlocal cache
+
+            if x in cache:
+                y = cache[x]
+                # print(f'Return f({x}) from cache: {y}')
+            elif isinstance(x, str):
+                if x == 'clear':
+                    cache = {}
+                else:
+                    raise ValueError()
+                return 0
+            else:
+                y = f(x)
+                cache[x] = y
+                # print(f'Compute f({x}): {y}')
+            return y
+
+        return inner
+    return cached
+
+
+def mkcached2():
+
+    def cached(f):
+        cache = {}
+
+        def inner(x):
+            if x in cache:
+                y = cache[x]
+                # print(f'Return f({x}) from cache: {y}')
+            else:
+                y = f(x)
+                cache[x] = y
+                # print(f'Compute f({x}): {y}')
+            return y
+
+        return inner
+    return cached
+
+
+@mkcached()
+def gcachedsin(x):
+    return fsin(x)
+
+def guncachedsin(x):
+    return fsin(x)
+
+def fcached(x):
+    gcachedsin('clear')
+    l = [x, x*x, x*x*x]
+    v1 = [gcachedsin(v) for v in l]
+    v2 = [gcachedsin(v) for v in l]
+    return gl_sum(v1 + v2)
+
+def fcached2(x):
+    gcached = mkcached()(guncachedsin)
+    l = [x, x*x, x*x*x]
+    v1 = [gcached(v) for v in l]
+    v2 = [gcached(v) for v in l]
+    return gl_sum(v1 + v2)
+
+def fcached3(x):
+    gcached = mkcached2()(guncachedsin)
+    l = [x, x*x, x*x*x]
+    v1 = [gcached(v) for v in l]
+    v2 = [gcached(v) for v in l]
+    return gl_sum(v1 + v2)

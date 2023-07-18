@@ -1,3 +1,4 @@
+
 import numpy as np
 
 def gsqr(X):
@@ -53,4 +54,14 @@ def fexp3(x):
     v = x[0]
     w = x[1]
     z = np.exp(v + 1j * w)
+    return z
+
+def fmnorm(x):
+    M = np.diag(x)
+    z = np.linalg.norm(M)
+    return z
+
+def fmnorm2(x):
+    M = np.diag(x)
+    z = np.linalg.norm(M, 2)
     return z

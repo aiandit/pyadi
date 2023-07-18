@@ -94,7 +94,7 @@ def mkCylData(N=10000, R0=1, theta=0, phi=0):
     cpts = np.hstack([ R0 * np.ones((N,1)), PP.reshape((N,1)), HH.reshape((N,1)) ])
     pts = cyl2xyz(cpts)
     pts = z_rotation(x_rotation(pts, theta), phi)
-    print('pts generated')
+    #print('pts generated')
     return pts
 
 

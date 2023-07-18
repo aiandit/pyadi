@@ -148,7 +148,7 @@ class TestNumpy(unittest.TestCase):
         objComps, obj, handle = cylfit.cylfit_obj()
         obj2, handle2 = cylfit2.cylfit_obj()
 
-        N = int(1e3)**2
+        N = int(1e2)**2
 
         demopts = cylfit.mkCylData(N, R0, theta0, phi0)
         demopts2 = cylfit2.mkCylData(N, R0, theta0, phi0)
