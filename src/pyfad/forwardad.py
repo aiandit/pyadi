@@ -204,8 +204,16 @@ def Dkw_numpy_sum(r, d_kw, dx, x, **kw):
 def D_numpy_diag(r, dx, x):
     return np.diag(dx)
 
+def D_numpy_zeros(r, *args):
+    return np.zeros(r.shape, dtype=r.dtype)
+
+D_numpy_eye = D_numpy_ones = D_numpy_random_rand = D_numpy_zeros
+
 def D_numpy_array(r, dx, x):
     return np.array(dx)
+
+def D_numpy_linalg_inv(r, dx, x):
+    return r @ dx @ r
 
 def D_numpy_linalg_norm(r, dx, x, d_ord=0, ord=None):
     if ord is None:
