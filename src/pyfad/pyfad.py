@@ -576,6 +576,8 @@ class ASTVisitorFMAD(ASTVisitorID):
 
 def diff2pys(intree, visitor, **kw):
 #   print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
+    if kw.get('verbose', 0) > 2:
+        print(f'Input code for {getattr(intree, "name", "")}:', unparse(intree))
     intree = normalize(intree.clone(), **kw)
     intree = canonicalize(intree)
     #    intree = resolvetmpvars(intree)
