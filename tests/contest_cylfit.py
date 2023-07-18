@@ -88,7 +88,7 @@ def setup():
 
     # v0 = np.array([R0 + 0.01, 0, 0])
     v0 = np.array([R0 + 1e-6, theta0, phi0])
-    obj, handle = cylfit.cylfit_obj()
+    objComps, obj, handle = cylfit.cylfit_obj()
     obj2, handle2 = cylfit2.cylfit_obj()
 
     N = int(1e3)**2
