@@ -249,7 +249,6 @@ def runfsolve_ad(fprime=None):
 # Cannot run alone, derivatives must be provided
 def _runuopt(fprime=None):
     import uopt.uopt
-    import scipy as sc
 
     objComps, obj1, handle = cylfit_obj()
 
@@ -337,7 +336,6 @@ def runuopt_fd():
 # run UOpt usolve. Cannot run alone, derivatives must be provided
 def _runusolve(fprime=None, fvprime=None):
     import uopt.uopt
-    import scipy as sc
 
     objComps, obj, handle = cylfit_obj()
 
@@ -440,8 +438,6 @@ def runusolve_fd():
 
 
 def runusolve_ad():
-    import uopt.uopt
-    import scipy as sc
 
     def gobj(fobj, x, y, g, udata):
         (dr, r) = pyfad.DiffFor(fobj, x)
