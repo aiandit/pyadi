@@ -602,6 +602,11 @@ Calls methods self._DXYZ for individual node XYZ handling
 
     def _DTry(self, t):
         t.body = self.ddispatch(t.body)
+        t.handlers = self.ddispatch(t.handlers)
+        return t
+
+    def _DExceptHandler(self, t):
+        t.body = self.ddispatch(t.body)
         return t
 
     def _DWith(self, t):
