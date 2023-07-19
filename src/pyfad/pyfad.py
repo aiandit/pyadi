@@ -15,7 +15,8 @@ from itertools import chain
 from astunparse import loadast, unparse2j, unparse2x, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 
-from .astvisitor import canonicalize, resolvetmpvars, normalize, unnormalize, filterLastFunction, infoSignature, filterFunctions, py, getmodule, getast, fqname
+from .astvisitor import canonicalize, resolvetmpvars, normalize, unnormalize, filterLastFunction
+from .astvisitor import infoSignature, filterFunctions, py, getmodule, getast, fqname, fdname
 from .astvisitor import ASTVisitorID, ASTVisitorImports, ASTVisitorLocals, mkTmp
 from .nodes import *
 from .runtime import dzeros, unzd, joind, unjnd, DWith
@@ -585,23 +586,22 @@ class ASTVisitorFMAD(ASTVisitorID):
 
 
 def diff2pys(intree, visitor, **kw):
-#   print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
+    # print('intree', unparse2j(intree, indent=1), file=open('intree.json', 'w'))
+
     if kw.get('verbose', 0) > 2:
         print(f'Input code for {getattr(intree, "name", "")}:', unparse(intree))
+
     intree = normalize(intree.clone(), **kw)
+
     intree = canonicalize(intree)
-    #    intree = resolvetmpvars(intree)
-    #    print('canon', unparse2j(intree, indent=1), file=open('canon.json', 'w'))
-    #    print('canon', unparse(intree), file=open('canon.py', 'w'))
+
     if kw.get('verbose', 0) > 1:
         print(f'Preprocessed code for {getattr(intree, "name", "")}:', unparse(intree))
-#    print('canon', unparse2j(intree, indent=1), file=open('norm.json', 'w'))
-#    print('canon', unparse(intree), file=open('norm.py', 'w'))
-#    print('canon', unparse(intree))
+
     outtree = visitor(intree)
-#    print('outtree', unparse2j(outtree, indent=1), file=open('outtree.json', 'w'))
-#    outtree = resolvetmpvars(outtree)
+
     outtree = unnormalize(outtree.clone(), **kw)
+
     return outtree
 
 
@@ -712,7 +712,7 @@ Source:
 
     sfname = ''
     if kw.get('dump', 0) > 0:
-        sfname = dumpFile('d_' + fqname(func) + '.py')
+        sfname = dumpFile('d_' + fdname(func) + '.py')
         print(dsrc, file=open(sfname, 'w'))
 
     cl_data = mkClosDict(func)
@@ -1130,7 +1130,7 @@ def DiffFor(function, *args, **opts):
         dumpDir = dumpdir
         if not os.path.exists(dumpDir):
             print(f'mkdir {dumpDir}')
-            os.mkdir(dumpDir)
+            os.makedirs(dumpDir)
 
     jacobian = opts.get('jacobian', True)
 
