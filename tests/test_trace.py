@@ -26,19 +26,22 @@ class TestPyTracer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # print('SETUP Class')
-        pyfad.initRules(rules='pyfad.trace,pyfad.dummyad,tr2=pyfad.trace', tracecalls=True)
+        pyfad.initRules(rules='pyfad.trace,pyfad.dummyad,tr2=pyfad.trace', tracecalls=True, verbose=True, verboseargs=True)
         cls.handle_ = pyfad.getHandle('pyfad.trace')
         cls.handle = lambda x, *args, **kw: cls.handle_(*args, **kw)
 
         cls.handle2_ = pyfad.getHandle('tr2')
         cls.handle2 = lambda x, *args, **kw: cls.handle2_(*args, **kw)
 
-        cls.verbose = 0
+        cls.verbose = 2
+        cls.dump = 1
+        cls.opts = {}
+
 
     def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
             args = [1,2,3]
-        (d_r, r) = pyfad.DiffFor(func, *args, **kw)
+        (d_r, r) = pyfad.DiffFor(func, *args, dump=self.dump, verbose=self.verbose, **self.opts, **kw)
         return (d_r, r)
 
     def test_tr_calll2(self):
@@ -75,7 +78,7 @@ class TestPyTracer(unittest.TestCase):
         hist = pyfad.getHandle('pyfad.trace')(get='hist')
         if self.verbose:
             print('** Get trace history: ', hist)
-        dres, res = self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234], verbose=True)
+        dres, res = self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234])
         hist = pyfad.getHandle('pyfad.trace')(get='hist')
         if self.verbose:
             print('Get trace history: ', hist)

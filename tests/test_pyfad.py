@@ -66,9 +66,9 @@ class TestPyfad(unittest.TestCase):
         # pyfad.initRules(rules='t1=pyfad.trace,t2=pyfad.trace,t3=pyfad.trace,ad=pyfad.forwardad')
         pyfad.initRules(rules='ad=pyfad.forwardad')
         pyfad.clear()
-        cls.verbose = 2
-        cls.dump = 0
-        cls.opts = {}
+        cls.verbose = 0
+        cls.dump = 1
+        cls.opts = {'dumpdir': 'dump'}
 
     def assertEq(self, f, r1, r2):
         if not almostEq(r1, r2):
