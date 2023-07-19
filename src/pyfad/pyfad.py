@@ -66,6 +66,11 @@ class ASTVisitorFMAD(ASTVisitorID):
     verbose = 0
 
     def __call__(self, tree):
+        """Process the tree. Calls dispatch, which will catch only
+FunctionDefs and enter ddispatch traversal when the function is
+designated as active.  Calls methods self._XYZ for individual node XYZ
+handling, there is only _FunctionDef."""
+
         self.localvars, self.localfuncs = ASTVisitorLocals()(tree)
         self.active_methods += self.localfuncs
         if self.verbose > 2:
@@ -74,7 +79,49 @@ class ASTVisitorFMAD(ASTVisitorID):
         self.result = self.dispatch(tree)
         return self.result
 
+
+    def dadispatch(self, tree):
+        """traversal only for the LHS of assignments"""
+
+        if isinstance(tree, list):
+            return [self.dadispatch(t) for t in tree]
+        elif isgeneric(tree):
+            return tree
+        cname = tree._class
+        meth = getattr(self, "_Da_"+cname, None)
+        # all nodes must be handled by a method
+        assert meth, f'self.{"_Da_"+cname} not found'
+        if meth:
+            return meth(tree)
+        else:
+            res = ASTNode()
+            for name in vars(tree).keys():
+                delem = self.dadispatch(getattr(tree, name))
+                setattr(res, name, delem)
+            return res
+
+    def _Da_Name(self, t):
+        return self.ddispatch(t)
+
+    def _Da_Attribute(self, t):
+        if not self.isLocal(t):
+            return Name('_')
+        return self.ddispatch(t)
+
+    def _Da_Subscript(self, t):
+        if not self.isLocal(t):
+            return Name('_')
+        return self.ddispatch(t)
+
+    def _Da_Tuple(self, t):
+        t.elts = self.dadispatch(t.elts)
+        return t
+
+
     def ddispatch(self, tree):
+        """The main workhorse, the differentiation traversal
+Calls methods self._DXYZ for individual node XYZ handling
+"""
         if isinstance(tree, list):
             return [self.ddispatch(t) for t in tree]
         elif isgeneric(tree):
@@ -94,6 +141,7 @@ class ASTVisitorFMAD(ASTVisitorID):
 #                print(f'DDispatch {name} => {repr(delem)}')
                 setattr(res, name, delem)
             return res
+
 
     nodiffFunctions = []
     nodiffExpr = ["Raise", "Assert"]
@@ -361,10 +409,10 @@ class ASTVisitorFMAD(ASTVisitorID):
     def _DAssign(self, t):
         atargets = [ s for s in t.targets if self.isLocal(s) ]
         if t.value._class in self.tupleDiff:
-            t.targets = [Tuple(self.ddispatch([t.clone() for t in atargets]) + self.dispatch(t.targets))]
+            t.targets = [Tuple(self.dadispatch([t.clone() for t in atargets]) + self.dispatch(t.targets))]
         else:
             #t.targets = [self.ddispatch(s.clone()) if self.isLocal(s) else Name('_') for s in t.targets ]
-            t.targets = [self.ddispatch(s.clone()) for s in atargets ]
+            t.targets = [self.dadispatch(s.clone()) for s in atargets ]
         isList = t.value._class == "List" or t.value._class == "Dict"
         t.value = self.ddispatch(t.value)
         if isList:
