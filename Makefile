@@ -40,12 +40,12 @@ dist: clean install-build-deps
 	python -m build
 	ls -l dist
 
-install-build-deps:
+PIP ?= pip
+install-deps:
 	$(PIP) install -r requirements.txt
 
 install-test-deps:
 	$(PIP) install -r test_requirements.txt
 
-PIP ?= pip
-install: dist
+install: install-deps
 	$(PIP) install .

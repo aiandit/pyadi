@@ -4,7 +4,7 @@ version = "1.0.1"
 authors = [
   { name="Johannes Willkomm", email="jwillkomm@ai-and-it.de" },
 ]
-description = "Source AD for python"
+description = "Source transformation AD for Python"
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [
@@ -24,6 +24,3 @@ build-backend = "hatchling.build"
 [project.scripts]
 pydiff = "pyfad.cmdline:pydiff"
 pycanon = "pyfad.cmdline:pycanon"
-
-[project.entry-points."pyfad.cmdline"]
-pydiff2 = "pyfad.cmdline:pydiff"
