@@ -8,6 +8,7 @@ def decorator(**opts):
 
     tracecalls = opts.get('tracecalls', False)
     verbose = opts.get('verbose', False)
+    verboseargs = opts.get('verboseargs', False)
 
     data = {}
 
@@ -24,6 +25,8 @@ def decorator(**opts):
 
             if verbose:
                 print(f'call to {f.__name__}() starts {time.time()} s')
+            if verboseargs:
+                print(f'call to {f.__name__}({args})')
 
             if tracecalls:
                 data['cur'] = f.__qualname__
@@ -54,6 +57,8 @@ def decorator(**opts):
             res = adfun(*args, **kw)
             if verbose:
                 print(f'call to {f.__name__}() ends {time.time()} s')
+            if verboseargs:
+                print(f'call to {f.__name__}(,,,) = {res}')
 
             return res
 
