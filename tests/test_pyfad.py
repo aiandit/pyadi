@@ -2,6 +2,7 @@ import ast
 import sys
 import unittest
 import math
+import warnings
 from itertools import chain
 
 import pyfad
@@ -65,7 +66,7 @@ class TestPyfad(unittest.TestCase):
         # pyfad.initRules(rules='t1=pyfad.trace,t2=pyfad.trace,t3=pyfad.trace,ad=pyfad.forwardad')
         pyfad.initRules(rules='ad=pyfad.forwardad')
         pyfad.clear()
-        cls.verbose = 0
+        cls.verbose = 2
         cls.dump = 0
         cls.opts = {}
 
@@ -421,3 +422,7 @@ class TestPyfad(unittest.TestCase):
         src = pyfad.py(inner)
         line1 = next(l for l in src.split('\n'))
         self.assertEqual(line1, 'def inner(x, y, z):')
+
+    def test_badfcachegl(self):
+        with self.assertWarns(UserWarning):
+            pyfad.DiffFor(fx.badfcachegl, 0.234)

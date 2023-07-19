@@ -7,6 +7,7 @@ import shutil
 from io import StringIO
 import tempfile
 import importlib
+import warnings
 import numpy as np
 
 from itertools import chain
@@ -112,15 +113,22 @@ class ASTVisitorFMAD(ASTVisitorID):
         self.tmpval = None
         for item in body:
             if item._class == "Assign":
-                if item.value._class == "BinOp" and item.value.op == "**" and isdiff(item.value.right):
-                    self.tmpval = mkTmp('s')
-                    nbody += [Assign(self.tmpval, self.mkOpPartialC("**", None, None, item.value.left, item.value.right))]
-                nbody += [self.ddispatch(item.clone())]
-                if item.value._class == "BinOp" and item.value.op == "**" and isdiff(item.value.right):
-                    nbody += [Assign(item.targets, self.tmpval)]
-                    self.tmpval = None
-                    continue
-                if item.value._class not in self.tupleDiff:
+                atargets = [ s for s in item.targets if self.isLocal(s) ]
+                if len(atargets) < len(item.targets):
+                    natargets = [ s for s in item.targets if not self.isLocal(s) ]
+                    warnings.warn(f'Assignment to non-local locations {[str(v).strip() for v in natargets]} cannot be handled, the derivative may be wrong')
+                if len(atargets) > 0:
+                    if item.value._class == "BinOp" and item.value.op == "**" and isdiff(item.value.right):
+                        self.tmpval = mkTmp('s')
+                        nbody += [Assign(self.tmpval, self.mkOpPartialC("**", None, None, item.value.left, item.value.right))]
+                    nbody += [self.ddispatch(item.clone())]
+                    if item.value._class == "BinOp" and item.value.op == "**" and isdiff(item.value.right):
+                        nbody += [Assign(item.targets, self.tmpval)]
+                        self.tmpval = None
+                        continue
+                    if item.value._class not in self.tupleDiff:
+                        nbody += [self.dispatch(item)]
+                else:
                     nbody += [self.dispatch(item)]
             elif item._class == "FunctionDef":
                 nbody += [self._DFunctionDef(item.clone())]
@@ -350,15 +358,15 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def _DAssign(self, t):
+        atargets = [ s for s in t.targets if self.isLocal(s) ]
         if t.value._class in self.tupleDiff:
-            t.targets = [Tuple(self.ddispatch([t.clone() for t in t.targets]) + self.dispatch(t.targets))]
+            t.targets = [Tuple(self.ddispatch([t.clone() for t in atargets]) + self.dispatch(t.targets))]
         else:
             #t.targets = [self.ddispatch(s.clone()) if self.isLocal(s) else Name('_') for s in t.targets ]
-            t.targets = [self.ddispatch(s.clone()) for s in t.targets ]
+            t.targets = [self.ddispatch(s.clone()) for s in atargets ]
         isList = t.value._class == "List" or t.value._class == "Dict"
         t.value = self.ddispatch(t.value)
         if isList:
-            #assert t.value.elts[0]._class == "Starred"
             if hasattr(t.value, 'elts') and t.value.elts[0]._class == "Starred":
                 t.value = t.value.elts[0].value
         return t
@@ -376,6 +384,8 @@ class ASTVisitorFMAD(ASTVisitorID):
         return t
 
     def isLocal(self, t):
+        if t._class == "Tuple":
+            return any([self.isLocal(s) for s in t.elts])
         return self.getRoot(t).id in self.localvars
 
     def _DStarred(self, node):

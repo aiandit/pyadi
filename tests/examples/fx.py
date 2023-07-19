@@ -1011,3 +1011,23 @@ def fcached3(x):
     v1 = [gcached(v) for v in l]
     v2 = [gcached(v) for v in l]
     return gl_sum(v1 + v2)
+
+gldata = {}
+def gcachegl(x):
+    if x in gldata:
+        y = gldata[x]
+    else:
+        y = fsin(x)
+        gldata[x] = y
+    return y
+
+def badfcachegl(x):
+    l = [x, x*x, x*x*x]
+    v1 = [gcachegl(v) for v in l]
+    v2 = [gcachegl(v) for v in l]
+    return gl_sum(v1 + v2)
+
+def fwrglobal(x):
+    l = [x, x*x, x*x*x]
+    r, gldata['c'], _ = gtpl(*l)
+    return r*2
