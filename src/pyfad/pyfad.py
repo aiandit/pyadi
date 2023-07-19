@@ -16,7 +16,7 @@ from astunparse import loadast, unparse2j, unparse2x, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 
 from .astvisitor import canonicalize, resolvetmpvars, normalize, unnormalize, filterLastFunction
-from .astvisitor import infoSignature, filterFunctions, py, getmodule, getast, fqname, fdname
+from .astvisitor import infoSignature, filterFunctions, py, getmodule, getast, fqname, fdname, fddname
 from .astvisitor import ASTVisitorID, ASTVisitorImports, ASTVisitorLocals, mkTmp
 from .nodes import *
 from .runtime import dzeros, unzd, joind, unjnd, DWith
@@ -758,9 +758,12 @@ Source:
 """)
         raise ex
 
+    if kw.get('verbose', 0) > 1:
+        print(f'Diff code {fdname(func)}:{dsrc}')
+
     sfname = ''
     if kw.get('dump', 0) > 0:
-        sfname = dumpFile('d_' + fdname(func) + '.py')
+        sfname = dumpFile(fddname(func) + '.py')
         print(dsrc, file=open(sfname, 'w'))
 
     cl_data = mkClosDict(func)

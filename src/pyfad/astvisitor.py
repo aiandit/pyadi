@@ -50,7 +50,12 @@ def fqname(func):
     return f'{mod}.{fname}'
 
 def fdname(func):
-    return '.'.join([ s for s in fqname(func).split() if s != '<locals>' ])
+    return '.'.join([ s for s in fqname(func).split('.') if s != '<locals>' ])
+
+def fddname(func):
+    fields = [ s for s in fqname(func).split('.') if s != '<locals>' ]
+    fields[-1] = 'd_' + fields[-1]
+    return '.'.join(fields)
 
 def rid(func):
     fname = fqname(func)
