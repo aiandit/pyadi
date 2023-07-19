@@ -457,10 +457,10 @@ Calls methods self._DXYZ for individual node XYZ handling
     def _DConstant(self, t):
         if isinstance(t.value, float) or isinstance(t.value, int):
             t = t.clone()
-            t.value = 0.0
+            t.value = 0
         elif isinstance(t.value, complex):
             t = t.clone()
-            t.value = 0.0j
+            t.value = 0j
         return t
 
     def mkOpPartialC(self, op, r, dx, x, y):
@@ -512,7 +512,7 @@ Calls methods self._DXYZ for individual node XYZ handling
     def _DBinOp(self, t):
         #print(f'Diff BinOp {t} left {vars(t.left)}')
         if nodiff(t.left) and nodiff(t.right):
-            return Constant(0.0)
+            return Constant(0)
 
         if nodiff(t.left):
             left = t.left
@@ -547,7 +547,7 @@ Calls methods self._DXYZ for individual node XYZ handling
                 t.left = left
 
         elif t.op == '//':
-            t = Constant(0.0)
+            t = Constant(0)
 
         elif t.op == '%':
             if t.right._class == "Tuple" or (t.left._class == "Constant" and isinstance(t.left.value, str)):
