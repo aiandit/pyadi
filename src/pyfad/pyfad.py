@@ -101,16 +101,18 @@ handling, there is only _FunctionDef."""
             return res
 
     def _Da_Name(self, t):
+        if not self.isLocal(t):
+            return Name(dpref_ + '_')
         return self.ddispatch(t)
 
     def _Da_Attribute(self, t):
         if not self.isLocal(t):
-            return Name('_')
+            return Name(dpref_ + '_')
         return self.ddispatch(t)
 
     def _Da_Subscript(self, t):
         if not self.isLocal(t):
-            return Name('_')
+            return Name(dpref_ + '_')
         return self.ddispatch(t)
 
     def _Da_Tuple(self, t):
