@@ -208,6 +208,7 @@ class ASTVisitor:
         meth = getattr(self, "_"+cname)
         meth(tree)
 
+
 class ASTVisitorID(ASTVisitor):
 
     def dispatch(self, tree):
@@ -224,12 +225,6 @@ class ASTVisitorID(ASTVisitor):
             for name in vars(tree):
                 setattr(tree, name, self.dispatch(getattr(tree, name)))
             return tree
-
-    def _BinOp(self, t):
-        # print(f'Catch BinOp {t.op}')
-        t.left = self.dispatch(t.left)
-        t.right = self.dispatch(t.right)
-        return t
 
 
 def isop(cn):
@@ -389,6 +384,7 @@ class ASTLocalAction:
         else:
             res = tree
         return res
+
 
 class ASTReolvetmpvars(ASTLocalAction):
 
