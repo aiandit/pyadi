@@ -602,8 +602,6 @@ def diff2pys(intree, visitor, **kw):
 #    print('outtree', unparse2j(outtree, indent=1), file=open('outtree.json', 'w'))
 #    outtree = resolvetmpvars(outtree)
     outtree = unnormalize(outtree.clone(), **kw)
-    if kw.get('dump', 0):
-        print(unparse2x(outtree, indent=1), file=open(dumpFile('outtree.xml'), 'w'))
     return outtree
 
 
@@ -659,38 +657,19 @@ def roundtrip2JID(fname):
         return roundtrip2JIDs(source, fname)
 
 
-def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'pyfad': 'D'}], vars=['x'], **kw):
+def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'pyfad': 'D'}], vars=['x'], fname='', **kw):
 
-    importstr = '\n'.join([f'import {name}' if isinstance(name, str) else ('\n'.join([f'from {k} import {v}' for k, v in name.items()])) for name in imports])
+    # importstr = '\n'.join([f'import {name}' if isinstance(name, str)
+    #                        else ('\n'.join([f'from {k} import {v}' for k, v in name.items()])) for name in imports])
     collectstr = '\n'.join([f'_pyfad_data["{name}"] = {name}' for name in vars])
 
-#    dsrc = f"{importstr}\n{source}\n{collectstr}"
     dsrc = f"{source}\n{collectstr}"
-    if kw.get('verbose', 0):
-        print(f'Differentiated code {source.name}: {source}')
-    sfname = ""
-    if Debug or True:
-        tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
-        sfname = f'{tmpsdir}/diff.py'
-        with open(sfname, 'w') as f:
-            f.write(dsrc)
-    # print(f'compile diff function code {source} in file {sfname}')
-    try:
-        res = compile(dsrc, sfname, "exec")
-    except SyntaxError as ex:
 
-        print('Failed to compile python code', ex)
-        print(dsrc)
-        if not sfname:
-            tmpsdir = tempfile.mkdtemp(prefix='pyfad_')
-            sfname_ = f'{tmpsdir}/diff.py'
-            with open(sfname_, 'w') as f:
-                f.write(dsrc)
-        else:
-            sfname_ = sfname
-        res = compile(dsrc, sfname_, "exec")
-        if not sfname:
-            shutil.rmtree(tmpsdir)
+    try:
+        res = compile(dsrc, fname, "exec")
+    except SyntaxError as ex:
+        # print(f'Compilation error in diff source:\n{ex}')
+        raise ex
 
     gvars = globals() | fglobals | {'_pyfad_data': {}}
     #print(f'exec compiled diff function code in file {sfname} with globals={(gvars).keys()} locals={flocals}')
@@ -717,29 +696,49 @@ def mkClosDict(function):
 
 
 def difffunction(func, active=[], **kw):
-    dsrc = Dpy(func, active, **kw)
-    cl_data = mkClosDict(func)
-    if cl_data and kw.get('verbose', 0) > 1:
-        print(f'DiffFor: Function {func} has a closure: {cl_data.keys()}')
+    dtree = Dpy(func, active, **kw)
 
     try:
-        fkey = dpref_ + func.__name__
-        # globals = func.__globals__ if not isinstance(func, type) else func.__init__.__globals__
-        gvars = func.__globals__ | kw.get('globals', {}) | cl_data
-        dfunc = execompile(dsrc, vars=[fkey], fglobals=gvars, **kw)
-        dfunc = dfunc[fkey]
-        # mod, modfile = getmodule(dfunc)
-        #setattr(sys.modules[mod], dfunc.__name__, dfunc)
-        #print(f'Produced AD function: {dfunc.__qualname__}, added to module {mod}')
+        dsrc = unparse(dtree)
     except BaseException as ex:
-        print(unparse2j(dsrc, indent=1), file=open(dumpFile('d_failed.json'), 'w'))
-        print(unparse(dsrc), file=open(dumpFile('d_failed.py'), 'w'))
-        print(f"""Failed to load diff code, exception:
+        print(unparse2j(dtree, indent=1), file=open(dumpFile('d_failed.json'), 'w'))
+        print(unparse2x(dtree, indent=1), file=open(dumpFile('d_failed.xml'), 'w'))
+        print(f"""Failed to unparse diff code, exception:
 {ex}
 Source:
 {py(func)}
 """)
         raise ex
+
+    sfname = ''
+    if kw.get('dump', 0) > 0:
+        sfname = dumpFile('d_' + fqname(func) + '.py')
+        print(dsrc, file=open(sfname, 'w'))
+
+    cl_data = mkClosDict(func)
+    if cl_data and kw.get('verbose', 0) > 1:
+        print(f'DiffFor: Function {func} has a closure: {cl_data.keys()}')
+
+    fkey = dpref_ + func.__name__
+    # globals = func.__globals__ if not isinstance(func, type) else func.__init__.__globals__
+    gvars = func.__globals__ | kw.get('globals', {}) | cl_data
+
+    try:
+        dfunc = execompile(dsrc, vars=[fkey], fglobals=gvars, fname=sfname, **kw)
+    except BaseException as ex:
+        print(unparse2j(dtree, indent=1), file=open(dumpFile('d_failed.json'), 'w'))
+        print(unparse2x(dtree, indent=1), file=open(dumpFile('d_failed.xml'), 'w'))
+        print(dsrc, file=open(dumpFile('d_failed.py'), 'w'))
+        print(f"""Failed to compile diff code, exception:
+{ex}
+Diff code:
+{dsrc}
+Source:
+{py(func)}
+""")
+        raise ex
+
+    dfunc = dfunc[fkey]
 
     return (dfunc, active)
 
@@ -1123,6 +1122,16 @@ def DiffFor(function, *args, **opts):
 
     verbose = opts.get('verbose', 0)
     timings = opts.get('timings', True)
+    dump = opts.get('dump', 0)
+    dumpdir = opts.get('dumpdir', '')
+    print(f'dumpdir={dumpdir}')
+    if dumpdir:
+        global dumpDir
+        dumpDir = dumpdir
+        if not os.path.exists(dumpDir):
+            print(f'mkdir {dumpDir}')
+            os.mkdir(dumpDir)
+
     jacobian = opts.get('jacobian', True)
 
     if timings:
