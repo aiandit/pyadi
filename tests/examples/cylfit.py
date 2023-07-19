@@ -1,5 +1,6 @@
 import numpy as np
 import pyfad
+import os
 
 # https://stackoverflow.com/questions/48265646/rotation-of-a-vector-python
 # vectorized
@@ -71,7 +72,7 @@ def cylfit_obj():
     return objComps, objv, handle
 
 
-def run():
+def runobj():
     objComps, obj, handle = cylfit_obj()
     v0 = np.array([1.1, 0.01, 0.01])
     r = obj(v0)
@@ -83,9 +84,8 @@ def cyl2xyz(cx):
     cres = cx[:,0] * np.exp(1j * cx[:,1])
     return np.hstack([np.real(cres).reshape((N,1)), np.imag(cres).reshape((N,1)), cx[:,2].reshape((N,1))])
 
+
 def mkCylData(N=10000, R0=1, theta=0, phi=0):
-    zaxis = np.zeros((1, 3))
-    zaxis[0,2] = 1
     Ns = int(np.sqrt(N))
     N = Ns ** 2
     phis = np.linspace(0, 2*np.pi, Ns)
@@ -107,7 +107,7 @@ def relNormMax(r1, r2):
     return nd / divi
 
 
-def runopt(fprime=None):
+def runopt(fprime=None, gtol=1e-7):
     import scipy as sc
 
     R0 = 1.1
@@ -118,23 +118,27 @@ def runopt(fprime=None):
     v0 = np.array([1.1, 0.01, 0.01])
     objComps, obj, handle = cylfit_obj()
 
-    N = int(1e3)**2
+    N = int(1e2)**2
 
     demopts = mkCylData(N, R0, theta0, phi0)
 
     handle()['points'] = demopts
 
-    print('start cg')
-    res = sc.optimize.fmin_cg(obj, v0, fprime=fprime, full_output=True)
+    print('start fmin_cg')
+    # does not work as soon as we give it a derivative??
+    res = sc.optimize.fmin_cg(obj, v0, fprime=fprime, full_output=True, gtol=gtol, norm=2)
     print(res)
 
     sol, *rem = res
 
+    sol[1] %= np.pi
+    sol[2] %= np.pi
+
     rsol = obj(sol)
 
     errsol = relNormMax(sol, np.array([R0, theta0, phi0]))
-    print(f'CG solution {sol}, expected {[R0, theta0, phi0]}')
-    print(f'CG solution error {errsol}, final objective {rsol}')
+    print(f'fmin_cg solution {sol}, expected {[R0, theta0, phi0]}')
+    print(f'fmin_cg solution error {errsol}, final objective {rsol}')
 
 def runopt_ad():
 
@@ -147,11 +151,27 @@ def runopt_ad():
         g = np.zeros((N,))
         for i in range(N):
             g[i] = dr[i]
+        print(f'gobj(x) = r={r}, g={g}')
         return g
 
-    return runopt(grad)
+    return runopt(grad, gtol=1e-10)
 
 
+def runopt_fd():
+
+    objComps, obj, handle = cylfit_obj()
+
+    def grad(*args, **kw):
+        (dr, r) = pyfad.DiffFD(obj, *args)
+        x = args[0]
+        N = x.size
+        g = np.zeros((N,))
+        for i in range(N):
+            g[i] = dr[i]
+        print(f'gobj(x) = r={r}, g={g}')
+        return g
+
+    return runopt(grad, gtol=1e-10)
 
 
 def runfsolve(fprime=None):
@@ -177,9 +197,10 @@ def runfsolve(fprime=None):
     vs = v0.copy()
     rs = r0.copy()
 
-    print('start usolve')
+    # NA: fsolve wants Nin == Nout?!
+    print('start sc.optimize.fsolve')
     res = sc.optimize.fsolve(objComps, v0, fprime=fprime)
-    print('usolve result', res, vs)
+    print('sc.optimize.fsolve result', res, vs)
 
     sol = vs
 
@@ -192,8 +213,8 @@ def runfsolve(fprime=None):
     rsol = obj(sol)
 
     errsol = relNormMax(sol, np.array([R0, theta0, phi0]))
-    print(f'usolve solution {sol}, expected {[R0, theta0, phi0]}')
-    print(f'usolve solution error {errsol}, final objective {rsol}')
+    print(f'fsolve solution {sol}, expected {[R0, theta0, phi0]}')
+    print(f'fsolve solution error {errsol}, final objective {rsol}')
 
 
 def runfsolve_fd(fprime=None):
@@ -224,23 +245,20 @@ def runfsolve_ad(fprime=None):
     runfsolve(gobj)
 
 
-def runuopt(fprime=None):
+# run the UOpt uopt solver in CG mode (no Hessian)
+# Cannot run alone, derivatives must be provided
+def _runuopt(fprime=None):
     import uopt.uopt
     import scipy as sc
 
     objComps, obj1, handle = cylfit_obj()
 
-    def fobj_uopt(x, y, udata):
+    def fobj(x, y, udata):
         r = obj1(x)
         y[:] = r
 
-    def gobj_uopt(x, y, g, udata):
-        (dr, r) = pyfad.DiffFor(obj1, x, verbose=2)
-        y[:] = r
-        for i in range(x.size):
-            g[i] = dr[i]
-        print(f'gobj(x) = r={r}, g={g}')
-        return g, r
+    def gobj(x, y, g, udata):
+        fprime(obj1, x, y, g, udata)
 
     R0 = 1.1
     theta0 = 0.1
@@ -249,7 +267,7 @@ def runuopt(fprime=None):
     # v0 = np.array([1, 0, 0])
     v0 = np.array([1.1, 0.01, 0.01])
 
-    N = int(1e3)**2
+    N = int(1e2)**2
 
     demopts = mkCylData(N, R0, theta0, phi0)
 
@@ -260,18 +278,63 @@ def runuopt(fprime=None):
     vs = v0.copy()
     rs = r0.copy()
 
+    status = uopt.statusHist()
+
     print('start uopt')
-    res = uopt.uopt.uopt(v0, vs, rs, fobj_uopt, gobj_uopt)
+    res = uopt.uopt(v0, vs, rs, fobj, gobj if fprime is not None else None,
+                    s = status, opts=dict(tolObjAbs=1e-6, cgmode=2))
     print(res)
 
     sol = vs
-    rsol = obj(sol)
+
+    sol[1] *= -1
+    sol[2] *= -1
+
+    sol[1] %= np.pi
+    sol[2] %= np.pi
+
+    rsol = obj1(sol)
 
     errsol = relNormMax(sol, np.array([R0, theta0, phi0]))
-    print(f'CG solution {sol}, expected {[R0, theta0, phi0]}')
-    print(f'CG solution error {errsol}, final objective {rsol}')
+    print(f'uopt CG solution {sol}, expected {[R0, theta0, phi0]}')
+    print(f'uopt CG solution error {errsol}, final objective {rsol}')
+
+    if not os.path.exists('plot'):
+        os.mkdir('plot')
+
+    uopt.mkPlot(status, 'J', 'it', outdir='plot')
+    uopt.mkPlot(status, 'Er', 'it', outdir='plot')
+    uopt.mkPlot(status, 'J', 'tj', outdir='plot')
+    uopt.mkPlot(status, 'Er', 'tj', outdir='plot')
 
 
+def runuopt_ad():
+
+    def gobj(fobj, x, y, g, udata):
+        (dr, r) = pyfad.DiffFor(fobj, x, verbose=0)
+        y[:] = r
+        for i in range(x.size):
+            g[i] = dr[i]
+        print(f'gobj(x) = r={r}, g={g}')
+        return g, r
+
+    _runuopt(gobj)
+
+
+def runuopt_fd():
+
+    def gobj(fobj, x, y, g, udata):
+        (dr, r) = pyfad.DiffFD(fobj, x)
+        y[:] = r
+        for i in range(x.size):
+            g[i] = dr[i]
+        print(f'gobj(x) = r={r}, g={g}')
+        return g, r
+
+    _runuopt(gobj)
+
+
+# run UOpt usolve. Cannot run alone, derivatives must be provided
 def _runusolve(fprime=None, fvprime=None):
     import uopt.uopt
     import scipy as sc
@@ -295,7 +358,7 @@ def _runusolve(fprime=None, fvprime=None):
     # v0 = np.array([1, 0, 0])
     v0 = np.array([1, 0.01, 0.01])
 
-    N = int(1e3)**2
+    N = int(1e2)**2
 
     demopts = mkCylData(N, R0, theta0, phi0)
 
@@ -308,11 +371,14 @@ def _runusolve(fprime=None, fvprime=None):
     vs = v0.copy()
     rs = r0.copy()
 
+    status = uopt.statusHist()
+
     print('start usolve')
-    res = uopt.uopt.usolve(v0, vs, rs,
-                           fobj,
-                           gobj if fprime is not None else None,
-                           gvobj if fvprime is not None else None)
+    res = uopt.usolve(v0, vs, rs,
+                      fobj,
+                      gobj if fprime is not None else None,
+                      gvobj if fvprime is not None else None,
+                      s = status)
     print('usolve result', res, vs)
 
     sol = vs
@@ -329,6 +395,13 @@ def _runusolve(fprime=None, fvprime=None):
     print(f'usolve solution {sol}, expected {[R0, theta0, phi0]}')
     print(f'usolve solution error {errsol}, final objective {rsol}')
 
+    if not os.path.exists('plot'):
+        os.mkdir('plot')
+
+    uopt.mkPlot(status, 'J', 'it', outdir='plot')
+    uopt.mkPlot(status, 'Er', 'it', outdir='plot')
+    uopt.mkPlot(status, 'J', 'tj', outdir='plot')
+    uopt.mkPlot(status, 'Er', 'tj', outdir='plot')
 
 def runusolve_fd():
 
@@ -342,6 +415,9 @@ def runusolve_fd():
     def gvobj(fobj, x, y, dx, g, udata):
         #print(f'dx={dx.shape}, g={g.shape}')
         if True:
+            # because the function is very nonlinear, the solver
+            # complains about a wrong derivative when we use DiffFD(f, x, seed=[dx])
+            # so we have to compute the full (N, 3)-Jacobian and multiply by hand!
             (drF, rF) = pyfad.DiffFD(fobj, x)
             Jac = np.zeros((rF.size, x.size))
             for i in range(x.size):
@@ -367,8 +443,6 @@ def runusolve_ad():
     import uopt.uopt
     import scipy as sc
 
-    objComps, obj, handle = cylfit_obj()
-
     def gobj(fobj, x, y, g, udata):
         (dr, r) = pyfad.DiffFor(fobj, x)
         y[:] = r
@@ -377,6 +451,7 @@ def runusolve_ad():
         print(f'gobj(x) = {np.linalg.norm(y)}')
 
     def gvobj(fobj, x, y, dx, g, udata):
+        # with AD the directional derivative is of course correct!
         (dr, r) = pyfad.DiffFor(fobj, x, seed=[dx])
         y[:] = r
         N, Ndd = dx.shape
@@ -389,7 +464,13 @@ def runusolve_ad():
 
 if __name__ == "__main__":
     import sys
-    mode = sys.argv[1] if len(sys.argv) > 1 else 'usolve'
+    if len(sys.argv) == 1:
+        print(f'run as {sys.argv[0]} <mode>')
+        modes = [f[3:] for f in dir(sys.modules[__name__]) if f.startswith('run')]
+        mode = modes[-1]
+        print(f'available modes: {modes}, run default: {mode}')
+    else:
+        mode = sys.argv[1]
     runf = getattr(sys.modules[__name__], 'run' + mode)
     runf()
     # runusolve()
