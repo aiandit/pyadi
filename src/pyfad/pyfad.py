@@ -701,8 +701,8 @@ def difffunction(func, active=[], **kw):
     try:
         dsrc = unparse(dtree)
     except BaseException as ex:
-        print(unparse2j(dtree, indent=1), file=open(dumpFile('d_failed.json'), 'w'))
-        print(unparse2x(dtree, indent=1), file=open(dumpFile('d_failed.xml'), 'w'))
+        print(unparse2j(dtree, indent=1), file=open('d_failed.json', 'w'))
+        print(unparse2x(dtree, indent=1), file=open('d_failed.xml', 'w'))
         print(f"""Failed to unparse diff code, exception:
 {ex}
 Source:
@@ -726,9 +726,9 @@ Source:
     try:
         dfunc = execompile(dsrc, vars=[fkey], fglobals=gvars, fname=sfname, **kw)
     except BaseException as ex:
-        print(unparse2j(dtree, indent=1), file=open(dumpFile('d_failed.json'), 'w'))
-        print(unparse2x(dtree, indent=1), file=open(dumpFile('d_failed.xml'), 'w'))
-        print(dsrc, file=open(dumpFile('d_failed.py'), 'w'))
+        print(unparse2j(dtree, indent=1), file=open('d_failed.json', 'w'))
+        print(unparse2x(dtree, indent=1), file=open('d_failed.xml', 'w'))
+        print(dsrc, file=open('d_failed.py', 'w'))
         print(f"""Failed to compile diff code, exception:
 {ex}
 Diff code:
@@ -1123,9 +1123,9 @@ def DiffFor(function, *args, **opts):
     verbose = opts.get('verbose', 0)
     timings = opts.get('timings', True)
     dump = opts.get('dump', 0)
-    dumpdir = opts.get('dumpdir', '')
-    print(f'dumpdir={dumpdir}')
-    if dumpdir:
+    dumpdir = opts.get('dumpdir', 'dump')
+
+    if dump > 0 and dumpdir != '.':
         global dumpDir
         dumpDir = dumpdir
         if not os.path.exists(dumpDir):
