@@ -435,7 +435,7 @@ Calls methods self._DXYZ for individual node XYZ handling
     def isLocal(self, t):
         if t._class == "Tuple":
             return any([self.isLocal(s) for s in t.elts])
-        return self.getRoot(t).id in self.localvars
+        return getattr(self.getRoot(t), 'id', '') in self.localvars
 
     def _DStarred(self, node):
         node.value = Call('zip', [self.ddispatch(node.value.clone()), node.value])
