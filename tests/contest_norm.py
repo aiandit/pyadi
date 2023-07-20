@@ -15,21 +15,21 @@ def getTest(bfun):
 
 #contest(dict(sin=getTest(sin), cos=getTest(cos), sqrt=getTest(sqrt)), name="Trig. test", outdir='out')
 
-def runPyfad(bfun):
+def runPyADi(bfun):
 
     def inner(*args, **kw):
         return pyadi.DiffFor(bfun, *args, timings=False, **kw)
 
     return inner
 
-def runPyfad2(bfun):
+def runPyADi2(bfun):
 
     def inner(*args, **kw):
         return pyadi.DiffFor(bfun, *args, timings=True, **kw)
 
     return inner
 
-def runPyfad3(bfun):
+def runPyADi3(bfun):
 
     def inner(*args, **kw):
         return pyadi.DiffFor(bfun, *args, timings=False, replaceops=True, **kw)
@@ -94,7 +94,7 @@ def ftest(x):
 def run():
     fds = dict(normDiag=runF(ftest),
                fd_normDiag=runPyFD(ftest), fd_normDiag2=runPyFDNP(ftest),
-               ad_normDiag=runPyfad(ftest), ad_normDiag2=runPyfad2(ftest), ad_normDiag3=runPyfad3(ftest))
+               ad_normDiag=runPyADi(ftest), ad_normDiag2=runPyADi2(ftest), ad_normDiag3=runPyADi3(ftest))
 
     args0, kw0 = mkInput(10)
     # print(args0, kw0)

@@ -9,7 +9,7 @@ from .examples import fxyz, fx, fgen
 
 from . import test_pyadi
 
-class TestPyfDummyad(test_pyadi.TestPyfad):
+class TestPyfDummyad(test_pyadi.TestPyADi):
 
     @classmethod
     def setUpClass(cls):

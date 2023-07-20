@@ -7,7 +7,7 @@ from itertools import chain
 import pyadi
 from . import test_pyadi
 
-class TestPyfadRepl(test_pyadi.TestPyfad):
+class TestPyADiRepl(test_pyadi.TestPyADi):
 
     @classmethod
     def setUpClass(cls):

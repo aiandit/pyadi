@@ -14,21 +14,21 @@ def getTest(bfun):
 
 #contest(dict(sin=getTest(sin), cos=getTest(cos), sqrt=getTest(sqrt)), name="Trig. test", outdir='out')
 
-def runPyfad(bfun):
+def runPyADi(bfun):
 
     def inner(*args, **kw):
         return pyadi.DiffFor(bfun, *args, timings=False, **kw)
 
     return inner
 
-def runPyfad2(bfun):
+def runPyADi2(bfun):
 
     def inner(*args, **kw):
         return pyadi.DiffFor(bfun, *args, timings=True, **kw)
 
     return inner
 
-def runPyfad3(bfun):
+def runPyADi3(bfun):
 
     def inner(*args, **kw):
         return pyadi.DiffFor(bfun, *args, timings=False, replaceops=True, **kw)
@@ -65,6 +65,6 @@ def reset():
 
 bfun = swirl.swirl
 
-contest(dict(swirl=runF(bfun), ad_swirl=runPyfad(bfun), ad_swirl2=runPyfad2(bfun), ad_swirl3=runPyfad3(bfun), fd_swirl=runPyFD(bfun)),
+contest(dict(swirl=runF(bfun), ad_swirl=runPyADi(bfun), ad_swirl2=runPyADi2(bfun), ad_swirl3=runPyADi3(bfun), fd_swirl=runPyFD(bfun)),
         timeout=1e-1, input=mkInput, reset=reset,
         name="Swirl test", outdir='out', print=True, show=False)

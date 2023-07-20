@@ -58,7 +58,7 @@ def f3(x,y,z):
     return r
 
 
-class TestPyfad(unittest.TestCase):
+class TestPyADi(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):

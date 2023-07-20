@@ -29,21 +29,21 @@ def getTest(bfun):
 
 #contest(dict(sin=getTest(sin), cos=getTest(cos), sqrt=getTest(sqrt)), name="Trig. test", outdir='out')
 
-def runPyfad(bfun):
+def runPyADi(bfun):
 
     def inner(*args, **kw):
         return pyadi.DiffFor(bfun, *args, timings=False, **kw)
 
     return inner
 
-def runPyfad2(bfun):
+def runPyADi2(bfun):
 
     def inner(*args, **kw):
         return pyadi.DiffFor(bfun, *args, timings=True, **kw)
 
     return inner
 
-def runPyfad3(bfun):
+def runPyADi3(bfun):
 
     def inner(*args, **kw):
         return pyadi.DiffFor(bfun, *args, timings=False, replaceops=True, **kw)
@@ -124,7 +124,7 @@ bfun2 = None
 
 setup()
 
-contest(dict(cylfit=runF(bfun), ad_cylfit=runPyfad(bfun), ad2_cylfit=runPyfad2(bfun), ad3_cylfit=runPyfad3(bfun), fd_cylfit=runPyFD(bfun),
-             cylfit2=runF(bfun2), ad_cylfit2=runPyfad(bfun2), fd_cylfit2=runPyFD(bfun2)),
+contest(dict(cylfit=runF(bfun), ad_cylfit=runPyADi(bfun), ad2_cylfit=runPyADi2(bfun), ad3_cylfit=runPyADi3(bfun), fd_cylfit=runPyFD(bfun),
+             cylfit2=runF(bfun2), ad_cylfit2=runPyADi(bfun2), fd_cylfit2=runPyFD(bfun2)),
         timeout=1e-1, input=mkInput, reset=reset,
         name="cylfit", title="Cyl. Fit Obj Function", outdir='out', print=True, show=False)
