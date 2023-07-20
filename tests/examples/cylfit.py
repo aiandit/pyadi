@@ -396,10 +396,12 @@ def _runusolve(fprime=None, fvprime=None):
     if not os.path.exists('plot'):
         os.mkdir('plot')
 
-    uopt.mkPlot(status, 'J', 'it', outdir='plot')
-    uopt.mkPlot(status, 'Er', 'it', outdir='plot')
-    uopt.mkPlot(status, 'J', 'tj', outdir='plot')
-    uopt.mkPlot(status, 'Er', 'tj', outdir='plot')
+    popts = dict(outdir='plot')
+    # popts |= dict(subtitle='pyinfo', hardwareinfo=True, usetex=True)
+    uopt.mkPlot(status, 'J', 'it', **popts)
+    uopt.mkPlot(status, 'Er', 'it', **popts)
+    uopt.mkPlot(status, 'J', 'tj', **popts)
+    uopt.mkPlot(status, 'Er', 'tj', **popts)
 
 def runusolve_fd():
 
