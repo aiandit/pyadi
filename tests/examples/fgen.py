@@ -1,6 +1,6 @@
 from math import sin, cos, tan, asin, acos, atan, log, sqrt, pi
 import random, math
-from pyfad import d_math
+from pyadi import d_math
 
 def fgen1(x, y, z):
     j = x

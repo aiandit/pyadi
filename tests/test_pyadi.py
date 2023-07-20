@@ -5,11 +5,11 @@ import math
 import warnings
 from itertools import chain
 
-import pyfad
+import pyadi
 from .examples import fxyz, fx, fgen
 from .examples.fx import f1 as f1alt,  f2 as f2alt
 
-pyfad.Debug = True
+pyadi.Debug = True
 
 fdH = 1e-8
 tolFD = fdH * 10
@@ -36,9 +36,9 @@ def sqsum(r1):
 
 
 def relNormMax(r1, r2):
-    dv = [ a - b for a,b in zip(pyfad.varv(r1), pyfad.varv(r2)) ]
-    s1 = sqsum(pyfad.varv(r1))
-    s2 = sqsum(pyfad.varv(r2))
+    dv = [ a - b for a,b in zip(pyadi.varv(r1), pyadi.varv(r2)) ]
+    s1 = sqsum(pyadi.varv(r1))
+    s2 = sqsum(pyadi.varv(r2))
     divi = max(s1, s2)
     if divi == 0:
         divi = 1
@@ -62,10 +62,10 @@ class TestPyfad(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # pyfad.initRules(rules='pyfad.trace,ad=pyfad.forwardad', verbose=True)
-        # pyfad.initRules(rules='t1=pyfad.trace,t2=pyfad.trace,t3=pyfad.trace,ad=pyfad.forwardad')
-        pyfad.initRules(rules='ad=pyfad.forwardad')
-        pyfad.clear()
+        # pyadi.initRules(rules='pyadi.trace,ad=pyadi.forwardad', verbose=True)
+        # pyadi.initRules(rules='t1=pyadi.trace,t2=pyadi.trace,t3=pyadi.trace,ad=pyadi.forwardad')
+        pyadi.initRules(rules='ad=pyadi.forwardad')
+        pyadi.clear()
         cls.verbose = 0
         cls.dump = 1
         cls.opts = {'dumpdir': 'dump'}
@@ -86,36 +86,36 @@ class TestPyfad(unittest.TestCase):
         return True
 
     def checkResult(self, func, args, res):
-        self.assertTrue(sqsum(pyfad.varv(res)) != 0)
+        self.assertTrue(sqsum(pyadi.varv(res)) != 0)
         self.assertTrue(self.assertEq(func, func(*args), res))
 
     def checkDer(self, func, args, dx, seed=1, active=[], **kw):
-        (der, r) = pyfad.DiffFD(func, *args, seed=seed, active=active, h=fdH, verbose=self.verbose, dump=self.dump, **self.opts)
+        (der, r) = pyadi.DiffFD(func, *args, seed=seed, active=active, h=fdH, verbose=self.verbose, dump=self.dump, **self.opts)
         if self.verbose > 0:
             print('cd', (der, dx))
         self.assertTrue(self.assertEqFD(func, dx, der))
 
     def test_D_f1(self):
-        df = pyfad.D(f1, verbose=self.verbose, dump=self.dump)
+        df = pyadi.D(f1, verbose=self.verbose, dump=self.dump)
         if self.verbose > 0:
             print('test f1', df)
 
     def test_Diff_f1(self):
-        df = pyfad.Diff(f1, verbose=self.verbose, dump=self.dump)
+        df = pyadi.Diff(f1, verbose=self.verbose, dump=self.dump)
         if self.verbose > 0:
             print('test2', df)
 
     axyz = ['x', 'y', 'z']
     def test_D_f1_active(self):
-        df = pyfad.D(f1, active=self.axyz, verbose=self.verbose, dump=self.dump)
+        df = pyadi.D(f1, active=self.axyz, verbose=self.verbose, dump=self.dump)
         if self.verbose > 0:
             print('test f1', df)
-            print('test f1 f', pyfad.py(f1))
-            print('test f1 d/dx f', pyfad.Dpy(f1))
+            print('test f1 f', pyadi.py(f1))
+            print('test f1 d/dx f', pyadi.Dpy(f1))
 
     def do_call_xyz(self, func, args):
         y = func(*args)
-        df = pyfad.D(func, active=self.axyz, verbose=self.verbose, dump=self.dump)
+        df = pyadi.D(func, active=self.axyz, verbose=self.verbose, dump=self.dump)
         if self.verbose > 0:
             print('df', df)
         args = list(args)
@@ -144,7 +144,7 @@ class TestPyfad(unittest.TestCase):
     def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
             args = [0.1,0.2,0.3]
-        (d_r, r) = pyfad.DiffFor(func, *args, **kw, verbose=self.verbose, dump=self.dump, **self.opts)
+        (d_r, r) = pyadi.DiffFor(func, *args, **kw, verbose=self.verbose, dump=self.dump, **self.opts)
         self.checkDer(func, args, d_r)
         self.checkResult(func, args, r)
         return (d_r, r)
@@ -169,40 +169,40 @@ class TestPyfad(unittest.TestCase):
     def test_varv(self):
         obj = [1,2,3,4]
         if self.verbose > 0:
-            print(repr(obj), repr(pyfad.varv(obj)))
-        self.assertEqual(obj, list(pyfad.varv(obj)))
+            print(repr(obj), repr(pyadi.varv(obj)))
+        self.assertEqual(obj, list(pyadi.varv(obj)))
 
         obj = 2
         if self.verbose > 0:
-            print(repr(obj), repr(pyfad.varv(obj)))
-        self.assertEqual([2], list(pyfad.varv(obj)))
+            print(repr(obj), repr(pyadi.varv(obj)))
+        self.assertEqual([2], list(pyadi.varv(obj)))
 
         obj = {'a': [1,2,3], 'b': 4}
         if self.verbose > 0:
-            print(repr(obj), repr(pyfad.varv(obj)))
-        self.assertEqual([1,2,3,4], list(pyfad.varv(obj)))
+            print(repr(obj), repr(pyadi.varv(obj)))
+        self.assertEqual([1,2,3,4], list(pyadi.varv(obj)))
 
     def test_fill(self):
         seed = list(range(100))
         obj = [1,2,3,4]
         if self.verbose > 0:
-            print(repr(obj), repr(pyfad.fill(obj, seed)))
-        self.assertEqual([0,1,2,3], pyfad.fill(obj, seed))
+            print(repr(obj), repr(pyadi.fill(obj, seed)))
+        self.assertEqual([0,1,2,3], pyadi.fill(obj, seed))
 
         obj = tuple([1,2,3,4])
         if self.verbose > 0:
-            print(repr(obj), repr(pyfad.fill(obj, seed)))
-        self.assertEqual(tuple([0,1,2,3]), pyfad.fill(obj, seed))
+            print(repr(obj), repr(pyadi.fill(obj, seed)))
+        self.assertEqual(tuple([0,1,2,3]), pyadi.fill(obj, seed))
 
         obj = 2
         if self.verbose > 0:
-            print(repr(obj), repr(pyfad.fill(obj, seed)))
-        self.assertEqual(0, pyfad.fill(obj, seed))
+            print(repr(obj), repr(pyadi.fill(obj, seed)))
+        self.assertEqual(0, pyadi.fill(obj, seed))
 
         obj = {'a': [1,2,3], 'b': 4}
         if self.verbose > 0:
-            print(repr(obj), repr(pyfad.fill(obj, seed)))
-        self.assertEqual({'a': [0,1,2], 'b': 3}, pyfad.fill(obj, seed))
+            print(repr(obj), repr(pyadi.fill(obj, seed)))
+        self.assertEqual({'a': [0,1,2], 'b': 3}, pyadi.fill(obj, seed))
 
     def test_sD_f4(self):
         self.do_sourceDiff_f_xyz(fxyz.f4)
@@ -221,44 +221,44 @@ class TestPyfad(unittest.TestCase):
 
 
     def test_sD_ftan_1(self):
-        pyfad.clear()
-        old = pyfad.delrule(math.tan)
-        with self.assertRaises(pyfad.NoRule):
+        pyadi.clear()
+        old = pyadi.delrule(math.tan)
+        with self.assertRaises(pyadi.NoRule):
             self.do_sourceDiff_f_x(fx.ftan)
-        pyfad.setrule(math.tan, old)
+        pyadi.setrule(math.tan, old)
 
     def test_sD_ftan_2(self):
-        pyfad.clear()
-        old = pyfad.delrule(math.tan)
+        pyadi.clear()
+        old = pyadi.delrule(math.tan)
         adf = lambda r, dx, x: 0
-        pyfad.setrule(math.tan, adf)
+        pyadi.setrule(math.tan, adf)
         with self.assertRaises(WrongDerivative):
             self.do_sourceDiff_f_x(fx.ftan)
-        pyfad.setrule(math.tan, old)
+        pyadi.setrule(math.tan, old)
 
     def test_sD_ftan_3(self):
-        pyfad.clear()
-        old = pyfad.delrule(math.tan)
+        pyadi.clear()
+        old = pyadi.delrule(math.tan)
         adf = lambda r, dx, x: dx / (1 + x*x)
-        pyfad.setrule(math.atan, adf)
+        pyadi.setrule(math.atan, adf)
         self.do_sourceDiff_f_x(fx.fatan)
-        pyfad.setrule(math.tan, old)
+        pyadi.setrule(math.tan, old)
 
 
     def test_sD_fsqrt_1(self):
-        pyfad.clear()
+        pyadi.clear()
         adf = lambda r, dx, x: 0
-        pyfad.setrule(fx.gbabylonian, adf)
+        pyadi.setrule(fx.gbabylonian, adf)
         with self.assertRaises(WrongDerivative):
             self.do_sourceDiff_f_x(fx.fbabylonian)
-        pyfad.delrule(fx.gbabylonian)
+        pyadi.delrule(fx.gbabylonian)
 
     def test_sD_fsqrt_2(self):
-        pyfad.clear()
+        pyadi.clear()
         adf = lambda r, dx, x: 0.5 * dx / r
-        pyfad.setrule(fx.gbabylonian, adf)
+        pyadi.setrule(fx.gbabylonian, adf)
         self.do_sourceDiff_f_x(fx.fbabylonian)
-        pyfad.delrule(fx.gbabylonian)
+        pyadi.delrule(fx.gbabylonian)
 
     def test_fxyz(self, module=None, args=[0.1,0.2,0.3]):
         if module is None:
@@ -292,18 +292,18 @@ class TestPyfad(unittest.TestCase):
         self.test_fxyz(module=fgen, args=[1,2,3])
 
     def test_py(self, module=None):
-        src = pyfad.py(fx.f1)
+        src = pyadi.py(fx.f1)
         self.assertEqual(src[0:10], "def f1(x):")
 
     def test_py2(self, module=None):
-        src, imps, mods = pyfad.py(fx.f1, True)
+        src, imps, mods = pyadi.py(fx.f1, True)
         self.assertEqual(src[0:10], "def f1(x):")
         self.assertEqual(mods, ['math', 'm2', 'timer'])
         if self.verbose > 0:
             print(src, imps, mods)
 
     def test_py_meth(self, module=None):
-        src, imps, mods = pyfad.py(fx.Plane.__init__, True)
+        src, imps, mods = pyadi.py(fx.Plane.__init__, True)
         self.assertEqual(src[0:10], "def __init")
         self.assertIn('pass', src)
         self.assertNotIn('self.consumption', src)
@@ -311,7 +311,7 @@ class TestPyfad(unittest.TestCase):
             print(src, imps, mods)
 
     def test_py_meth2(self, module=None):
-        src, imps, mods = pyfad.py(fx.Plane2.__init__, True)
+        src, imps, mods = pyadi.py(fx.Plane2.__init__, True)
         self.assertEqual(src[0:10], "def __init")
         self.assertIn('self.consumption', src)
         self.assertNotIn('pass', src)
@@ -319,7 +319,7 @@ class TestPyfad(unittest.TestCase):
             print(src, imps, mods)
 
     def test_ast_clearcache(self, module=None):
-        pyfad.clear()
+        pyadi.clear()
 
     def test_particular_fx(self):
         self.do_sourceDiff_f_xyz(fx.fkeywords4a, args=[0.234])
@@ -378,7 +378,7 @@ class TestPyfad(unittest.TestCase):
         self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], timings=True)
 
     def test_tracetimings(self):
-        pyfad.initRules(rules='pyfad.timing,pyfad.forwardad', catch=['flong', 'fcalllist'], height=8)
+        pyadi.initRules(rules='pyadi.timing,pyadi.forwardad', catch=['flong', 'fcalllist'], height=8)
         self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], timings=True)
         self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], timings=True)
         self.do_sourceDiff_f_xyz(fx.flong, args=[0.234], timings=True)
@@ -392,37 +392,37 @@ class TestPyfad(unittest.TestCase):
         d = {'a': (1,2), 'b': (1,2), 'c': (1,2)}
         dr = { k: d[k][0] for k in d }
         r = { k: d[k][1] for k in d }
-        dr2, r2 = pyfad.unzd(d)
+        dr2, r2 = pyadi.unzd(d)
         self.assertEqual(dr, dr2)
         self.assertEqual(r, r2)
 
     def test_joind(self):
         d = {'a': (1,2), 'b': (1,2), 'c': (1,2)}
 
-        dr, r = pyfad.unzd(d)
+        dr, r = pyadi.unzd(d)
 
-        res = pyfad.joind([dr], [r])
+        res = pyadi.joind([dr], [r])
 
         res2 = { 'd_' + k: v for k, v in dr.items() } | { k: v for k, v in r.items() }
 
         self.assertEqual(res, res2)
 
-        dr2, r2 = pyfad.unjnd(res)
+        dr2, r2 = pyadi.unjnd(res)
 
         self.assertEqual(dr, dr2)
         self.assertEqual(r, r2)
 
     def test_getSource_py(self):
-        src = pyfad.py(fx.f1)
+        src = pyadi.py(fx.f1)
         line1 = next(l for l in src.split('\n'))
         self.assertEqual(line1, 'def f1(x):')
 
     def test_getSource_py_inner(self):
         inner = fx.ginner()
-        src = pyfad.py(inner)
+        src = pyadi.py(inner)
         line1 = next(l for l in src.split('\n'))
         self.assertEqual(line1, 'def inner(x, y, z):')
 
     def test_badfcachegl(self):
         with self.assertWarns(UserWarning):
-            pyfad.DiffFor(fx.badfcachegl, 0.234)
+            pyadi.DiffFor(fx.badfcachegl, 0.234)

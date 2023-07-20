@@ -4,19 +4,19 @@ import unittest
 import math
 from itertools import chain
 
-import pyfad
+import pyadi
 from .examples import fxyz, fx, fgen
 
-from . import test_pyfad
+from . import test_pyadi
 
-class TestPyfDummyad(test_pyfad.TestPyfad):
+class TestPyfDummyad(test_pyadi.TestPyfad):
 
     @classmethod
     def setUpClass(cls):
-        # pyfad.initRules(rules='trace,ad', verbose=True)
-        # pyfad.initRules(rules='trace,ad')
-        pyfad.clear()
-        pyfad.initRules(rules='pyfad.dummyad')
+        # pyadi.initRules(rules='trace,ad', verbose=True)
+        # pyadi.initRules(rules='trace,ad')
+        pyadi.clear()
+        pyadi.initRules(rules='pyadi.dummyad')
         cls.verbose = 0
         cls.dump = 0
         cls.opts = {}

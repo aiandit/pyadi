@@ -1,4 +1,4 @@
-import pyfad
+import pyadi
 import numpy as np
 
 #vectorized gbabylonian
@@ -30,6 +30,6 @@ while True:
 print(f'f({x}) = {r}, check: {r@r}, error {np.linalg.norm(x - r@r)}')
 
 #compute derivative
-d_r, r = pyfad.DiffFor(fbabylonian, x)
+d_r, r = pyadi.DiffFor(fbabylonian, x)
 # print(f'f({x}) = {r}')
 print(f'f\'({x}) = {d_r}')

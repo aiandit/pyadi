@@ -8,7 +8,7 @@ import time
 
 import requests
 
-import pyfad
+import pyadi
 from .examples import fxyz, fx, fgen, ftrace
 
 def mkreq(x):
@@ -26,11 +26,11 @@ class TestPyTracer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # print('SETUP Class')
-        pyfad.initRules(rules='pyfad.trace,pyfad.dummyad,tr2=pyfad.trace', tracecalls=True, verbose=True, verboseargs=True)
-        cls.handle_ = pyfad.getHandle('pyfad.trace')
+        pyadi.initRules(rules='pyadi.trace,pyadi.dummyad,tr2=pyadi.trace', tracecalls=True, verbose=True, verboseargs=True)
+        cls.handle_ = pyadi.getHandle('pyadi.trace')
         cls.handle = lambda x, *args, **kw: cls.handle_(*args, **kw)
 
-        cls.handle2_ = pyfad.getHandle('tr2')
+        cls.handle2_ = pyadi.getHandle('tr2')
         cls.handle2 = lambda x, *args, **kw: cls.handle2_(*args, **kw)
 
         cls.verbose = 2
@@ -41,7 +41,7 @@ class TestPyTracer(unittest.TestCase):
     def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
             args = [1,2,3]
-        (d_r, r) = pyfad.DiffFor(func, *args, dump=self.dump, verbose=self.verbose, **self.opts, **kw)
+        (d_r, r) = pyadi.DiffFor(func, *args, dump=self.dump, verbose=self.verbose, **self.opts, **kw)
         return (d_r, r)
 
     def test_tr_calll2(self):
@@ -57,29 +57,29 @@ class TestPyTracer(unittest.TestCase):
 
     def test_tr_hist(self):
         dres, res = self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234], tracecalls=True)
-        hist = pyfad.getHandle('pyfad.trace')(get='hist')
-        hist2 = pyfad.getHandle('tr2')(get='hist')
+        hist = pyadi.getHandle('pyadi.trace')(get='hist')
+        hist2 = pyadi.getHandle('tr2')(get='hist')
         h1a = [h for h in hist if h not in ['range', 'len', 'sum']]
         self.assertEqual(h1a, hist2)
 
     def test_tr_hist2(self):
         dres, res = self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234], tracecalls=True)
-        hist1 = pyfad.getHandle('pyfad.trace')(get='hist')
-        hist2 = pyfad.getHandle('tr2')(get='hist')
+        hist1 = pyadi.getHandle('pyadi.trace')(get='hist')
+        hist2 = pyadi.getHandle('tr2')(get='hist')
 
         dres, res = self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234], tracecalls=True)
-        hist1a = pyfad.getHandle('pyfad.trace')(get='hist')
-        hist2a = pyfad.getHandle('tr2')(get='hist')
+        hist1a = pyadi.getHandle('pyadi.trace')(get='hist')
+        hist2a = pyadi.getHandle('tr2')(get='hist')
 
         self.assertEqual(hist1, hist1a)
         self.assertEqual(hist2, hist2a)
 
     def test_tr_verbose(self):
-        hist = pyfad.getHandle('pyfad.trace')(get='hist')
+        hist = pyadi.getHandle('pyadi.trace')(get='hist')
         if self.verbose:
             print('** Get trace history: ', hist)
         dres, res = self.do_sourceDiff_f_xyz(fx.fcalll5, args=[0.234])
-        hist = pyfad.getHandle('pyfad.trace')(get='hist')
+        hist = pyadi.getHandle('pyadi.trace')(get='hist')
         if self.verbose:
             print('Get trace history: ', hist)
 

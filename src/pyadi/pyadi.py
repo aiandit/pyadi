@@ -712,11 +712,11 @@ def roundtrip2JID(fname):
         return roundtrip2JIDs(source, fname)
 
 
-def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'pyfad': 'D'}], vars=['x'], fname='', **kw):
+def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'pyadi': 'D'}], vars=['x'], fname='', **kw):
 
     # importstr = '\n'.join([f'import {name}' if isinstance(name, str)
     #                        else ('\n'.join([f'from {k} import {v}' for k, v in name.items()])) for name in imports])
-    collectstr = '\n'.join([f'_pyfad_data["{name}"] = {name}' for name in vars])
+    collectstr = '\n'.join([f'_pyadi_data["{name}"] = {name}' for name in vars])
 
     dsrc = f"{source}\n{collectstr}"
 
@@ -726,11 +726,11 @@ def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'
         # print(f'Compilation error in diff source:\n{ex}')
         raise ex
 
-    gvars = globals() | fglobals | {'_pyfad_data': {}}
+    gvars = globals() | fglobals | {'_pyadi_data': {}}
     #print(f'exec compiled diff function code in file {sfname} with globals={(gvars).keys()} locals={flocals}')
     exec(res, gvars, flocals)
 
-    result = {name: gvars["_pyfad_data"][name] for name in vars}
+    result = {name: gvars["_pyadi_data"][name] for name in vars}
     gvars |= result
     return result
 
@@ -905,7 +905,7 @@ def addrulemodule(module, **kw):
 
 def initRules(**opts):
     clearrulemodules()
-    rules = opts.get('rules', 'ad=pyfad.forwardad')
+    rules = opts.get('rules', 'ad=pyadi.forwardad')
     rules = rules.split(',')
     for rule in rules:
         add = {}
@@ -1217,7 +1217,7 @@ def DiffFor(function, *args, **opts):
 
     tracecalls = opts.get('tracecalls', False)
     if tracecalls:
-        callHandle('pyfad.trace', clear='hist')
+        callHandle('pyadi.trace', clear='hist')
 
     if 'dx' in opts:
         dargs = dx
@@ -1241,7 +1241,7 @@ def DiffFor(function, *args, **opts):
 
 
 def Diff(active='all', **opts):
-    def _pyfad_diff(function):
+    def _pyadi_diff(function):
 
         adc = {'f': None}
 
@@ -1266,7 +1266,7 @@ def Diff(active='all', **opts):
                 return (dresult, result)
 
         return inner
-    return _pyfad_diff
+    return _pyadi_diff
 
 
 def DiffFD(f, *args, **opts):

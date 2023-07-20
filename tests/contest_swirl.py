@@ -2,7 +2,7 @@ from math import sin, cos, sqrt
 from pycontest import *
 import numpy as np
 
-import pyfad
+import pyadi
 from examples import swirl
 
 def getTest(bfun):
@@ -17,35 +17,35 @@ def getTest(bfun):
 def runPyfad(bfun):
 
     def inner(*args, **kw):
-        return pyfad.DiffFor(bfun, *args, timings=False, **kw)
+        return pyadi.DiffFor(bfun, *args, timings=False, **kw)
 
     return inner
 
 def runPyfad2(bfun):
 
     def inner(*args, **kw):
-        return pyfad.DiffFor(bfun, *args, timings=True, **kw)
+        return pyadi.DiffFor(bfun, *args, timings=True, **kw)
 
     return inner
 
 def runPyfad3(bfun):
 
     def inner(*args, **kw):
-        return pyfad.DiffFor(bfun, *args, timings=False, replaceops=True, **kw)
+        return pyadi.DiffFor(bfun, *args, timings=False, replaceops=True, **kw)
 
     return inner
 
 def runPyFD(bfun):
 
     def inner(*args, **kw):
-        return pyfad.DiffFD(bfun, *args, **kw)
+        return pyadi.DiffFD(bfun, *args, **kw)
 
     return inner
 
 def runPyFD(bfun):
 
     def inner(*args, **kw):
-        return pyfad.DiffFD(bfun, *args, **kw)
+        return pyadi.DiffFD(bfun, *args, **kw)
 
     return inner
 
@@ -61,7 +61,7 @@ def mkInput(N):
     return args, { 'seed':  [ np.random.rand(args[0].size+1) ] }
 
 def reset():
-    pyfad.clear()
+    pyadi.clear()
 
 bfun = swirl.swirl
 

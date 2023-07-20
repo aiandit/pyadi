@@ -65,19 +65,19 @@ def decorator(**opts):
 
 
 
-def D_pyfad_runtime_binop_add(r, dx, x, dy, y):       return dx+dy
-def D_pyfad_runtime_binop_sub(r, dx, x, dy, y):       return dx-dy
-def D_pyfad_runtime_binop_mult(r, dx, x, dy, y):      return dx*y + x*dy
-def D_pyfad_runtime_binop_c_mult(r, dx, x, dy, y):    return x*dy
-def D_pyfad_runtime_binop_d_mult(r, dx, x, dy, y):    return dx*y
-def D_pyfad_runtime_binop_matmult(r, dx, x, dy, y):   return dx@y + x@dy
-def D_pyfad_runtime_binop_div(r, dx, x, dy, y):       return (dx*y - x*dy) / y**2
-def D_pyfad_runtime_binop_floordiv(r, dx, x, dy, y):  return 0
-def D_pyfad_runtime_binop_mod(r, dx, x, dy, y):       return dx - dy * int(floor(x/y))
-def D_pyfad_runtime_binop_pow(r, dx, x, dy, y):       return dx * y * (x ** (y -1)) + ((dy * r * np.log(x)) if dy != 0 else 0)
+def D_pyadi_runtime_binop_add(r, dx, x, dy, y):       return dx+dy
+def D_pyadi_runtime_binop_sub(r, dx, x, dy, y):       return dx-dy
+def D_pyadi_runtime_binop_mult(r, dx, x, dy, y):      return dx*y + x*dy
+def D_pyadi_runtime_binop_c_mult(r, dx, x, dy, y):    return x*dy
+def D_pyadi_runtime_binop_d_mult(r, dx, x, dy, y):    return dx*y
+def D_pyadi_runtime_binop_matmult(r, dx, x, dy, y):   return dx@y + x@dy
+def D_pyadi_runtime_binop_div(r, dx, x, dy, y):       return (dx*y - x*dy) / y**2
+def D_pyadi_runtime_binop_floordiv(r, dx, x, dy, y):  return 0
+def D_pyadi_runtime_binop_mod(r, dx, x, dy, y):       return dx - dy * int(floor(x/y))
+def D_pyadi_runtime_binop_pow(r, dx, x, dy, y):       return dx * y * (x ** (y -1)) + ((dy * r * np.log(x)) if dy != 0 else 0)
 
-def D_pyfad_runtime_unaryop_uadd(r, dx, x): return +dx
-def D_pyfad_runtime_unaryop_usub(r, dx, x): return -dx
+def D_pyadi_runtime_unaryop_uadd(r, dx, x): return +dx
+def D_pyadi_runtime_unaryop_usub(r, dx, x): return -dx
 
 def D_builtins_print(r, *args):
     print('D ', *args[0::2])

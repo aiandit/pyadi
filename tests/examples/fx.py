@@ -3,7 +3,7 @@ from math import sin, cos, tan, asin, acos, atan, log, exp, sqrt
 import math
 import math as m2
 
-import pyfad.timer as timer
+import pyadi.timer as timer
 
 def f1(x):
     z = fsin(x)

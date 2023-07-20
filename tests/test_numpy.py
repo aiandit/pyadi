@@ -5,11 +5,11 @@ import math
 import numpy as np
 from itertools import chain
 
-import pyfad
+import pyadi
 from .examples import fxyz, fx, fgen, swirl, fnp, cylfit, cylfit2
 from .examples.fx import f1 as f1alt,  f2 as f2alt
 
-pyfad.Debug = True
+pyadi.Debug = True
 
 fdH = 1e-8
 tolFD = fdH * 10
@@ -45,9 +45,9 @@ def relNormMaxNP(r1, r2):
 def relNormMax(r1, r2):
     if hasattr(r1, 'flat') and False:
         return relNormMaxNP(r1,r2)
-    dv = [ a - b for a,b in zip(pyfad.varv(r1), pyfad.varv(r2)) ]
-    s1 = sqsum(pyfad.varv(r1))
-    s2 = sqsum(pyfad.varv(r2))
+    dv = [ a - b for a,b in zip(pyadi.varv(r1), pyadi.varv(r2)) ]
+    s1 = sqsum(pyadi.varv(r1))
+    s2 = sqsum(pyadi.varv(r2))
     divi = max(s1, s2)
     if divi == 0:
         divi = 1
@@ -58,10 +58,10 @@ class TestNumpy(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # pyfad.initRules(rules='pyfad.trace,ad=pyfad.forwardad', verbose=True)
-        # pyfad.initRules(rules='t1=pyfad.trace,t2=pyfad.trace,t3=pyfad.trace,ad=pyfad.forwardad')
-        pyfad.initRules(rules='ad=pyfad.forwardad')
-        pyfad.clear()
+        # pyadi.initRules(rules='pyadi.trace,ad=pyadi.forwardad', verbose=True)
+        # pyadi.initRules(rules='t1=pyadi.trace,t2=pyadi.trace,t3=pyadi.trace,ad=pyadi.forwardad')
+        pyadi.initRules(rules='ad=pyadi.forwardad')
+        pyadi.clear()
         cls.opts = {}
         cls.verbose = 0
         cls.dump = 0
@@ -82,11 +82,11 @@ class TestNumpy(unittest.TestCase):
         return True
 
     def checkResult(self, func, args, res):
-        self.assertTrue(sqsum(pyfad.varv(res)) != 0)
+        self.assertTrue(sqsum(pyadi.varv(res)) != 0)
         self.assertTrue(self.assertEq(func, func(*args), res))
 
     def checkDer(self, func, args, dx, seed=1, active=[]):
-        (der, r) = pyfad.DiffFD(func, *args, seed=seed, active=active, h=fdH)
+        (der, r) = pyadi.DiffFD(func, *args, seed=seed, active=active, h=fdH)
         if self.verbose > 0:
             print('cd', (der, dx))
         self.assertTrue(self.assertEqFD(func, dx, der))
@@ -94,7 +94,7 @@ class TestNumpy(unittest.TestCase):
     def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
             args = [1,2,3]
-        (d_r, r) = pyfad.DiffFor(func, *args, **kw, verbose=self.verbose, dump=self.dump, **self.opts)
+        (d_r, r) = pyadi.DiffFor(func, *args, **kw, verbose=self.verbose, dump=self.dump, **self.opts)
         self.checkDer(func, args, d_r)
         self.checkResult(func, args, r)
         return (d_r, r)
@@ -112,7 +112,7 @@ class TestNumpy(unittest.TestCase):
     def test_fsqr(self):
         X = np.zeros((2,2))
         X.flat[:] = [1, 2, 3, 4]
-        # print(f'nvars: {pyfad.nvars(X)} {X.size}')
+        # print(f'nvars: {pyadi.nvars(X)} {X.size}')
         self.do_sourceDiff_f_xyz(fnp.gsqr, args=[X])
 
 

@@ -1,5 +1,5 @@
 import numpy as np
-import pyfad
+import pyadi
 import os
 
 # https://stackoverflow.com/questions/48265646/rotation-of-a-vector-python
@@ -145,7 +145,7 @@ def runopt_ad():
     objComps, obj, handle = cylfit_obj()
 
     def grad(*args, **kw):
-        (dr, r) = pyfad.DiffFor(obj, *args)
+        (dr, r) = pyadi.DiffFor(obj, *args)
         x = args[0]
         N = x.size
         g = np.zeros((N,))
@@ -162,7 +162,7 @@ def runopt_fd():
     objComps, obj, handle = cylfit_obj()
 
     def grad(*args, **kw):
-        (dr, r) = pyfad.DiffFD(obj, *args)
+        (dr, r) = pyadi.DiffFD(obj, *args)
         x = args[0]
         N = x.size
         g = np.zeros((N,))
@@ -221,7 +221,7 @@ def runfsolve_fd(fprime=None):
     objComps, obj, handle = cylfit_obj()
 
     def gobj(x, udata):
-        (dr, r) = pyfad.DiffFDNP(objComps, x)
+        (dr, r) = pyadi.DiffFDNP(objComps, x)
         g = np.zeros(r.size, x.size)
         for i in range(x.size):
             g[:,i] = dr[i]
@@ -235,7 +235,7 @@ def runfsolve_ad(fprime=None):
     objComps, obj, handle = cylfit_obj()
 
     def gobj(x, udata):
-        (dr, r) = pyfad.DiffFor(objComps, x)
+        (dr, r) = pyadi.DiffFor(objComps, x)
         g = np.zeros(r.size, x.size)
         for i in range(x.size):
             g[:,i] = dr[i]
@@ -310,7 +310,7 @@ def _runuopt(fprime=None):
 def runuopt_ad():
 
     def gobj(fobj, x, y, g, udata):
-        (dr, r) = pyfad.DiffFor(fobj, x, verbose=0)
+        (dr, r) = pyadi.DiffFor(fobj, x, verbose=0)
         y[:] = r
         for i in range(x.size):
             g[i] = dr[i]
@@ -323,7 +323,7 @@ def runuopt_ad():
 def runuopt_fd():
 
     def gobj(fobj, x, y, g, udata):
-        (dr, r) = pyfad.DiffFD(fobj, x)
+        (dr, r) = pyadi.DiffFD(fobj, x)
         y[:] = r
         for i in range(x.size):
             g[i] = dr[i]
@@ -406,7 +406,7 @@ def _runusolve(fprime=None, fvprime=None):
 def runusolve_fd():
 
     def gobj(fobj, x, y, g, udata):
-        (dr, r) = pyfad.DiffFD(fobj, x)
+        (dr, r) = pyadi.DiffFD(fobj, x)
         y[:] = r
         for i in range(x.size):
             g[:,i] = dr[i]
@@ -418,7 +418,7 @@ def runusolve_fd():
             # because the function is very nonlinear, the solver
             # complains about a wrong derivative when we use DiffFD(f, x, seed=[dx])
             # so we have to compute the full (N, 3)-Jacobian and multiply by hand!
-            (drF, rF) = pyfad.DiffFD(fobj, x)
+            (drF, rF) = pyadi.DiffFD(fobj, x)
             Jac = np.zeros((rF.size, x.size))
             for i in range(x.size):
                 Jac[:,i] = drF[i]
@@ -427,11 +427,11 @@ def runusolve_fd():
                 print('check Jac', Jac)
                 print('check dx', dx)
                 print('check', Jv)
-                (drnp, rnp) = pyfad.DiffFDNP(fobj, x, seed=[dx ])
+                (drnp, rnp) = pyadi.DiffFDNP(fobj, x, seed=[dx ])
                 print('check fd2', drnp)
-                (drnp2, rnp2) = pyfad.DiffFDNP(lambda t: fobj(x + t*dx.flat), np.array([0.0]))
+                (drnp2, rnp2) = pyadi.DiffFDNP(lambda t: fobj(x + t*dx.flat), np.array([0.0]))
                 print('check fd2', drnp2)
-                (dr, r) = pyfad.DiffFD(fobj, x, seed=[dx ])
+                (dr, r) = pyadi.DiffFD(fobj, x, seed=[dx ])
         y[:] = rF
         g[:] = Jv
         print(f'gvobj(x) = {np.linalg.norm(y)}')
@@ -442,7 +442,7 @@ def runusolve_fd():
 def runusolve_ad():
 
     def gobj(fobj, x, y, g, udata):
-        (dr, r) = pyfad.DiffFor(fobj, x)
+        (dr, r) = pyadi.DiffFor(fobj, x)
         y[:] = r
         for i in range(x.size):
             g[:,i] = dr[i]
@@ -450,7 +450,7 @@ def runusolve_ad():
 
     def gvobj(fobj, x, y, dx, g, udata):
         # with AD the directional derivative is of course correct!
-        (dr, r) = pyfad.DiffFor(fobj, x, seed=[dx])
+        (dr, r) = pyadi.DiffFor(fobj, x, seed=[dx])
         y[:] = r
         N, Ndd = dx.shape
         for i in range(Ndd):

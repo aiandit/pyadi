@@ -1,5 +1,5 @@
 [project]
-name = "pyfad"
+name = "pyadi"
 version = "1.0.1"
 authors = [
   { name="Johannes Willkomm", email="jwillkomm@ai-and-it.de" },
@@ -14,13 +14,13 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/aiandit/pyfad"
-"Bug Tracker" = "https://github.com/aiandit/pyfad/issues"
+"Homepage" = "https://github.com/aiandit/pyadi"
+"Bug Tracker" = "https://github.com/aiandit/pyadi/issues"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.scripts]
-pydiff = "pyfad.cmdline:pydiff"
-pycanon = "pyfad.cmdline:pycanon"
+pydiff = "pyadi.cmdline:pydiff"
+pycanon = "pyadi.cmdline:pycanon"

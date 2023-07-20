@@ -1,4 +1,4 @@
-import pyfad
+import pyadi
 import numpy as np
 
 #vectorized gbabylonian
@@ -22,7 +22,7 @@ r = fbabylonian(x)
 print(f'f{x}) = {r}')
 
 #compute derivative
-d_r, r = pyfad.DiffFor(fbabylonian, x, seed = [np.ones(N)])
+d_r, r = pyadi.DiffFor(fbabylonian, x, seed = [np.ones(N)])
 # print(f'f{x}) = {r}')
 print(f'f\'({x}) = {d_r},\n correct result is {0.5/r},\
  error {np.linalg.norm(d_r[0] - 0.5/r)}')
