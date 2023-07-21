@@ -602,6 +602,10 @@ Calls methods self._DXYZ for individual node XYZ handling
         t.value = self.diffUnlessIsTupleDiff(t.value)
         return t
 
+    def _DYield(self, t):
+        t.value = self.diffUnlessIsTupleDiff(t.value)
+        return t
+
     def _DTry(self, t):
         t.body = self.diffStmtList(t.body)
         t.handlers = self.ddispatch(t.handlers)
