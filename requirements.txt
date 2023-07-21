@@ -1,4 +1,5 @@
 wheel
 build
 https://github.com/aiandit/astunparse/archive/refs/heads/main.zip
+sphinx
 # ../astunparse/dist/astunparse-1.6.3-py2.py3-none-any.whl
