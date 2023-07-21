@@ -1036,7 +1036,7 @@ def ggenerator(l):
     for i in range(len(l)):
         yield l[i]
 
-def _fgenerator(x):
+def fgenerator(x):
     l = [x, x*x, x*x*x]
     vl = [v for v in ggenerator(l)]
     print(f'Generated list {vl}')
