@@ -1039,7 +1039,7 @@ def ggenerator(l):
 def fgenerator(x):
     l = [x, x*x, x*x*x]
     vl = [v for v in ggenerator(l)]
-    print(f'Generated list {vl}')
+    # print(f'Generated list {vl}')
     return gl_sum2(vl)
 
 def md_ggenerator(dm_l, l):
@@ -1053,3 +1053,20 @@ def fgeneratorm(x):
     for (dm_v, v) in md_ggenerator(dl, l):
         s += v
     return s
+
+def ggenerator2(l):
+    for i in range(len(l)):
+        if i == 0:
+            yield l[i]
+        elif i % 2 == 1:
+            yield [sin(l[i]), cos(l[i])]
+        else:
+            yield fsin(l[i])*l[i-1] + l[i-2]
+
+
+def fgenerator2(x):
+    l = [x, x*x, x*x*x]
+    l = l + l + l
+    vl = [v for v in ggenerator2(l)]
+    # print(f'Generated list {vl}')
+    return gl_sum2(vl)
