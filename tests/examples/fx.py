@@ -1046,7 +1046,7 @@ def md_ggenerator(dm_l, l):
     for (dm_i, i) in zip([0]*len(l), range(len(l))):
         yield (dm_l[i], l[i])
 
-def _fgeneratorm(x):
+def fgeneratorm(x):
     l = [x, x*x, x*x*x]
     dl = [1, 0, 0]
     s = 0
