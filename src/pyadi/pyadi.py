@@ -964,6 +964,47 @@ def mkConstr(function):
         return initType(function, *args, **kw)
     return constr
 
+class GenIter:
+    def __init__(self, genobj):
+        self.genobj = genobj
+
+    def __iter__(self):
+        self.index = 0
+        self.findex = 0
+        return self
+
+    def next(self):
+        self.nitem = next(self.genobj)
+        self.index += 1
+
+    def __next__(self):
+        if self.index == self.findex:
+            # print('l')
+            self.next()
+        # else: assert self.findex +1 == self.index
+        self.findex += 1
+        # assert self.findex == self.index
+        return self.nitem[0]
+
+class GenIter2:
+    def __init__(self, genobj):
+        self.genobj = genobj
+
+    def __iter__(self):
+        self.index = 0
+        return self
+
+    def __next__(self):
+        if self.genobj.index == self.index:
+            print('r')
+            assert False
+            # is it true this never happens?
+            next(self.genobj)
+        # else: assert self.index +1 == self.genobj.index
+        self.index += 1
+        # assert self.index == self.genobj.index
+        return self.genobj.nitem[1]
+
 
 def DoDiffFunction(function, **opts):
 
@@ -1013,6 +1054,10 @@ def DoDiffFunction(function, **opts):
                 adres = do, o
             else:
                 adres = None, None
+        elif adres.__class__.__name__ == 'generator':
+            adres_d = GenIter(adres)
+            adres_v = GenIter2(adres_d)
+            adres = adres_d, adres_v
 
         return adres
 
