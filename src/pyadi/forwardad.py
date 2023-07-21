@@ -125,6 +125,9 @@ def D_builtins_len(r, dx, x):
 def D_builtins_enumerate(r, dx, x):
     return zip([0]*len(x), dx)
 
+def D_builtins_zip(r, *args):
+    return zip(*args[0::2])
+
 def D_builtins_int(r, dx, x): return 0
 def D_builtins_float(r, dx, x): return float(dx)
 def D_builtins_complex(r, dx, x, dy, y): return complex(dx, dy)
