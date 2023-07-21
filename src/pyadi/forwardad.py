@@ -9,6 +9,27 @@ import numpy as np
 me = sys.modules[__name__]
 
 
+def getrule(func, adfunc, mode='D'):
+    id = mode + '_' + rid(func)
+    return getattr(me, id)
+
+
+def setrule(func, adfunc, mode='D'):
+    id = mode + '_' + rid(func)
+    setattr(me, id, adfunc)
+
+
+def delrule(func, mode='D'):
+    id = mode + '_' + rid(func)
+    res = getattr(me, id)
+    delattr(me, id)
+    return res
+
+
+def getrules():
+    return me.__dict__
+
+
 def mkRule(f, rule):
     def runRule(*args, **kw):
         res = f(*args[1::2], **kw)

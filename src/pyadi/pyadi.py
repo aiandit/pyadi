@@ -30,8 +30,6 @@ from . import d_math
 
 from . import astvisitor
 
-from . import rules
-
 
 Debug = False
 
@@ -870,7 +868,7 @@ def doSourceDiff(function, opts):
 
     if isbuiltin(function):
         fname = function.__name__
-        id = rules.rid(function)
+        id = astvisitor.rid(function)
         msg = f'No rule for buitin {fname}, function {id} not found'
         raise (NoRule(msg))
 
