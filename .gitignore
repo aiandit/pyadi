@@ -6,3 +6,4 @@ build
 src/pyadi.egg-info/
 .tox
 dump
+doc/_build
