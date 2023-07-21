@@ -1075,6 +1075,7 @@ def DiffFunction(function, **opts):
 
 
 D = DiffFunction
+"""An alias for :py:func:`DiffFunction` so the generated code can be shorter."""
 
 
 def DiffFunctionObj(tpl, **opts):
@@ -1132,9 +1133,11 @@ def DiffFunctionObj(tpl, **opts):
     return inner if dself is not None else adfun
 
 Dc = DiffFunctionObj
+"""An alias for :py:func:`DiffFunctionObj` so the generated code can be shorter."""
 
 
 def nvars(args):
+    """Compute recursively the total number of values in the list args."""
     if isinstance(args, list) or isinstance(args, tuple):
         return sum([nvars(f) for f in args])
     elif isinstance(args, dict):
@@ -1186,6 +1189,28 @@ class FillHelper:
 
 
 def fill(arg, seed):
+    """Fill arg with values from seed.
+
+    Fill arguments arg with values from seed. Lists, tuples, dicts and
+    objects are deep-copied and each generic values (as per
+    :py:func:`.isgeneric`) is filled with one value from seed.
+    :py:mod:`numpy` arrays are batch-filled using
+    :py:meth:`FillIter.get`.
+
+    Parameters
+    ----------
+    arg : list of objects
+        Function arguments.
+
+    seed : list of float or a :py:mod:`numpy` array
+        Values to fill into arg during deep-copy.
+
+    Returns
+    -------
+    arg
+        A deep copy of arg filled with seed.
+
+    """
     if not isinstance(seed, FillHelper):
         seed = FillHelper(seed)
     if isinstance(arg, list):
@@ -1316,11 +1341,47 @@ def Diff(active='all', **opts):
     return _pyadi_diff
 
 
-def DiffFD(f, *args, **opts):
+def DiffFD(f, *args, active=[], seed=1, h=1e-8, **opts):
+    """Evalaute derivatves using central finite differences.
 
-    seed = opts.get('seed', 1)
-    active = opts.get('active', [])
-    h = opts.get('h', 1e-8)
+    The function f is called two times for each derivative direction
+    provided by seed, to evaluate a central finite difference with
+    step size h. The function f is once more to compute the original
+    result.
+
+    Parameters
+    ----------
+    f : function
+        Function to differentiate.
+
+    args : list
+        Function arguments.
+
+    h  : float
+        Step size, default 1e-8
+
+    active : list or str
+        Active arguments, like [0,1], ['x', 'y'], or a comma-separated
+        string like 'x,y'. The empty list or string means all arguments.
+
+    seed : 1 or list
+        Seed, derivative directions. When seed == 1, all derivative
+        directions are computed. When seed is a list, then each entry
+        must be an array of the same size as the total length of the
+        active arguments. The function :py:func:`.nvars` can compute
+        that value.
+
+    opts : dict
+        Options, not used.
+
+    Returns
+    -------
+    tuple
+        A tuple of the derivative and the function result. The
+        derivative is a list with as many entries as there where seed
+        directions.
+
+    """
 
     if len(active) == 0:
         func = f
@@ -1371,11 +1432,47 @@ def DiffFD(f, *args, **opts):
     return dres, r
 
 
-def DiffFDNP(f, *args, **opts):
+def DiffFDNP(f, *args, active=[0], seed=1, h=1e-8, **opts):
+    """An optimized version of :py:func:`DiffFD` with some
+    restrictions:
 
-    seed = opts.get('seed', 1)
-    active = opts.get('active', [])
-    h = opts.get('h', 1e-8)
+      - there can be only one active argument, considering
+        opts['active'].
+
+      - the only active argument, the seeds, and the function result
+        must all by :py:mod:`numpy` arrays.
+
+    Parameters
+    ----------
+    f : function
+        Function to differentiate.
+
+    args : list
+        Function arguments.
+
+    h  : float
+        Step size.
+
+    active : list or str
+        Active arguments, like [0,1], ['x', 'y'], or a comma-separated
+        string like 'x,y'.
+
+    seed : 1 or list
+        Seed, derivative directions. When seed == 1, all derivative
+        directions are computed. When seed is a list, then each entry
+        must be an array of the same size as the active argument.
+
+    opts : dict
+        Options, of which this funciton uses:
+
+    Returns
+    -------
+    tuple
+        A tuple of the derivative and the function result. The
+        derivative is a list with as many entries as there where seed
+        directions.
+
+    """
 
     if len(active) == 0:
         func = f

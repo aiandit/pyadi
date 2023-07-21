@@ -4,8 +4,18 @@ Module and function reference
 Main module pyadi
 =================
 
-The main module contains the most important function for user of
-PyADi: :py:func:`.DiffFor`, which evaluares derivatives.
+The main module contains the most important function for users of
+PyADi: :py:func:`.DiffFor`, which evaluates derivatives.
+
+It also contains the runtime function decorators :py:func:`.D` and
+:py:func:`.Dc`, which are the main workhorse of PyADi. The module also
+contains the mechanism by which these decorators invoke the configured
+rule modules, which by default is just :py:mod:`.forwardad`. When the
+rule modules at last ask the core to handle the function, source
+transformation is used to produce a differentiated function. The main
+module also contains the main AST visistor that performs the source
+code differentiation, while many tools related to that task are also
+in :py:mod:`.astvisitor`.
 
 .. automodule:: pyadi.pyadi
    :members:
@@ -37,19 +47,9 @@ Module forwardad
    :members:
    :undoc-members:
 
-Module rules
-^^^^^^^^^^^^
 
-The contents of this module closely belong to :py:mod:`.forwardad`,
-they manipulate the dictionary of :py:mod:`.forwardad` do add and
-delete differentiation rule.
-
-.. automodule:: pyadi.rules
-   :members:
-   :undoc-members:
-
-Module dummad
--------------
+Module dummyad
+--------------
 
 This rule module is an attempt to provide a set of rules that makes
 the differentiated code run, with no regard for the derivative result.
@@ -63,7 +63,7 @@ Module trace
 
 This rule module adds a call to any function call that monitors for
 certain tasks, like printing the function name and possibly arguments,
-and to other tasks such as even interrupting the program.
+and for other tasks such as even interrupting the program.
 
 .. automodule:: pyadi.trace
    :members:
@@ -74,7 +74,7 @@ Module timing
 
 This rule module adds a call to any function call that monitors
 certain function calls. When a matching function is caught its call
-and its descendants for a configurable height are times with
+and its descendants for a configurable height are timed with
 :py:class:`.Timer`.
 
 .. automodule:: pyadi.timing

@@ -8,8 +8,9 @@ Differentiation
 .. autofunction:: pyadi.DiffFD
 .. autofunction:: pyadi.DiffFDNP
 
-.. autofunction:: setrule
-.. autofunction:: delrule
+.. autofunction:: pyadi.setrule
+.. autofunction:: pyadi.getrule
+.. autofunction:: pyadi.delrule
 
 ..
    from .pyadi import DiffFor, DiffFD, DiffFDNP
