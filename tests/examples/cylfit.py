@@ -110,6 +110,11 @@ def relNormMax(r1, r2):
 def runopt(fprime=None, gtol=1e-7):
     import scipy as sc
 
+    objComps, obj, handle = cylfit_obj()
+
+    def gobj(x, y, g, udata):
+        fprime(obj, x, y, g, udata)
+
     R0 = 1.1
     theta0 = 0.1
     phi0 = np.pi/2
@@ -125,8 +130,7 @@ def runopt(fprime=None, gtol=1e-7):
     handle()['points'] = demopts
 
     print('start fmin_cg')
-    # does not work as soon as we give it a derivative??
-    res = sc.optimize.fmin_cg(obj, v0, fprime=fprime, full_output=True, gtol=gtol, norm=2)
+    res = sc.optimize.fmin_cg(obj, v0, fprime=gobj if fprime is not None else None, full_output=True, gtol=gtol, norm=2)
     print(res)
 
     sol, *rem = res
@@ -142,9 +146,7 @@ def runopt(fprime=None, gtol=1e-7):
 
 def runopt_ad():
 
-    objComps, obj, handle = cylfit_obj()
-
-    def grad(*args, **kw):
+    def grad(obj, *args, **kw):
         (dr, r) = pyadi.DiffFor(obj, *args)
         x = args[0]
         N = x.size
@@ -159,9 +161,7 @@ def runopt_ad():
 
 def runopt_fd():
 
-    objComps, obj, handle = cylfit_obj()
-
-    def grad(*args, **kw):
+    def grad(obj, *args, **kw):
         (dr, r) = pyadi.DiffFD(obj, *args)
         x = args[0]
         N = x.size
@@ -232,7 +232,6 @@ def runfsolve_fd(fprime=None):
 
 
 def runfsolve_ad(fprime=None):
-    objComps, obj, handle = cylfit_obj()
 
     def gobj(x, udata):
         (dr, r) = pyadi.DiffFor(objComps, x)
