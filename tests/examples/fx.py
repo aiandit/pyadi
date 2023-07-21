@@ -1031,3 +1031,25 @@ def fwrglobal(x):
     l = [x, x*x, x*x*x]
     r, gldata['c'], _ = gtpl(*l)
     return r*2
+
+def ggenerator(l):
+    for i in range(len(l)):
+        yield l[i]
+
+def _fgenerator(x):
+    l = [x, x*x, x*x*x]
+    vl = [v for v in ggenerator(l)]
+    print(f'Generated list {vl}')
+    return gl_sum2(vl)
+
+def md_ggenerator(dm_l, l):
+    for (dm_i, i) in zip([0]*len(l), range(len(l))):
+        yield (dm_l[i], l[i])
+
+def _fgeneratorm(x):
+    l = [x, x*x, x*x*x]
+    dl = [1, 0, 0]
+    s = 0
+    for (dm_v, v) in md_ggenerator(dl, l):
+        s += v
+    return s
