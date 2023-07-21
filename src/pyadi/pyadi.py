@@ -184,7 +184,7 @@ Calls methods self._DXYZ for individual node XYZ handling
             elif item._class == "FunctionDef":
                 nbody += [self._DFunctionDef(item.clone())]
                 nbody += [item]
-            elif item._class == "AugAssign" or item._class == "FunctionDef":
+            elif item._class == "AugAssign":
                 if item.op == "**" and isdiff(item.value):
                     self.tmpval = mkTmp('s')
                     nbody += [Assign(self.tmpval, self.mkOpPartialC("**", None, None, item.target, item.value))]
