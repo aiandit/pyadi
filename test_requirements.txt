@@ -1,5 +1,5 @@
 coverage
 pytest
 requests
-numpy
+sphinx
 -rrequirements.txt
