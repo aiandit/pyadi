@@ -20,6 +20,7 @@ in :py:mod:`.astvisitor`.
 .. automodule:: pyadi.pyadi
    :members:
    :undoc-members:
+   :special-members: __init__, __call__, __str__, __repr__, __iter__, __next__, __enter__, __exit__
 
 
 Runtime rule modules
@@ -91,6 +92,7 @@ Module astvisitor
 .. automodule:: pyadi.astvisitor
    :members:
    :undoc-members:
+   :special-members: __init__, __call__, __str__, __repr__, __iter__, __next__, __enter__, __exit__
 
 Module nodes
 ------------
@@ -98,9 +100,19 @@ Module nodes
 .. automodule:: pyadi.nodes
    :members:
    :undoc-members:
+   :special-members: __init__, __call__, __str__, __repr__
 
 Other utility modules
 =====================
+
+Module runtime
+--------------
+
+.. automodule:: pyadi.runtime
+   :members:
+   :undoc-members:
+   :special-members: __init__, __call__, __str__, __repr__
+
 
 Module timer
 ------------
@@ -108,9 +120,11 @@ Module timer
 .. automodule:: pyadi.timer
    :members:
    :undoc-members:
+   :special-members: __init__, __call__, __str__, __repr__
 
 Module cmdline
 --------------
 .. automodule:: pyadi.cmdline
    :members:
    :undoc-members:
+   :special-members:

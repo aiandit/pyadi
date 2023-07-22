@@ -905,9 +905,37 @@ def addrulemodule(module, **kw):
     if ind == 0: ind = ''
     rulemodules[f'{alias}{ind}'] = module, deco, handle
 
-def initRules(**opts):
+def initRules(rules='ad=pyadi.forwardad', **opts):
+    """Initialize the rule processing mechanism for
+    :py:func:`processRules` that performs the resolution of functions
+    to differentiated functions.
+
+    The :py:func:`.decorator` of a rule module may return two function
+    handles instead of one. In this case the second one can be
+    retrieved using :py:func:`.getHandle`, possibly to manipulate the
+    scope of the returned differentiated functions at runtime, as
+    demonstrated by the :py:func:`~.trace.decorator` of the rule
+    module :py:mod:`.trace`.
+
+    Parameters
+    ----------
+
+    rules : str
+
+        Comma-separated list of python modules to use as rule
+        modules. Entries can use 'alias=module' to define a name alias
+        for the rule module, which is useful when the same module
+        shall be added several times to the chain. For example::
+
+            pyadi.initRules(rules='pyadi.trace,pyadi.forwardad,tr2=pyadi.trace',
+                            tracecalls=True, verbose=True, verboseargs=True)
+
+    opts : dict
+        Passed to :py:func:`decorator` of all the rule modules upon
+        initialization.
+
+    """
     clearrulemodules()
-    rules = opts.get('rules', 'ad=pyadi.forwardad')
     rules = rules.split(',')
     for rule in rules:
         add = {}
@@ -1004,8 +1032,113 @@ class GenIter2:
         return self.genobj.nitem[1]
 
 
-def DoDiffFunction(function, **opts):
+def doDiffFunction(function, **opts):
+    """Produce differentiated functions.
 
+    This function is called to produced a derivative function for
+    function, that is, a function that is called with tuples (dx, x)
+    for each original argument x in the original code, and that
+    returns a tuple (dr, r) where r is the function result and dr is
+    the derivative.
+
+    This function will call :py:func:`processRules`, which calls the
+    installed rule modules.
+
+    The default rule module :py:mod:`forwardad` will for example catch
+    calls to :py:func:`print`, which is a builtin function, and call
+    :py:func:`.mkRule` with :py:func:`.D_builtins_print` to produce a
+    suitable result.
+
+    When no rule module catchs the call and returns a suitable
+    function, finally the source differentiation
+    :py:func:`doSourceDiff` is invoked. It will produce a suitable
+    result by retrieving the AST of function using :py:func:`.getast`
+    and differentiating that.
+
+    A few special cases need to by handled as follows:
+
+       - When function is a type, then a constructor is being called.
+
+          - set _C = function
+
+          - When _C.__init__ is not builtin, set function =
+            _C.__init__, that is the constructor class method.
+
+       - When function has a closure and the last closure entry
+         fdec is a function this might be a call to a decorated
+         function, that is, the result of deco(fdec), which is a
+         local function that captured fdec. So when fdec has a
+         decorator list (getting the ast of fdec), this might be
+         the right thing. TODO: We should check if this is really
+         the right function. However, substitute function by
+         fdec. This will thus in the following get the AST of fdec,
+         which is something like::
+
+             @mydeco2(1.23)
+             def gdeco2(l):
+                 return gl_sum(l)
+
+         This gets differentiated to an expression decorating the
+         regular D(fdec) with the differentiated decorator
+         expression::
+
+             @(lambda f: D(mydeco2)((0, 1.23))[0](f, gdeco2)[0])
+             def d_gdeco2(d_l, l):
+                 return D(gl_sum)((d_l, l))
+
+         Which when loaded produces the differentiated inner function
+         that the differentiated decorator, that D(mydeco2) returns,
+         creates when called with d_gdeco2 alias f, and gdeco2. Thus,
+         whatever happens in these decorators and the inner functions
+         that they produce is getting differentiated regulary.
+
+         The differentiated decorator expression is one of the few
+         cases where we have to throw away the second part of the
+         tuples that differentiated functions produce, because we only
+         need the differentiated result, and even twice in this case.
+
+    Then the differentiated function ``adfun`` is produced by calling
+    :py:func:`processRules`. This function returns however a local
+    function that does the following:
+
+      - first flatten the argument list of N tuples to a list of 2*N,
+        alternating derivative and regular arguments. This is because
+        the source differentiation differentiates ``def f(x, y):`` to
+        ``def d_f(d_x, x, d_y, y):``. Hence, the builtin rules will
+        also be called with the flattened list of arguments. This step
+        also forces the evaluation of potentially lazy zip and other
+        iterators that the arguments may be.
+
+      - when ``_C`` is not None, a type, that is, a constructor has
+        been called. Initialize two objects d_o and o of the type
+        ``_C`` and :py:func:`.dzeros` the designated derivative object
+        ``d_o``. Prepend ``(d_o, o)`` to the list of arguments. This
+        requires that _C.__init__ accepts being called with no
+        arguments. Both objects will then be reinitialized again with
+        the provided arguments to the constructor when the
+        differentiated __init__ method ``adres`` is invoked in the
+        next step. TODO: check if we can somehow produce unitialized
+        objects, that is, do what Python does before it calls
+        __init__?
+
+      - Finally call ``adres = adfun(*args, **kw)``
+
+      - when ``adres`` is None, which often happens with methods, return
+        ``(None, None)``, unless ``_C`` is not None, then a constructor has
+        been called, return ``(d_o, o)``.
+
+      - when ``adres`` is an object of the builtin type ``generator``,
+        ``function`` was a generator function and ``adfun`` is too,
+        with differentiated yield statements that produce
+        tuples. Create two coupled iterators ``d_it =``
+        :py:class:`GenIter` (``adres``) and ``it =``
+        :py:class:`GenIter2` (``d_it``) that in tandem iterate
+        ``adres``, one returning ``r[0]`` and the other ``r[1]`` of
+        the tuples ``r`` produced, and return ``(d_it, it)``.
+
+      - otherwise, return ``adres``, which is a tuple.
+
+    """
     _class, constr, deco = None, None, None
 
     if isinstance(function, type):
@@ -1063,11 +1196,21 @@ def DoDiffFunction(function, **opts):
 
 
 def DiffFunction(function, **opts):
+    """Runtime decorator to handle function calls.
 
+    This function merely caches the calls to
+    :py:func:`doDiffFunction`, which does the actual work when no
+    entry is found for function.
+
+    Use :py:func:`clear` to clear this cache, which should be
+    necessary only when the processing is redefined at runtime using
+    :py:func:`initRules`.
+
+    """
     adfun = adc.get(function, None)
     if adfun is None:
         # print(f'Diff function {function.__name__}')
-        adfun = DoDiffFunction(function, **(transformOps|opts))
+        adfun = doDiffFunction(function, **(transformOps|opts))
         adc[function] = adfun
         # print(f'Diff function {function.__name__} cached => {adfun.__name__}')
         # else: print(f'Found diff function {function.__name__} in cache: {adfun.__name__}')
@@ -1079,6 +1222,54 @@ D = DiffFunction
 
 
 def DiffFunctionObj(tpl, **opts):
+    """Runtime decorator to handle calls to local variables.
+
+    Calls to local variables like obj.meth are differentiated to an
+    expression invoking this function as DC((d_obj.meth, obj,meth)),
+    that is, with a tuple of the "differentiated" function and the
+    original function.
+
+    Let the tuple tpl be expanded to dfunc, func.
+
+    This function will usually call DiffFunction (aka. D) with func
+    after handling the following cases:
+
+      - When dfunc != func:
+
+        1) A method is being called, dfunc and func are bound
+           methods. Extract the two self pointers from both and
+           substitute func with the actual class function T.meth,
+           where T is the type. T is not necessarily the type of obj
+           but may also be a parent class when an inherited method is
+           being called using super().
+
+           At runtime, inject the two self pointers to the front of
+           the argument list.
+
+        2) When func is not a function, then an object is being
+           called, dfunc is the derivative object. Substitute func by
+           T.__call__, where T is the type of obj.
+
+           At runtime, inject the two self pointers (that is, dfunc
+           and the original func) to the front of the argument list.
+
+        3) Otherwise, a local function inner is being called, which
+           will have been differentiated in source code already, the
+           call to this decorator then being Dc(d_inner,
+           inner). Hence, dfunc is already the differentiated function
+           of func, it can be called directly. In this case D() is not
+           called in the following.
+
+      - When dfunc == func: A function alias has been called, that is,
+        a global function was assigned to a local variable like myf =
+        math.sin. The differentiated variable d_myf then has
+        dzeros(math.sin), which is also math.sin. Do nothing.
+
+      . Finally call DiffFunction(func) and return that result, unless
+        the runtime arguments need patching, then return a local
+        function doing that.
+
+    """
     dfunc, function = tpl
 
     dself, self = None, None
@@ -1346,8 +1537,8 @@ def DiffFD(f, *args, active=[], seed=1, h=1e-8, **opts):
 
     The function f is called two times for each derivative direction
     provided by seed, to evaluate a central finite difference with
-    step size h. The function f is once more to compute the original
-    result.
+    step size h. The function f is called once more to compute the
+    original result.
 
     Parameters
     ----------
