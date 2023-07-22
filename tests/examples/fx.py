@@ -819,16 +819,16 @@ def fdeco(x):
     r = gdeco(l)
     return r
 
-def mydeco2(c, d, e):
+def mydeco2(c):
     def mkDeco(f):
         def inner(*args, **kw):
             args = [ [v*2 for v in args[0]], *args[1:] ]
             res = f(*args, **kw)
-            return e*d*sqrt(abs(res*c))
+            return sqrt(abs(res*c))
         return inner
     return mkDeco
 
-@mydeco2(1.23, 0.1, 0.1)
+@mydeco2(1.23)
 def gdeco2(l):
     return gl_sum(l)
 
