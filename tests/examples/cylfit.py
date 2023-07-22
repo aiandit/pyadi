@@ -112,8 +112,8 @@ def runopt(fprime=None, gtol=1e-7):
 
     objComps, obj, handle = cylfit_obj()
 
-    def gobj(x, y, g, udata):
-        fprime(obj, x, y, g, udata)
+    def gobj(x):
+        return fprime(obj, x)
 
     R0 = 1.1
     theta0 = 0.1
