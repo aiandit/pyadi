@@ -14,6 +14,7 @@ Welcome to the PyADi documentation!
    installation
    usage
    supported
+   testing
    reference
 
 
