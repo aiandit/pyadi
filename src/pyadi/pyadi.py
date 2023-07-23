@@ -899,8 +899,8 @@ def addrulemodule(module, **kw):
 
 def initRules(rules='ad=pyadi.forwardad', **opts):
     """Initialize the rule processing mechanism for
-    :py:func:`processRules` that performs the resolution of functions
-    to differentiated functions.
+    :py:func:`processRules` that performs the mapping of functions to
+    differentiated functions.
 
     The :py:func:`.decorator` of a rule module may return two function
     handles instead of one. In this case the second one can be
@@ -909,18 +909,25 @@ def initRules(rules='ad=pyadi.forwardad', **opts):
     demonstrated by the :py:func:`~.trace.decorator` of the rule
     module :py:mod:`.trace`.
 
+    When the same module shall be used several times in the chain, an
+    alias can be defined, for example::
+
+      pyadi.initRules(
+        rules='pyadi.trace,pyadi.forwardad,tr2=pyadi.trace',
+        tracecalls=True, verbose=True, verboseargs=True)
+
+    Then, ``getHandle('tr2')`` retrieves the handle to the second
+    instance of the decorator that the trace module installed, and
+    ``getHandle('pyadi.trace')`` gets that of the first, while
+    ``getHandle('pyadi.forwardad')`` is None because it does not
+    provide a handler function.
+
     Parameters
     ----------
-
     rules : str
-
         Comma-separated list of python modules to use as rule
-        modules. Entries can use 'alias=module' to define a name alias
-        for the rule module, which is useful when the same module
-        shall be added several times to the chain. For example::
-
-            pyadi.initRules(rules='pyadi.trace,pyadi.forwardad,tr2=pyadi.trace',
-                            tracecalls=True, verbose=True, verboseargs=True)
+        modules. Entries can use 'alias=module' to define a name
+        alias.
 
     opts : dict
         Passed to :py:func:`decorator` of all the rule modules upon
@@ -941,6 +948,29 @@ initRules()
 
 
 def getHandle(alias):
+    """Return handle to a rule module.
+
+    Return the second item of the result of a rule module's decorator
+    function, or None. This second item is meant to be a function that
+    can manipulate or read the local scope of the decorator, for an
+    example see the tracing rule module :py:mod:`.trace`.
+
+    The result returned becomes invalid whenever :py:func:`initRules`
+    is called again.
+
+    Parameters
+    ----------
+    alias : str
+       The module name or alias used with :py:func:`initRules`.
+
+
+    Returns
+    -------
+    object, usually function or None
+      The second item that the rule module's decorator returned,
+      usally a second inner function.
+
+    """
     return rulemodules[alias][2]
 
 
@@ -1346,6 +1376,10 @@ def varv(args):
 
 
 class FillHelper:
+    """A simple iterator used to source floats one by one from either
+    a list or a :py:mod:`numpy` array, used by :py:func:`.fill`.
+
+    """
     def __init__(self, seed):
         self.seed = np.array(seed)
         self.len = nvars(seed)
@@ -1355,6 +1389,8 @@ class FillHelper:
         return self
 
     def __next__(self):
+        """Return a single float from the data.
+        """
         if self.offs < self.len:
             r = self.seed[self.offs]
             self.offs += 1
@@ -1363,9 +1399,12 @@ class FillHelper:
             raise StopIteration
 
     def __repr__(self):
-        return f'Filler({self.offs}/{len(self.seed)})'
+        """Print the fill status like "FillHelper(i/n)".
+        """
+        return f'FillHelper({self.offs}/{len(self.seed)})'
 
     def get(self, N):
+        """Batch-return N values to speed up filling arrays."""
         r = self.seed[self.offs:(self.offs+N)]
         self.offs += N
         return r
@@ -1375,17 +1414,19 @@ def fill(arg, seed):
     """Fill arg with values from seed.
 
     Fill arguments arg with values from seed. Lists, tuples, dicts and
-    objects are deep-copied and each generic values (as per
-    :py:func:`.isgeneric`) is filled with one value from seed.
-    :py:mod:`numpy` arrays are batch-filled using
-    :py:meth:`FillIter.get`.
+    objects are deep-copied and each generic value, as per
+    :py:func:`astunparse.astnode.isgeneric` is filled with one value
+    from seed using :py:class:`.FillHelper`.  :py:mod:`numpy` arrays
+    are batch-filled in-place using :py:meth:`.FillHelper.get`, so
+    :py:func:`.dzeros` should be used before if it is desired that
+    arrays are cloned and the original arrays not modified
 
     Parameters
     ----------
     arg : list of objects
         Function arguments.
 
-    seed : list of float or a :py:mod:`numpy` array
+    seed : list of floats or a :py:mod:`numpy` array
         Values to fill into arg during deep-copy.
 
     Returns
@@ -1465,6 +1506,89 @@ def mkActArgFunction(f, args, inds):
 
 
 def DiffFor(function, *args, seed=1, active=[], timings=True, verbose=0, dump=0, dumpdir='dump', **opts):
+    """Differentiate function and compute first-order derivatives.
+
+    Differentiate function ``function(*args)`` with forward mode
+    AD to produce ``adfun``. This function is the main entry point to start the
+    differentiation process. This function basically does the
+    following:
+
+       - Differentiate ``function`` with :py:func:`DiffFunction` alias
+         :py:func:`D`
+
+       - Create one set of derivative arguments ``dx = dzeros(args)``
+         using :py:func:`.dzeros`
+
+       - For each seeddir in seed, initialize ``dx`` with seeddir
+         using :py:func:`.fill` and call ``adfun`` with dx and x
+         appropriately
+
+    The result is a tuple of 1. the list of the derivative results
+    thus produced, and 2. the function result.
+
+    Although PyADi supports almost the full set of Python language
+    features including keyword arguments, lambda functions, etc. the
+    ``function`` given here must adhere to some restrictions:
+
+      - Since this function only processes the positional arguments
+         ``args`` and considers all keyword arguments as options to
+         the process, ``function`` can only use positional arguments.
+
+      - ``function`` can have parameter default values,
+
+      -  ``function`` must also be a regular Python function, not a lambda
+         expression.
+
+      - However, ``function`` can be a local function returned by
+        whatever other function. This setup processs will not be
+        differentiated .
+
+    This may require that a dedicated toplevel function is created
+    that can be given to this function.
+
+    Parameters
+    ----------
+
+    function : function
+        Function to differentiate. Must be a regular function, including
+        an inner function, but not lambda, can only use positional
+        arguments. This concerns only ``function`` itself. Inside
+        ``function`` the full set of Python can be used.
+
+    args : list
+        Function arguments. ``function`` will be differentiated with
+        respect to all arguments or to those listed by ``active``.
+
+    active : list or str
+        Active arguments, like [0,1], ['x', 'y'], or a comma-separated
+        string like 'x,y'. The empty list or string means all
+        arguments. What actually happens is that a local function of
+        only the active ``args``, calling ``function``, is generated
+        by :py:func:`.mkActArgFunction` and that is differentiated
+        instead.
+
+    seed : 1 or list
+        Seed, derivative directions. When seed == 1, all derivative
+        directions are computed. When seed is a list, then each entry
+        must be an array of the same size as the total length of the
+        active arguments. The function :py:func:`.nvars` can compute
+        that value.
+
+    opts : dict
+        Further options ``opts`` including also verbose, dump and
+        dumpdir are stored in a global variable
+        :py:data:`.transformOpts`. These global options are added to
+        the options of :py:func:`.doDiffFunction` by each call to
+        :py:func:`.D` in the subsequent process.
+
+    Returns
+    -------
+    tuple
+        A tuple of the derivative and the function result. The
+        derivative is a list with as many entries as there where seed
+        directions.
+
+    """
     global transformOpts
     transformOpts = opts | dict(timings=timings, verbose=verbose, dump=dump, dumpdir=dumpdir)
 
@@ -1569,7 +1693,11 @@ def DiffFD(f, *args, active=[], seed=1, h=1e-8, **opts):
 
     active : list or str
         Active arguments, like [0,1], ['x', 'y'], or a comma-separated
-        string like 'x,y'. The empty list or string means all arguments.
+        string like 'x,y'. The empty list or string means all
+        arguments. What actually happens is that a local function of
+        only the active ``args``, calling ``function``, is generated
+        by :py:func:`.mkActArgFunction` and that is differentiated
+        instead.
 
     seed : 1 or list
         Seed, derivative directions. When seed == 1, all derivative
@@ -1649,7 +1777,10 @@ def DiffFDNP(f, *args, active=[0], seed=1, h=1e-8, **opts):
 
     active : list or str
         Active arguments, like [0,1], ['x', 'y'], or a comma-separated
-        string like 'x,y'.
+        string like 'x,y'. What actually happens is that a local function of
+        only the active ``args``, calling ``function``, is generated
+        by :py:func:`.mkActArgFunction` and that is differentiated
+        instead.
 
     seed : 1 or list
         Seed, derivative directions. When seed == 1, all derivative

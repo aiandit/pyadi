@@ -1,3 +1,164 @@
+"""The default rule module for PyADi.
+
+It resolves functions for which it has a handler registered to a
+corresponding function compatible with our AD process, that is,
+function that takes the flattened list of 2*N arguments and the
+differentiated keywords dictionary and returns a tuple of the
+derivative and the function result.
+
+When some function is not handled by this module, then source
+transformation will be invoked. This in turn fails with the exception
+:py:exc:`.NoSource` when the source can not be obtained. Then a
+handler must be added to this module in order to make the process
+work.
+
+Defining handlers, how they are resolved and their semantics is
+entirely local to this module.
+
+Handlers for any Python function ``function`` can be set, retrieved,
+and deleted with :py:func:`.setrule`, :py:func:`.getrule`, and
+:py:func:`.delrule`, respectively.
+
+Note the mode parameter of these functions, which can be 'D', 'Dkw' or
+'E'. This controls how the generic calling pattern is mapped to the
+rules:
+
+  "D") :py:func:`.mkRule` is used to build the AD function, and the
+       rule must have the signature ``rule(r, *args, **kw)``, or
+       compatible. The wrapper calls the original function first as
+       ``r = function(*args[1::2])`` and then calls the rule passing
+       the result ``r`` as the first parameter. The rule must return
+       just the derivative ``d_r``, the wrapper returns ``(d_r, r)``.
+
+  "Dkw") similar to "D", :py:func:`.mkRule2` is used to build the AD
+         function, which additionally unpacks the keywords into the
+         derivative keywords and the original keywords with
+         :py:func:`.unjnd`. The rule must have the signature ``rule(r,
+         d_kw, *args, **kw)``. The wrapper in addition to the function
+         result passes the derivative keywords as the second parameter
+         ``d_kw`` while ``kw`` will only receive the original keyword
+         params.
+
+  "E") No wrapper is produced, the rule will be called directly, which
+       accordingy must return a tuple.
+
+Note that the rule modes have the precedence 'D', 'Dkw', and 'E'. So
+if you wanted to replace an existing rule with mode 'D' with a new
+rule with mode 'E', make sure to :py:func:`.delrule` the handler with
+mode 'D' first, or else your new rule would be shadowed by the still
+extant rule with mode 'D'.
+
+Mode "D" is useful in that vast majority of cases. For example, the
+handler for :py:func:`~math.sin` is::
+
+  def D_math_sin(r, dx, x):
+      return dx * cos(x)
+
+The handler for :py:func:`print` calls print again, this time with all
+the differentiated arguments::
+
+  def D_builtins_print(r, *args):
+      print('D ', *args[0::2])
+      return 0
+
+The function result that is provided by the wrapper can be put to good
+use in several functions, for example the exponentials like
+:py:func:`~math.exp` and :py:func:`~math.sqrt`, but also
+:py:func:`numpy.linalg.inv`::
+
+  def D_math_exp(r, dx, x):
+      return r * dx
+
+  def D_math_sqrt(r, dx, x):
+      return 0.5 * dx / r
+
+  def D_numpy_linalg_inv(r, dx, x):
+      return r @ dx @ r
+
+Common trivial cases are type conversions, which should be applied to
+the derivative arguments too::
+
+  def D_builtins_list(r, dx, x):
+      return list(dx)
+
+  def D_builtins_tuple(r, dx, x):
+      return tuple(dx)
+
+  def D_builtins_float(r, dx, x):
+      return float(dx)
+
+  def D_builtins_complex(r, dx, x, dy, y):
+      return complex(dx, dy)
+
+Another generic case is when data is shuffled around in whatever way,
+then apply the same shuffling to the derivatives::
+
+  def D_builtins_ndarray_reshape(r, *args, **kw):
+      # args[0]: the derivative array
+      # args[1]: the original array
+      # args[3::2]: the remainder of the original arguments, i.e. the sizes
+      return args[0].reshape(*args[3::2])
+
+  def D_numpy_hstack(r, dx, x):
+      return np.hstack(dx)
+
+  def D_numpy_diag(r, dx, x):
+      return np.diag(dx)
+
+  def D_numpy_real(r, dx, x):
+      return np.real(dx)
+
+  def D_numpy_imag(r, dx, x):
+      return np.imag(dx)
+
+
+Another trivial case, but which can be a pitfall, is where values are
+created that do not depend on the inputs, in which case it is
+paramount that the derivative values are always zero::
+
+  def D_builtins_int(r, dx, x):
+      return 0
+
+  def D_builtins_len(r, dx, x):
+      return 0
+
+  def D_builtins_Random_random(r):
+      return 0
+
+When a sequence is created, we must provide a sequence of zeros::
+
+  def D_builtins_range(r, *args):
+      return [0]*len(r)
+
+  def D_builtins_enumerate(r, dx, x):
+      return zip([0]*len(x), dx)
+
+And likewise for arrays::
+
+  def D_numpy_zeros(r, *args):
+      return np.zeros(r.shape, dtype=r.dtype)
+
+  D_numpy_eye = D_numpy_ones = D_numpy_random_rand = D_numpy_zeros
+
+The intention of the mode "Dkw" is to save the call to
+:py:func:`.unjnd` when it is not needed. The flipside is that rules
+must announce when they do want the split keyword arguments, but so
+far these are quite a small number, for example, :py:func:`dict`
+itself::
+
+  def Dkw_builtins_dict(r, d_kw, *args, **kw):
+      return dict(**d_kw)
+
+Another example is :py:func:`numpy.sum`, which on past occasions has
+it made pretty clear that it does not want to be bothered with a
+keyword ``d_axis`` or any other keyword starting with ``d_`` for that
+matter, so we give it what it needs but not what is does not want::
+
+  def Dkw_numpy_sum(r, d_kw, dx, x, **kw):
+      return np.sum(dx, **kw)
+
+"""
+
 from itertools import chain
 from math import sin, cos, tan, asin, acos, atan, log, sqrt, floor
 from .astvisitor import getmodule, rid
