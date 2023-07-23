@@ -834,15 +834,9 @@ def clear(search=None):
         adc = {}
         astvisitor.modastcache = {}
         astvisitor.getast(d_math.dummy)
-    elif isinstance(search, str):
-        for k in adc:
-            if search in k:
-                del adc[k]
-        for k in astvisitor.astcache:
-            if search in k:
-                del astvisitor.astcache[k]
     else:
-        del adc[fid(search)]
+        if search in adc:
+            del adc[search]
 
 
 def doSourceDiff(function, opts):
