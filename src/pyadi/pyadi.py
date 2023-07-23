@@ -708,12 +708,6 @@ def diff2pys2s(source, fname):
     return unparse(differentiate(loadast(source)))
 
 
-def roundtrip2JID(fname):
-    with open(fname, "r") as pyfile:
-        source = pyfile.read()
-        return roundtrip2JIDs(source, fname)
-
-
 def execompile(source, fglobals={}, flocals={}, imports=['math', 'sys', 'os', {'pyadi': 'D'}], vars=['x'], fname='', **kw):
 
     # importstr = '\n'.join([f'import {name}' if isinstance(name, str)
@@ -810,13 +804,6 @@ def fid(func, active):
     fid = f'{func.__qualname__}:{modfile}:{repr(active)}'
 #    print('FID', func, fid)
     return fid
-
-
-def is_instance_userdefined_and_newclass(inst):
-    cls = inst.__class__
-    if hasattr(cls, '__class__'):
-        return ('__dict__' in dir(cls) or hasattr(cls, '__slots__'))
-    return False
 
 
 def isbuiltin(func):
