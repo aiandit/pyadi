@@ -18,7 +18,8 @@ import sys
 sys.path = ['../src'] + sys.path
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'sphinx.ext.intersphinx']
-intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
+                       'numpy': ('http://docs.scipy.org/doc/numpy/', None)}
 intersphinx_disabled_reftypes = []
 
 templates_path = ['_templates']
