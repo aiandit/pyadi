@@ -1476,7 +1476,8 @@ def DiffFor(function, *args, **opts):
         dresult = []
         for s in seed:
             dresult.append(adfun(*zip(fill(dargs, s), args)))
-        result = dresult[0][1]
+
+        result = dresult[0][1] if len(dresult) else None
         dresult = [d for d, r in dresult]
 
     return dresult, result
