@@ -1191,7 +1191,7 @@ def DiffFunction(function, **opts):
     adfun = adc.get(function, None)
     if adfun is None:
         # print(f'Diff function {function.__name__}')
-        adfun = doDiffFunction(function, **(transformOps|opts))
+        adfun = doDiffFunction(function, **(transformOpts|opts))
         adc[function] = adfun
         # print(f'Diff function {function.__name__} cached => {adfun.__name__}')
         # else: print(f'Found diff function {function.__name__} in cache: {adfun.__name__}')
@@ -1416,16 +1416,13 @@ def createFullGradients(args):
         seeds.append(seed)
     return seeds
 
-transformOps = {}
 
-def DiffFor(function, *args, **opts):
-    global transformOps
-    transformOps = opts
+transformOpts = {}
 
-    verbose = opts.get('verbose', 0)
-    timings = opts.get('timings', True)
-    dump = opts.get('dump', 0)
-    dumpdir = opts.get('dumpdir', 'dump')
+
+def DiffFor(function, *args, seed=1, active=[], timings=True, verbose=0, dump=0, dumpdir='dump', **opts):
+    global transformOpts
+    transformOpts = opts | dict(timings=timings, verbose=verbose, dump=dump, dumpdir=dumpdir)
 
     if dump > 0 and dumpdir != '.':
         global dumpDir
@@ -1451,15 +1448,6 @@ def DiffFor(function, *args, **opts):
     else:
 
         adfun = D(function, **opts)
-
-    seed = opts.get('seed', 1)
-    rdef = opts.get('rules', None)
-    if rdef:
-        initRules(**opts)
-
-    tracecalls = opts.get('tracecalls', False)
-    if tracecalls:
-        callHandle('pyadi.trace', clear='hist')
 
     if 'dx' in opts:
         dargs = dx
