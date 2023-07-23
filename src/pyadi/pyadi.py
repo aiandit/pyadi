@@ -822,7 +822,18 @@ def getsig(f):
 def varspec(x):
     if isinstance(x, str):
         x = x.split(',')
+    assert isinstance(x, list)
     return x
+
+
+def parinds(f, x):
+    x = varspec(x)
+    if len(x) > 0 and isinstance(x[0], str):
+        sig = getsig(f)
+        inds = [sig.index(a) for a in sig if a in x]
+    else:
+        inds = x
+    return inds
 
 
 adc = {}
@@ -1420,6 +1431,39 @@ def createFullGradients(args):
 transformOpts = {}
 
 
+def mkActArgFunction(f, args, inds):
+    """Create an inner function of only the arguments given by
+    ``inds``, filling in the remaining ones statically in each call.
+
+    Return the inner function and the remaining arguments.
+
+    This function is differentiated automatically by
+    :py:func:`.DiffFor` and :py:func:`.DiffFD` when active arguments were specified.
+
+    Parameters
+    ----------
+
+    function : function
+      A function of ``args``, for which an inner function is created
+      of only ``[args[i] for i in inds]``
+
+    Returns
+    -------
+    function, list
+      A tuple of the inner function and the remaining arguments.
+
+    """
+    def inner(*aargs):
+        fullargs = list(args)
+        for i, k in enumerate(inds):
+            fullargs[k] = aargs[i]
+        return f(*fullargs)
+
+    actargs = [args[i] for i in inds]
+
+    return inner, actargs
+
+
 def DiffFor(function, *args, seed=1, active=[], timings=True, verbose=0, dump=0, dumpdir='dump', **opts):
     global transformOpts
     transformOpts = opts | dict(timings=timings, verbose=verbose, dump=dump, dumpdir=dumpdir)
@@ -1432,6 +1476,10 @@ def DiffFor(function, *args, seed=1, active=[], timings=True, verbose=0, dump=0,
             os.makedirs(dumpDir)
 
     jacobian = opts.get('jacobian', True)
+
+    if len(active) > 0:
+        inds = parinds(function, active)
+        function, args = mkActArgFunction(function, args, inds)
 
     if timings:
         with Timer(function.__qualname__, 'run', verbose=verbose-1) as t:
@@ -1545,21 +1593,8 @@ def DiffFD(f, *args, active=[], seed=1, h=1e-8, **opts):
     if len(active) == 0:
         func = f
     else:
-        active = varspec(active)
-        if isinstance(active[0], str):
-            sig = getsig(f)
-            inds = [sig.index(a) for a in sig if a in active]
-        else:
-            inds = active
-
-        fullargs = [v for v in args]
-
-        def inner(*aargs):
-            for i, k in enumerate(inds):
-                fullargs[k] = aargs[i]
-            return f(*fullargs)
-        func = inner
-        args = [args[i] for i in inds]
+        inds = parinds(f, active)
+        func, args = mkActArgFunction(f, args, inds)
 
     v = np.array(list(varv(args)))
     dargs = dzeros(args)
@@ -1636,21 +1671,8 @@ def DiffFDNP(f, *args, active=[0], seed=1, h=1e-8, **opts):
     if len(active) == 0:
         func = f
     else:
-        active = varspec(active)
-        if isinstance(active[0], str):
-            sig = getsig(f)
-            inds = [sig.index(a) for a in sig if a in active]
-        else:
-            inds = active
-
-        fullargs = [v for v in args]
-
-        def inner(*aargs):
-            for i, k in enumerate(inds):
-                fullargs[k] = aargs[i]
-            return f(*fullargs)
-        func = inner
-        args = [args[i] for i in inds]
+        inds = parinds(f, active)
+        func, args = mkActArgFunction(f, args, inds)
 
     assert(len(args) == 1)
 
