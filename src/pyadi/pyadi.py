@@ -438,7 +438,7 @@ Calls methods self._DXYZ for individual node XYZ handling
         return getattr(self.getRoot(t), 'id', '') in self.localvars
 
     def _DStarred(self, node):
-        node.value = Call('zip', [self.ddispatch(node.value.clone()), node.value])
+        node.value = Call('zip', [Starred(self.diffUnlessIsTupleDiff(node.value))])
         return node
 
     def _DSubscript(self, node):
