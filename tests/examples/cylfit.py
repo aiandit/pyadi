@@ -107,7 +107,7 @@ def relNormMax(r1, r2):
     return nd / divi
 
 
-def runopt(fprime=None, gtol=1e-7):
+def runfmin_cg(fprime=None, gtol=1e-7):
     import scipy as sc
 
     objComps, obj, handle = cylfit_obj()
@@ -144,7 +144,7 @@ def runopt(fprime=None, gtol=1e-7):
     print(f'fmin_cg solution {sol}, expected {[R0, theta0, phi0]}')
     print(f'fmin_cg solution error {errsol}, final objective {rsol}')
 
-def runopt_ad():
+def runfmin_cg_ad():
 
     def grad(obj, *args, **kw):
         (dr, r) = pyadi.DiffFor(obj, *args)
@@ -156,10 +156,10 @@ def runopt_ad():
         print(f'gobj(x) = r={r}, g={g}')
         return g
 
-    return runopt(grad, gtol=1e-10)
+    return runfmin_cg(grad, gtol=1e-10)
 
 
-def runopt_fd():
+def runfmin_cg_fd():
 
     def grad(obj, *args, **kw):
         (dr, r) = pyadi.DiffFD(obj, *args)
@@ -171,7 +171,7 @@ def runopt_fd():
         print(f'gobj(x) = r={r}, g={g}')
         return g
 
-    return runopt(grad, gtol=1e-10)
+    return runfmin_cg(grad, gtol=1e-10)
 
 
 def runfsolve(fprime=None):
@@ -242,6 +242,85 @@ def runfsolve_ad(fprime=None):
         return g
 
     runfsolve(gobj)
+
+
+# run the NLOpt solver
+def _runnlopt(fprime=None):
+    import nlopt
+
+    objComps, obj1, handle = cylfit_obj()
+
+    def fobjwrap(x, grad):
+        print('fobjwrap', x, grad)
+        if grad.size > 0:
+            y = np.array([0.0])
+            fprime(obj1, x, y, grad, {})
+            print('fobjwrap res', y, grad)
+            return y[0]
+        else:
+            return obj1(x)
+
+    R0 = 1.1
+    theta0 = 0.1
+    phi0 = np.pi/2
+
+    # v0 = np.array([1, 0, 0])
+    v0 = np.array([1.1, 0.01, 0.01])
+
+    N = int(1e2)**2
+
+    demopts = mkCylData(N, R0, theta0, phi0)
+
+    handle()['points'] = demopts
+
+    r0 = obj1(v0)
+
+    print('start uopt')
+    opt = nlopt.opt(nlopt.LD_MMA, 3)
+    opt.set_min_objective(fobjwrap)
+    opt.set_stopval(1e-7)
+    res = opt.optimize(v0)
+    print(res)
+
+    sol = res
+
+    # sol[1] *= -1
+    # sol[2] *= -1
+
+    # sol[1] %= np.pi
+    # sol[2] %= np.pi
+
+    rsol = obj1(sol)
+
+    errsol = relNormMax(sol, np.array([R0, theta0, phi0]))
+    print(f'uopt CG solution {sol}, expected {[R0, theta0, phi0]}')
+    print(f'uopt CG solution error {errsol}, final objective {rsol}')
+
+
+def runnlopt_ad():
+
+    def gobj(fobj, x, y, g, udata):
+        (dr, r) = pyadi.DiffFor(fobj, x, verbose=0)
+        y[:] = r
+        for i in range(x.size):
+            g[i] = dr[i]
+        print(f'gobj(x) = r={r}, g={g}')
+        return g, r
+
+    _runnlopt(gobj)
+
+
+def runnlopt_fd():
+
+    def gobj(fobj, x, y, g, udata):
+        (dr, r) = pyadi.DiffFD(fobj, x)
+        y[:] = r
+        for i in range(x.size):
+            g[i] = dr[i]
+        print(f'gobj(x) = r={r}, g={g}')
+        return g, r
+
+    _runnlopt(gobj)
 
 
 # run the UOpt uopt solver in CG mode (no Hessian)
@@ -470,7 +549,3 @@ if __name__ == "__main__":
         mode = sys.argv[1]
     runf = getattr(sys.modules[__name__], 'run' + mode)
     runf()
-    # runusolve()
-    # runuopt()
-    #runopt_ad()
-    #runopt()
