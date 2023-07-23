@@ -1459,8 +1459,6 @@ def DiffFor(function, *args, **opts):
         with Timer(function.__qualname__, 'run', verbose=verbose-1) as t:
             result = function(*args)
 
-    if timings:
-
         with Timer(function.__qualname__, 'diff', verbose=verbose-1) as t:
             adfunOrig = D(function, **opts)
 
