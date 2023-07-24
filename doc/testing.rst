@@ -77,7 +77,7 @@ Tests layout and organization
 
 All functions beginning with "f" from the test example modules
 tests.examples.fx and tests.examples.fxyz are run automatically by the
-test module tests.test_pyadi, so the easiest way is to add tests for
+test module tests.test_pyadi, so the easiest way to add tests for
 new functionality is to add some function beginning with f in one of
 those.
 

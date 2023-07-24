@@ -1066,10 +1066,13 @@ def doDiffFunction(function, **opts):
     This function will call :py:func:`processRules`, which calls the
     installed rule modules.
 
-    The default rule module :py:mod:`forwardad` will for example catch
-    calls to :py:func:`print`, which is a builtin function, and call
-    :py:func:`.mkRule` with :py:func:`.D_builtins_print` to produce a
-    suitable result.
+    The default rule module :py:mod:`.forwardad` will for example
+    catch calls to :py:func:`print`, which is a builtin function, and
+    call :py:func:`.mkRule` with :py:func:`.D_builtins_print` to
+    produce a suitable result, namely, it will print the
+    differentiated arguments in an additional line to the original
+    print, which in the case of a formatted :py:doc:`fstring` would be
+    the same f-string, but with differentiated expressions..
 
     When no rule module catchs the call and returns a suitable
     function, finally the source differentiation
@@ -1240,7 +1243,7 @@ def DiffFunction(function, **opts):
 
 
 D = DiffFunction
-"""An alias for :py:func:`DiffFunction` so the generated code can be shorter."""
+"""An alias for :py:func:`.DiffFunction` so the generated code can be shorter."""
 
 
 def DiffFunctionObj(tpl, **opts):
@@ -1520,8 +1523,8 @@ def DiffFor(function, *args, seed=1, active=[], timings=True, verbose=0, dump=0,
          using :py:func:`.dzeros`
 
        - For each seeddir in seed, initialize ``dx`` with seeddir
-         using :py:func:`.fill` and call ``adfun`` with dx and x
-         appropriately
+         using :py:func:`.fill` and call ``adfun`` with ``dx`` and
+         ``args`` appropriately.
 
     The result is a tuple of 1. the list of the derivative results
     thus produced, and 2. the function result.
@@ -1673,7 +1676,7 @@ def Diff(active='all', **opts):
 
 
 def DiffFD(f, *args, active=[], seed=1, h=1e-8, **opts):
-    """Evalaute derivatves using central finite differences.
+    """Evaluate derivatves using central finite differences.
 
     The function f is called two times for each derivative direction
     provided by seed, to evaluate a central finite difference with

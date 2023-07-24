@@ -6,9 +6,10 @@ A virtual environment using :py:mod:`virtualenv` should by used.
 Installation from GitHub
 ========================
 
-Install directly from the git repository::
+Install directly from the git repository, dependencies (:py:mod:`numpy`) first::
 
-    pip install https://github.com/aiandit/pyadi/archive/refs/heads/main.zip
+    pip install -r https://raw.githubusercontent.com/aiandit/pyadi/master/requirements.txt
+    pip install https://github.com/aiandit/pyadi/archive/refs/heads/master.zip
 
 
 Installation from Source
