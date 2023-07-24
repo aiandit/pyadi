@@ -1,7 +1,7 @@
 Basic usage
 ***********
 
-PyADi performs first order aitomatic differentiation via source transformation.
+PyADi performs first order automatic differentiation via source transformation.
 
 
 Differentiation

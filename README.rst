@@ -1,5 +1,5 @@
 
-PyADi performs first order aitomatic differentiation via source transformation.
+PyADi performs first order automatic differentiation via source transformation.
 
 To install, use the git repository directly, dependencies
 (numpy) first::
