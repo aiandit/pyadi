@@ -36,7 +36,7 @@ The data types :ref:`dict`, :py:func:`tuple`, and :py:func:`dict` are
 supported as literals well as they are in the form of :std:token:`list
 comprehensions <python-grammar:list_comprehension>` and
 :std:token:`dict comprehensions <python-grammar:dict_comprehension>`,
-also known as :ref:`generators <tut-generators>`.
+also known as :ref:`generator expressions <tut-generators>`.
 
 Object oriented programming with classes is supported, including
 inheritance, method calling, bound methods, and the super()
@@ -48,8 +48,13 @@ Iterators including user-defined iterators are supported but they
 (i.e. the hidden methods __iter__ and __next__) are not
 differentiated. However, a "derivative" iterator object will
 automatically be created for each iterator object that the code uses,
-so as long as the iterators shuffe data around, the derivative should
-also be correct.
+and its constructor and other methods being called regularly will be
+differentiated, so as long as the iterations just shuffe data around,
+the derivative should also be correct.
+
+Generator functions and the :ref:`yield statment <tut-generators>` are
+also supported. Here, the generator function and the yielded
+expressions are differentiated entirely.
 
 Formatted strings are differentiated, and the rule for
 :py:func:`print` prints the differentiated arguments, so the
