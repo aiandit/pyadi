@@ -61,11 +61,11 @@ Formatted strings are differentiated, and the rule for
 differentiated programs will print lines with the values of
 differentiated expressions, in addition to the original line.
 
-Several of the most important functions are already supported, by it
+Several of the most important functions are already supported, be it
 because they are available in source of because they have been added
 to the list of builtin rules in :py:mod:`.forwardad`. The latter must
 happen for any function that cannot or shall not be differentiated in
-source. It is a work in progress to cover more and mode builtin
+source. It is a work in progress to cover more and more builtin
 functions. When a function is not covered by a rule and the source
 code cannot be obtained, :py:func:`.DiffFor` will raise
 :py:exc:`.NoSource`. Users can use :py:func:`.setrule` to dynamically
