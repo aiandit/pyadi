@@ -280,7 +280,6 @@ def gl_sum(x):
     return s
 
 def gl_sums(*x):
-    print(f'gl_sums, args: {x}')
     s = 0
     for i in range(len(x)):
         s += x[i]

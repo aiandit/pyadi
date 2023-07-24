@@ -64,7 +64,7 @@ class TestDiffFor(unittest.TestCase):
         # pyadi.initRules(rules='t1=pyadi.trace,t2=pyadi.trace,t3=pyadi.trace,ad=pyadi.forwardad')
         pyadi.initRules(rules='ad=pyadi.forwardad')
         pyadi.clear()
-        cls.verbose = 2
+        cls.verbose = 0
         cls.dump = 1
         cls.opts = {'dump': cls.dump, 'verbose': cls.verbose}
 
@@ -170,7 +170,7 @@ class TestDiffFor(unittest.TestCase):
         self.assertTrue(almostEq(dr_dx2, dr))
 
         #print('rc', dr[0], dr_dxc)
-        self.assertTrue(almostEqFD(dr[0], dr_dxc))
+        self.assertTrue(almostEq(dr[0], dr_dxc))
 
     def test_DiffFor_partial5(self):
         f = fxyz.f4a
@@ -195,4 +195,4 @@ class TestDiffFor(unittest.TestCase):
         self.assertTrue(almostEq(dr_dx2, dr))
 
         #print('rc', dr[0], dr_dxc)
-        self.assertTrue(almostEq(dr[0], dr_dxc, tol=1e-4))
+        self.assertTrue(almostEq(dr[0], dr_dxc))

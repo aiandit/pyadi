@@ -26,14 +26,15 @@ class TestPyTracer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # print('SETUP Class')
-        pyadi.initRules(rules='pyadi.trace,pyadi.dummyad,tr2=pyadi.trace', tracecalls=True, verbose=True, verboseargs=True)
+        # pyadi.initRules(rules='pyadi.trace,pyadi.dummyad,tr2=pyadi.trace', tracecalls=True, verbose=True, verboseargs=True)
+        pyadi.initRules(rules='pyadi.trace,pyadi.dummyad,tr2=pyadi.trace', tracecalls=True)
         cls.handle_ = pyadi.getHandle('pyadi.trace')
         cls.handle = lambda x, *args, **kw: cls.handle_(*args, **kw)
 
         cls.handle2_ = pyadi.getHandle('tr2')
         cls.handle2 = lambda x, *args, **kw: cls.handle2_(*args, **kw)
 
-        cls.verbose = 2
+        cls.verbose = 0
         cls.dump = 1
         cls.opts = {}
 
