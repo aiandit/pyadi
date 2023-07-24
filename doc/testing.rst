@@ -211,7 +211,7 @@ Running Contests
 ================
 
 Some example codes are benchmarked using :py:mod:`pycontest`. Each of
-those is in one module tests.constest_*::
+those experiments is in one module tests.constest_*::
 
   python tests/contest_cylfit.py
 
