@@ -408,7 +408,7 @@ def D_numpy_linalg_norm(r, dx, x, d_ord=0, ord=None):
             if x.ndim > 1:
                 U, S, Vh = np.linalg.svd(x)
                 maxv = S[0]
-                dn = U[:,0] @ dx @ Vh[:,0]
+                dn = U[:,0] @ dx @ Vh[0,:]
                 return dn
             else:
                 raise ValueError()
