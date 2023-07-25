@@ -5,7 +5,7 @@ authors = [
   { name="Johannes Willkomm", email="jwillkomm@ai-and-it.de" },
 ]
 description = "Source transformation AD for Python"
-readme = "README.md"
+readme = "README.rst"
 requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3",
