@@ -73,7 +73,7 @@ use in several functions, for example the exponentials like
       return 0.5 * dx / r
 
   def D_numpy_linalg_inv(r, dx, x):
-      return r @ dx @ r
+      return r @ -dx @ r
 
 Common trivial cases are type conversions, which should be applied to
 the derivative arguments too::
@@ -398,7 +398,7 @@ def D_numpy_array(r, dx, x):
     return np.array(dx)
 
 def D_numpy_linalg_inv(r, dx, x):
-    return r @ dx @ r
+    return r @ -dx @ r
 
 def D_numpy_linalg_norm(r, dx, x, d_ord=0, ord=None):
     if ord is None:
