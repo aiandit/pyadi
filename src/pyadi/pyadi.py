@@ -24,6 +24,7 @@ from .runtime import dzeros, unzd, joind, unjnd, DWith
 from .runtime import binop_add, binop_sub, binop_mult, binop_c_mult, binop_d_mult, binop_matmult, binop_div, binop_floordiv, binop_mod, binop_pow
 from .runtime import unaryop_uadd, unaryop_usub
 from .runtime import augassign_add, augassign_sub, augassign_mult, augassign_div, augassign_truediv, augassign_mod
+from .dtargets import mkActArgFunction
 
 from .timer import Timer
 from . import d_math
@@ -1477,39 +1478,6 @@ def createFullGradients(args):
 
 
 transformOpts = {}
-
-
-def mkActArgFunction(f, args, inds):
-    """Create an inner function of only the arguments given by
-    ``inds``, filling in the remaining ones statically in each call.
-
-    Return the inner function and the remaining arguments.
-
-    This function is differentiated automatically by
-    :py:func:`.DiffFor` and :py:func:`.DiffFD` when active arguments were specified.
-
-    Parameters
-    ----------
-
-    function : function
-      A function of ``args``, for which an inner function is created
-      of only ``[args[i] for i in inds]``
-
-    Returns
-    -------
-    function, list
-      A tuple of the inner function and the remaining arguments.
-
-    """
-    def inner(*aargs):
-        fullargs = list(args)
-        for i, k in enumerate(inds):
-            fullargs[k] = aargs[i]
-        return f(*fullargs)
-
-    actargs = [args[i] for i in inds]
-
-    return inner, actargs
 
 
 def DiffFor(function, *args, seed=1, active=[], timings=True, verbose=0, dump=0, dumpdir='dump', **opts):
