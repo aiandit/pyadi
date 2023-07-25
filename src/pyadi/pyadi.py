@@ -859,7 +859,7 @@ def doSourceDiff(function, opts):
     # print(f'SD: {function.__name__}')
 
     if isbuiltin(function):
-        fname = function.__name__
+        fname = fqname(function)
         id = astvisitor.rid(function)
         msg = f'No rule for buitin {fname}, function {id} not found'
         raise (NoRule(msg))
