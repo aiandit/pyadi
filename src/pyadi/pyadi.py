@@ -1002,6 +1002,11 @@ def processRules(function, opts, *args, **kw):
 
 
 def initType(function, *args, **kw):
+    """Create pair of objects d_o, and o by calling the constructor
+    ``function`` twice, and then zero all floats in d_o with
+    :py:func:`dzeros`.
+
+    """
     do, o = function(*args[1::2], **kw), function(*args[1::2], **kw)
     do = dzeros(do)
     return do, o
@@ -1057,8 +1062,8 @@ class GenIter2:
 def doDiffFunction(function, **opts):
     """Produce differentiated functions.
 
-    This function is called to produced a derivative function for
-    function, that is, a function that is called with tuples (dx, x)
+    This function is called to produce a derivative function for
+    ``function``, that is, a function that is called with tuples (dx, x)
     for each original argument x in the original code, and that
     returns a tuple (dr, r) where r is the function result and dr is
     the derivative.
@@ -1071,7 +1076,7 @@ def doDiffFunction(function, **opts):
     call :py:func:`.mkRule` with :py:func:`.D_builtins_print` to
     produce a suitable result, namely, it will print the
     differentiated arguments in an additional line to the original
-    print, which in the case of a formatted :py:doc:`fstring` would be
+    print, which in the case of a formatted :py:doc:`f-string` would be
     the same f-string, but with differentiated expressions..
 
     When no rule module catchs the call and returns a suitable
@@ -1124,23 +1129,22 @@ def doDiffFunction(function, **opts):
 
     Then the differentiated function ``adfun`` is produced by calling
     :py:func:`processRules`. This function returns however a local
-    function that does the following:
+    function def theADFun(*args, **kw): that does the following:
 
-      - first flatten the argument list of N tuples to a list of 2*N,
-        alternating derivative and regular arguments. This is because
-        the source differentiation differentiates ``def f(x, y):`` to
-        ``def d_f(d_x, x, d_y, y):``. Hence, the builtin rules will
-        also be called with the flattened list of arguments. This step
-        also forces the evaluation of potentially lazy zip and other
-        iterators that the arguments may be.
+      - first flatten the argument list ``args`` of N tuples to a list
+        of 2*N, alternating derivative and regular arguments. This is
+        because the source differentiation differentiates ``def f(x,
+        y):`` to ``def d_f(d_x, x, d_y, y):``. Hence, the builtin
+        rules will also be called with the flattened list of
+        arguments. This step also forces the evaluation of potentially
+        lazy zip and other iterators that the arguments may be.
 
       - when ``_C`` is not None, a type, that is, a constructor has
-        been called. Initialize two objects d_o and o of the type
-        ``_C`` and :py:func:`.dzeros` the designated derivative object
-        ``d_o``. Prepend ``(d_o, o)`` to the list of arguments. This
-        requires that _C.__init__ accepts being called with no
-        arguments. Both objects will then be reinitialized again with
-        the provided arguments to the constructor when the
+        been called. Initialize two objects d_o and o with
+        :py:func:`.initType`.  Prepend ``(d_o, o)`` to the list of
+        arguments. This requires that _C.__init__ accepts being called
+        with no arguments. Both objects will then be reinitialized
+        again with the provided arguments to the constructor when the
         differentiated __init__ method ``adres`` is invoked in the
         next step. TODO: check if we can somehow produce unitialized
         objects, that is, do what Python does before it calls
