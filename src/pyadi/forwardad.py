@@ -392,7 +392,7 @@ def D_numpy_diag(r, dx, x):
 def D_numpy_zeros(r, *args):
     return np.zeros(r.shape, dtype=r.dtype)
 
-D_numpy_eye = D_numpy_ones = D_numpy_random_rand = D_numpy_zeros
+D_numpy_eye = D_numpy_ones = D_numpy_random_rand = D_builtins_RandomState_rand = D_numpy_zeros
 
 def D_numpy_array(r, dx, x):
     return np.array(dx)
