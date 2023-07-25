@@ -250,6 +250,7 @@ def fplane4(x, **kw):
 class Plane5(Plane2):
     heading = 0
     wind = 0
+    crew = [1, 2, 5]
     def __init__(this, h, **kw):
         sinit = super().__init__(**kw)
         this.heading = h
@@ -1100,4 +1101,19 @@ def fstarred3(x):
 
 def fstarred4(x):
     l = [x, gl_sums(*glob_l), x*x*x]
+    return gl_sum2(l)
+
+gplane = Plane5
+
+def fstarred5(x):
+    l = [x, *gplane.crew, x*x]
+    return gl_sum2(l)
+
+def fstarred6(x):
+    l = [x, *[v*1e-2 for v in gplane.crew], x*x*x]
+    return gl_sum2(l)
+
+# fd fail
+def _fsin4(x):
+    l = [x, sin(1e3*math.pi + x*x*x)]
     return gl_sum2(l)
