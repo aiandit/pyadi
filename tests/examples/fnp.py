@@ -20,11 +20,11 @@ def fmatmul3(x):
     r = M @ M2 @ M
     return np.sum(np.diag(r))
 
-def _fmatmul4(x):
+def fmatmul4(x):
     M = np.diag(x)
     M2 = 2.1*M
     print(M.shape, M2.shape)
-    r = M @ np.invert(M2) @ M
+    r = M @ np.linalg.inv(M2) @ M
     return np.sum(np.diag(r))
 
 def fnorm(x):
