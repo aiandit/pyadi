@@ -23,7 +23,7 @@ def fmatmul3(x):
 def fmatmul4(x):
     M = np.diag(x)
     M2 = 2.1*M
-    print(M.shape, M2.shape)
+    #print(M.shape, M2.shape)
     r = M @ np.linalg.inv(M2) @ M
     return np.sum(np.diag(r))
 
