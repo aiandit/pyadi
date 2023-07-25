@@ -113,6 +113,14 @@ Module runtime
    :undoc-members:
    :special-members: __init__, __call__, __str__, __repr__
 
+Module dtargets
+---------------
+
+.. automodule:: pyadi.dtargets
+   :members:
+   :undoc-members:
+   :special-members: __init__, __call__, __str__, __repr__
+
 
 Module timer
 ------------
