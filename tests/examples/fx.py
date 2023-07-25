@@ -1093,3 +1093,11 @@ def fstarred(x):
 def fstarred2(x):
     l = [x, x*x, x*x*x]
     return gl_sums(*[v for v in l])
+
+def fstarred3(x):
+    l = [x, *glob_l, x*x*x]
+    return gl_sum2(l)
+
+def fstarred4(x):
+    l = [x, gl_sums(*glob_l), x*x*x]
+    return gl_sum2(l)

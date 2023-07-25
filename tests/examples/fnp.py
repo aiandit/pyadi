@@ -65,3 +65,29 @@ def fmnorm2(x):
     M = np.diag(x)
     z = np.linalg.norm(M, 2)
     return z
+
+def fmnorm3(x):
+    M = np.diag(x)
+    I = np.eye(*M.shape)
+    z = np.linalg.norm(M @ (M + I), 2)
+    return z
+
+def fmnorm4(x):
+    M = np.diag(x)
+    I = np.ones(M.size)
+    I = I.reshape(*M.shape)
+    z = np.linalg.norm(M @ (M + I))
+    return z
+
+def fmnorm5(x):
+    M = np.diag(x)
+    I = np.ones(M.size)
+    I = I.reshape(*M.shape)
+    z = np.linalg.norm(M @ (M + I), 2)
+    return z
+
+def fmnorm6(x):
+    M = np.diag(x)
+    I = np.ones(M.size)*1e-3
+    z = np.linalg.norm(M @ (M + I.reshape(*M.shape)), 2)
+    return z
