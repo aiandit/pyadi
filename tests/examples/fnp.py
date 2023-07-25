@@ -91,3 +91,11 @@ def fmnorm6(x):
     I = np.ones(M.size)*1e-3
     z = np.linalg.norm(M @ (M + I.reshape(*M.shape)), 2)
     return z
+
+g_X = np.ones(9)*1e-3
+
+def fmnorm7(x):
+    M = np.diag(x)
+    I = np.ones(M.size)*1e-3
+    z = np.linalg.norm(M @ (M + g_X.reshape(*M.shape)), 2)
+    return z
