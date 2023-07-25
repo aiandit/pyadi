@@ -450,7 +450,7 @@ Calls methods self._DXYZ for individual node XYZ handling
     def _DAttribute(self, t):
         #print(f'Diff Attribute {t.attr} of {vars(t.value)} {self.imports}')
         if not t.value._class == "Call" and not self.isLocal(t.value):
-            return Constant(0)
+            return Call('dzeros', t)
         t.value = self.ddispatch(t.value)
         return t
 
