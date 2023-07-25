@@ -870,16 +870,7 @@ def doSourceDiff(function, opts):
 
     (adfun, actind) = difffunction(function, **opts)
 
-    self = getattr(function, '__self__', None)
-    if self is not None:
-        _class = self.__class__
-        if _class.__name__ == 'module':
-            self = None
-
-    def inner(*args, **kw):
-        return adfun(dzeros(self), self, *args, **kw)
-
-    return adfun if self is None else inner
+    return adfun
 
 rulemodules = {}
 def clearrulemodules(name=None):
@@ -1192,6 +1183,13 @@ def doDiffFunction(function, **opts):
                 # handled only in case of source diff, later
                 pass
 
+    self = getattr(function, '__self__', None)
+    if self is not None:
+        selfClass = self.__class__
+        if selfClass.__name__ == 'module':
+            self = None
+
+
     adfun = processRules(function, opts)
     if opts.get('verbose', 0):
         print(f'AD function produced for {fqname(function)}: {adfun.__qualname__}')
@@ -1206,6 +1204,8 @@ def doDiffFunction(function, **opts):
             d_kw, f_kw = unjnd(kw)
             do, o = initType(_class, *args, **f_kw)
             args = [do, o] + list(args)
+        elif self is not None:
+            args = [dzeros(self), self] + list(args)
 
         adres = adfun(*args, **kw)
         if adres is None:

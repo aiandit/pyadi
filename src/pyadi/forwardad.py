@@ -265,9 +265,9 @@ def D_builtins_print(r, *args):
     print('D ', *args[0::2])
     return 0
 
-def D_builtins_super(r, *args):
-    #print('D_super', *args)
-    return super(*args[0::2])
+# super is given two superfluous excess arguments now...
+def E_builtins_super(*args):
+    return super(*args[2::2]), super(*args[3::2])
 
 def E_builtins_super___init__(*args, **kw):
     #print('E_super___init___builtins', *args)
@@ -377,8 +377,8 @@ def D_numpy_matmul(r, dx, x, dy, y):
 def E_builtins_ndarray_copy(*args, **kw):
     return args[0].copy(),  args[1].copy()
 
-def D_builtins_ndarray_reshape(r, *args, **kw):
-    return args[0].reshape(*args[3::2])
+def E_builtins_ndarray_reshape(*args, **kw):
+    return args[0].reshape(*args[3::2]), args[1].reshape(*args[3::2])
 
 def D_numpy_hstack(r, dx, x):
     return np.hstack(dx)
