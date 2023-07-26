@@ -447,9 +447,9 @@ def D_numpy_linalg_norm(r, dx, x, d_ord=0, ord=None):
                 dn = U[:,0] @ dx @ Vh[0,:]
                 return dn
             else:
-                raise ValueError()
                 return np.sum(x * dx) / r
         else:
+            raise ValueError()
             return np.sum(x * dx) / r
 
 def D_numpy_real(r, dx, x):
