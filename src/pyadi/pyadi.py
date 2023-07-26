@@ -17,7 +17,7 @@ from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 
 from .astvisitor import canonicalize, resolvetmpvars, normalize, unnormalize, filterLastFunction
 from .astvisitor import infoSignature, filterFunctions, py, getmodule, getast, fqname, fdname, fddname
-from .astvisitor import ASTVisitorID, ASTVisitorImports, ASTVisitorLocals, mkTmp
+from .astvisitor import ASTVisitorID, ASTVisitorImports, ASTVisitorLocals, mkTmp, isbuiltin
 from .nodes import *
 from .runtime import dzeros, unzd, joind, unjnd, DWith
 
@@ -805,13 +805,6 @@ def fid(func, active):
     fid = f'{func.__qualname__}:{modfile}:{repr(active)}'
 #    print('FID', func, fid)
     return fid
-
-
-def isbuiltin(func):
-    mod, modfile = getmodule(func)
-    res = modfile is None
-#    print('isbuiltin', func, res)
-    return res
 
 
 def getsig(f):
