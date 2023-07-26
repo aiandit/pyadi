@@ -1,8 +1,8 @@
           Func Rel. T (µs/N) Rel. T 2 (µs/N)   Speedup ()
-      normDiag    0.0755893    0.0459859            1
-   ad_normDiag     0.345742     0.118098      4.57395
-  fd_normDiag2     0.347273     0.126769       4.5942
-  ad_normDiag3     0.370569     0.117757      4.90241
-  ad_normDiag2     0.535098     0.154267      7.07902
-   fd_normDiag     0.562274     0.177837      7.43854
+      normDiag    0.0908657    0.0466498            1
+   ad_normDiag     0.347841     0.116662      3.82807
+  ad_normDiag3     0.365334     0.118861      4.02059
+  fd_normDiag2     0.389538     0.113283      4.28696
+  ad_normDiag2     0.531124     0.156654      5.84515
+   fd_normDiag     0.652029     0.178756      7.17574
 
