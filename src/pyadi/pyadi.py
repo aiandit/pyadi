@@ -27,7 +27,6 @@ from .runtime import augassign_add, augassign_sub, augassign_mult, augassign_div
 from .dtargets import mkActArgFunction
 
 from .timer import Timer
-from . import d_math
 
 from . import astvisitor
 
@@ -838,7 +837,7 @@ def clear(search=None):
     if search is None:
         adc = {}
         astvisitor.modastcache = {}
-        astvisitor.getast(d_math.dummy)
+        astvisitor.getast(mkActArgFunction)
     else:
         if search in adc:
             del adc[search]

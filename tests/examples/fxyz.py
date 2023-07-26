@@ -1,6 +1,5 @@
 from math import sin, cos, tan, asin, acos, atan, log, sqrt, pi
 import random, math
-from pyadi import d_math
 
 def f1(x,y,z):
     r = x*2*x*y*z
