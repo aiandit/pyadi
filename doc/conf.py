@@ -15,7 +15,7 @@ release = '2023'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 import sys
-sys.path = ['../src'] + sys.path
+sys.path = ['../src', '../tests'] + sys.path
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'sphinx.ext.intersphinx', 'sphinx.ext.viewcode']
 intersphinx_mapping = {'python': ('https://docs.python.org/3', None),
