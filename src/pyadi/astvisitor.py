@@ -100,7 +100,7 @@ def getmoddict(mod, **opts):
         moddict = ASTVisitorDict()(tree)
         modastcache[mod] = {'name': mod, "file": modfile, "data": (tree, imports, modules), "dict": moddict}
         resolveImports(mod, modfile, moddict, imports, modules, **opts)
-        if opts.get('verbose', 0):
+        if opts.get('verbose', 0) > 1:
             print(f'Load and parse module {mod} source from {modfile}')
         t1 = time.time()
         if opts.get('verbose', 0):
@@ -111,7 +111,7 @@ def getmoddict(mod, **opts):
 def resolveImports(mod, modfile, moddict, imports, modules, **opts):
     pkgs = mod.split('.')
     moduleImports = {}
-    if opts.get('verbose', 0):
+    if opts.get('verbose', 0) > 1:
         print(f'Resolve imports for {mod}, {modfile}')
     # print(f'Resolve imports for {mod}, {modfile}:, imports={imports}, modules={modules}')
     # print(f'moddict={moddict.keys()}')
@@ -123,7 +123,7 @@ def resolveImports(mod, modfile, moddict, imports, modules, **opts):
             if imod not in moduleImports:
                 moduleImports[imod] = {}
             moduleImports[imod].update({ name:  impentry[imod] })
-    if opts.get('verbose', 0) > 1:
+    if opts.get('verbose', 0) > 2:
         print(f'moduleImports={moduleImports}')
     for imod in moduleImports:
         modname, level = imod
@@ -148,16 +148,16 @@ def resolveImports(mod, modfile, moddict, imports, modules, **opts):
         imodimps = moduleImports[imod]
         for name, impname in imodimps.items():
             if name == "*":
-                if opts.get('verbose', 0) > 0:
+                if opts.get('verbose', 0) > 1:
                     print(f'Import {impname} from import module {modname} as {name} into {mod}')
                 moddict.update(impd)
             else:
                 if impname in impd:
-                    if opts.get('verbose', 0) > 0:
+                    if opts.get('verbose', 0) > 1:
                         print(f'Import {impname} from module {modname} into {mod} as {name}')
                     moddict[name] = impd[impname]
                 else:
-                    if opts.get('verbose', 0) > 0:
+                    if opts.get('verbose', 0) > 1:
                         print(f'Import {impname} from module {modname} into {mod} as {name} is likely a module.')
     return moddict
 
