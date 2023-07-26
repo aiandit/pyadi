@@ -624,13 +624,6 @@ Calls methods self._DXYZ for individual node XYZ handling
             t.optional_vars = self.diffUnlessIsTupleDiff(t.optional_vars)
         return t
 
-    def __Dwithitem(self, t):
-        t = t.clone()
-        t.context_expr = self.ddispatch(t.context_expr)
-        if t.optional_vars:
-            t.optional_vars = self.ddispatch(t.optional_vars)
-        return t
-
     def _DDelete(self, t):
         dtargets = [ self.ddispatch(s.clone()) for s in t.targets if self.isLocal(s) ]
         t.targets = dtargets + t.targets
