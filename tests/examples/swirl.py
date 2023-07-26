@@ -12,6 +12,7 @@ def initialize_starting_point(nint):
     # 04/20/07 by A. Vehreschild and H. Martin Buecker based on
     #  the implementation of the MINPACK-2 routine DSFDFJ by
     #  Brett M. Averick, 1993.
+    # 2023 translated to Python by Johannes Willkomm
 
     cpts = 4;
     fdeg = 4;
@@ -57,6 +58,7 @@ def swirl(x, epsilon):
     # 04/20/07 by B. Kuhlmann and H. Martin Buecker based on
     #  the implementation of the MINPACK-2 routine DSFDFJ by
     #  Brett M. Averick, 1993.
+    # 2023 translated to Python by Johannes Willkomm
 
     n = len(x);
     bc = 3;

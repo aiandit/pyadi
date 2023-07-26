@@ -26,18 +26,19 @@ rules:
   "D") :py:func:`.mkRule` is used to build the AD function, and the
        rule must have the signature ``rule(r, *args, **kw)``, or
        compatible. The wrapper calls the original function first as
-       ``r = function(*args[1::2])`` and then calls the rule passing
-       the result ``r`` as the first parameter. The rule must return
-       just the derivative ``d_r``, the wrapper returns ``(d_r, r)``.
+       ``r = function(*args[1::2], **kw)`` and then calls the rule
+       passing the result ``r`` as the first parameter. The rule must
+       return just the derivative ``d_r``, the wrapper returns ``(d_r,
+       r)``.
 
   "Dkw") similar to "D", :py:func:`.mkRule2` is used to build the AD
          function, which additionally unpacks the keywords into the
          derivative keywords and the original keywords with
-         :py:func:`.unjnd`. The rule must have the signature ``rule(r,
-         d_kw, *args, **kw)``. The wrapper in addition to the function
-         result passes the derivative keywords as the second parameter
-         ``d_kw`` while ``kw`` will only receive the original keyword
-         params.
+         :py:func:`.unjnd` into ``d_kw, kw``. The rule must have the
+         signature ``rule(r, d_kw, *args, **kw)``. The wrapper in
+         addition to the function result passes the derivative
+         keywords as the second parameter ``d_kw`` while ``kw`` will
+         only receive the original keyword params.
 
   "E") No wrapper is produced, the rule will be called directly, which
        accordingy must return a tuple.
@@ -170,17 +171,52 @@ import numpy as np
 me = sys.modules[__name__]
 
 
-def getrule(func, adfunc, mode='D'):
+def getrule(func, mode='D'):
+    """Return the runtime handler ``adfunc`` for ``func`` with
+    ``mode``.  See :py:func:`.setrule` for details.
+
+    Returns
+    -------
+    function
+      The currently installed handler.
+
+    """
     id = mode + '_' + rid(func)
     return getattr(me, id)
 
 
 def setrule(func, adfunc, mode='D'):
+    """Install a runtime handler ``adfunc`` for ``func`` with ``mode``.
+
+    This is a function that gets called with the current original and
+    derivative parameters in the form ``adfunc(*args, **kw)``, where
+
+    When ``mode='D'``, then the handler will be called as ``adfunc(r,
+    *args, **kw)``, where ``r`` is the function result.
+
+    When ``mode='Dkw'``, then the handler will be called as
+    ``adfunc(r, d_kw, *args, **kw)``, where in addition ``d_kw, kw``
+    is the result of :py:func:`.unjnd`.
+
+    When ``mode='E'``, then the handler will be called as
+    ``adfunc(*args, **kw)``, and has to return a tuple.
+
+    """
+
     id = mode + '_' + rid(func)
     setattr(me, id, adfunc)
 
 
 def delrule(func, mode='D'):
+    """Delete the runtime handler for ``func`` with
+    ``mode``.  See :py:func:`.setrule` for details.
+
+    Returns
+    -------
+    function
+      The currently installed handler.
+
+    """
     id = mode + '_' + rid(func)
     res = getattr(me, id)
     delattr(me, id)

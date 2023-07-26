@@ -1113,8 +1113,8 @@ def doDiffFunction(function, **opts):
          need the differentiated result, and even twice in this case.
 
     Then the differentiated function ``adfun`` is produced by calling
-    :py:func:`processRules`. This function returns however a local
-    function def theADFun(*args, **kw): that does the following:
+    :py:func:`.processRules`. This function returns however a local
+    function ``def theADFun(*args, **kw):`` that does the following:
 
       - first flatten the argument list ``args`` of N tuples to a list
         of 2*N, alternating derivative and regular arguments. This is

@@ -6,7 +6,8 @@ def mkActArgFunction(f, args, inds):
     Return the inner function and the remaining arguments.
 
     This function is differentiated automatically by
-    :py:func:`.DiffFor` and :py:func:`.DiffFD` when active arguments were specified.
+    :py:func:`.DiffFor` and :py:func:`.DiffFD` when active arguments
+    were specified.
 
     Parameters
     ----------

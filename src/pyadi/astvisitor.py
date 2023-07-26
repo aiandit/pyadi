@@ -82,6 +82,11 @@ def isbuiltin(func):
 
 modastcache = {}
 def getmoddict(mod, **opts):
+    """Return dictionary with ASTs of module classes and
+    functions. Resolve ``from`` imports with
+    :py:func:`.resolveImports`.
+
+    """
     modfile = getattr(sys.modules.get(mod, {}), '__file__', None)
     if modfile is None or modfile.endswith('.so'):
         if opts.get('verbose', 0):
