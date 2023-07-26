@@ -48,12 +48,12 @@ def run():
 
     When we evaluate this function at ``t=0`` we get ``f(x)`` and when
     we evaluate the derivatives at that point we get the directional
-    derivative::
+    derivatives of ``f``::
 
         dr2, r2 = pyadi.DiffFor(foft, 0, verbose=2)
         dr_fd2, r2 = pyadi.DiffFD(foft, 0)
 
-    PyADi will differemtiate ``foft`` to the following code, were the
+    PyADi will differentiate ``foft`` to the following code, were the
     nonlocal values ``x0`` and ``dx`` are treated as having no
     derivative, which produces the calls to :py:func:`.dzeros`::
 
