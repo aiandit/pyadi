@@ -1127,6 +1127,13 @@ def doDiffFunction(function, **opts):
         objects, that is, do what Python does before it calls
         __init__?
 
+      - Another corner case is when ``function`` is not a function but
+        a bound method. This can only happen with global objects being
+        called, like the method ``get`` of :py:obj:`os.environ`. Then
+        the self pointer ``o`` is extracted and a copy ``d_o`` to be
+        :py:func:`.dzeros`-ed must be created somehow on the
+        fly. Prepend ``(d_o, o)`` to the list of arguments.
+
       - Finally call ``adres = adfun(*args, **kw)``
 
       - when ``adres`` is None, which often happens with methods, return
@@ -1243,10 +1250,11 @@ D = DiffFunction
 def DiffFunctionObj(tpl, **opts):
     """Runtime decorator to handle calls to local variables.
 
-    Calls to local variables like obj.meth are differentiated to an
-    expression invoking this function as DC((d_obj.meth, obj,meth)),
-    that is, with a tuple of the "differentiated" function and the
-    original function.
+    Calls to local variables like ``obj.meth`` are differentiated to
+    an expression invoking this function as ``Dc((d_obj.meth,
+    obj,meth))``, that is, with a tuple of the "differentiated"
+    function and the original function. Differentiated is in quotes
+    because different cases can happen.
 
     Let the tuple tpl be expanded to dfunc, func.
 
