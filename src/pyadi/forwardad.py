@@ -190,16 +190,22 @@ def setrule(func, adfunc, mode='D'):
 
     This is a function that gets called with the current original and
     derivative parameters in the form ``adfunc(*args, **kw)``, where
+    ``args`` is a list of 2*N arguments, derivative and original
+    arguments interleaved.
 
-    When ``mode='D'``, then the handler will be called as ``adfunc(r,
-    *args, **kw)``, where ``r`` is the function result.
+    Depending on ``mode`` the ``adfunc`` will be handled differently,
+    in the first two cases a wrapper function is produced:
 
-    When ``mode='Dkw'``, then the handler will be called as
-    ``adfunc(r, d_kw, *args, **kw)``, where in addition ``d_kw, kw``
-    is the result of :py:func:`.unjnd`.
+    - When ``mode='D'``, the handler will be called as ``adfunc(r,
+      *args, **kw)``, where ``r`` is the function result, and has to
+      return just the derivative ``d_r``.
 
-    When ``mode='E'``, then the handler will be called as
-    ``adfunc(*args, **kw)``, and has to return a tuple.
+    - When ``mode='Dkw'``, the handler will be called as ``adfunc(r,
+      d_kw, *args, **kw)``, where in addition ``d_kw, kw`` is the
+      result of :py:func:`.unjnd`.
+
+    - When ``mode='E'``, then the handler will be called directly as
+      ``adfunc(*args, **kw)``, and has to return a tuple.
 
     """
 

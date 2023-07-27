@@ -1471,13 +1471,13 @@ def DiffFor(function, *args, seed=1, active=[], f_kw=None,
     evaluated at ``*args`` and ``**f_kw``, w.r.t. all floats in
     ``args``, possibly restricted by ``àctive``.
 
-    Differentiate function ``function(*args)`` with forward mode
-    AD to produce ``adfun``. This function is the main entry point to start the
-    differentiation process. This function basically does the
+    Differentiate function ``function(*args)`` with forward mode AD to
+    produce ``adfun``. This function is the main entry point to start
+    the differentiation process. This function basically does the
     following:
 
-       - Differentiate ``function`` with :py:func:`DiffFunction` alias
-         :py:func:`D`
+       - Differentiate ``function`` with :py:func:`.DiffFunction` alias
+         :py:func:`.D`
 
        - Create one set of derivative arguments ``dx = dzeros(args)``
          using :py:func:`.dzeros`
@@ -1486,37 +1486,49 @@ def DiffFor(function, *args, seed=1, active=[], f_kw=None,
          using :py:func:`.fill` and call ``adfun`` with ``dx`` and
          ``args`` appropriately.
 
-    The result is a tuple of 1. the list of the derivative results
-    thus produced, and 2. the function result.
+    The result is a tuple of the list of the derivative results thus
+    produced, and the function result.
 
     Although PyADi supports almost the full set of Python language
     features including keyword arguments, lambda functions, etc. the
     ``function`` given here must adhere to some restrictions:
 
-      - Since this function only processes the positional arguments
-         ``args`` and considers all keyword arguments as options to
-         the process, ``function`` can only use positional arguments.
+      - ``function`` must be a regular Python function, defined with
+         ``def``, not a lambda expression.
+
+      - This function only processes the positional arguments ``args``
+        and considers all keyword arguments as options to the process,
+        additional keyword arguments can be passed using ``f_kw``.
 
       - ``function`` can have parameter default values,
 
-      -  ``function`` must also be a regular Python function, not a lambda
-         expression.
+      - ``function`` can be a local function returned by whatever
+        other function. This setup processs will not be
+        differentiated.
 
-      - However, ``function`` can be a local function returned by
-        whatever other function. This setup processs will not be
-        differentiated .
+      - ``function`` can also have a decorator, which will be
+        differentiated.
 
-    This may require that a dedicated toplevel function is created
-    that can be given to this function.
+    It may in some cases be required, and it is no problem, to create
+    additional toplevel functions that can be given to this function,
+    for example to wrap a lambda expression.
+
+    It should not be required to build extra toplevel functions to
+    inject global variables into the scope, since ``function`` can be
+    a local function already. It will have access to the parent scopes
+    as usual, but the values in it are treated as global values with
+    zero derivative.
+
+    However, when a function returning a function is called within
+    ``function``, then this entire process, including possible calls
+    to the result later, will be differentiated.
 
     Parameters
     ----------
 
     function : function
-        Function to differentiate. Must be a regular function, including
-        an inner function, but not lambda, can only use positional
-        arguments. This concerns only ``function`` itself. Inside
-        ``function`` the full set of Python can be used.
+        Function to differentiate. Must be a regular function, defined
+        with ``def``, can be a local function.
 
     args : list
         Function arguments. ``function`` will be differentiated with
@@ -1533,9 +1545,14 @@ def DiffFor(function, *args, seed=1, active=[], f_kw=None,
     seed : 1 or list
         Seed, derivative directions. When seed == 1, all derivative
         directions are computed. When seed is a list, then each entry
-        must be an array of the same size as the total length of the
-        active arguments. The function :py:func:`.nvars` can compute
-        that value.
+        must be a list or array of the same size as the total length
+        of the active arguments. The function :py:func:`.nvars` can
+        compute that value.
+
+    f_kw : dict
+        Further keyword arguments that will be passed to ``function``
+        as ``**f_kw``. This wraps ``function`` with
+        :py:func:`.mkKwFunction`.
 
     opts : dict
         Further options ``opts`` including also verbose, dump and
@@ -1548,7 +1565,7 @@ def DiffFor(function, *args, seed=1, active=[], f_kw=None,
     -------
     tuple
         A tuple of the derivative and the function result. The
-        derivative is a list with as many entries as there where seed
+        derivative is a list with as many entries as there were seed
         directions.
 
     """
@@ -1669,9 +1686,13 @@ def DiffFD(f, *args, active=[], seed=1, h=1e-8, f_kw={}, **opts):
     seed : 1 or list
         Seed, derivative directions. When seed == 1, all derivative
         directions are computed. When seed is a list, then each entry
-        must be an array of the same size as the total length of the
-        active arguments. The function :py:func:`.nvars` can compute
-        that value.
+        must be a list or array of the same size as the total length
+        of the active arguments. The function :py:func:`.nvars` can
+        compute that value.
+
+    f_kw : dict
+        Further keyword arguments that will be passed to ``f`` as
+        ``**f_kw``.
 
     opts : dict
         Options, not used.
@@ -1680,7 +1701,7 @@ def DiffFD(f, *args, active=[], seed=1, h=1e-8, f_kw={}, **opts):
     -------
     tuple
         A tuple of the derivative and the function result. The
-        derivative is a list with as many entries as there where seed
+        derivative is a list with as many entries as there were seed
         directions.
 
     """
@@ -1754,6 +1775,10 @@ def DiffFDNP(f, *args, active=[0], seed=1, h=1e-8, f_kw={}, **opts):
         directions are computed. When seed is a list, then each entry
         must be an array of the same size as the active argument.
 
+    f_kw : dict
+        Further keyword arguments that will be passed to ``f`` as
+        ``**f_kw``.
+
     opts : dict
         Options, of which this funciton uses:
 
@@ -1761,7 +1786,7 @@ def DiffFDNP(f, *args, active=[0], seed=1, h=1e-8, f_kw={}, **opts):
     -------
     tuple
         A tuple of the derivative and the function result. The
-        derivative is a list with as many entries as there where seed
+        derivative is a list with as many entries as there were seed
         directions.
 
     """

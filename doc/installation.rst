@@ -1,7 +1,22 @@
 Installation
 ************
 
-A virtual environment using :py:mod:`virtualenv` should by used.
+Make sure that Python is installed. A virtual environment using
+:py:mod:`virtualenv` should by used, for example, on a Debian or
+Ubuntu system use this command to install the basic python3 backages
+and virtualenv::
+
+  sudo apt install python3-virtualenv
+
+Create a virtualenv and activate it::
+
+  mkdir ~/.venvs/
+  virtualenv ~/.venvs/testenv
+  . ~/.venvs/testenv/bin/activate
+
+This changes the shell environment so that an isolated python
+environment is available by just calling ``python`` (not ``python3``)
+and ``pip`` to install further packages into that virtualenv.
 
 Installation from GitHub
 ========================
