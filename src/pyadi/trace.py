@@ -1,14 +1,11 @@
+
 import time
 import sys
 
 class Stop(BaseException):
     pass
 
-def decorator(**opts):
-
-    tracecalls = opts.get('tracecalls', False)
-    verbose = opts.get('verbose', False)
-    verboseargs = opts.get('verboseargs', False)
+def decorator(tracecalls=False, verbose=False, verboseargs=False, **opts):
 
     data = {}
 
