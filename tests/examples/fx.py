@@ -61,6 +61,17 @@ def fneg2(x):
     z = (x + (- y))
     return z
 
+def gplus(x, y):
+    s = x + y
+    return s
+
+def fmult(x):
+    r = sin(x)
+    s = r * x
+    t = s * 2
+    z = 2 * t
+    return z
+
 def fdiv(x):
     r = sin(x)
     s = r / x
@@ -89,11 +100,11 @@ def fpow(x):
     z = 2 ** r
     return r + s + t + z
 
-def gbabylonian(x, y=1):
-    if abs(y**2 - x) < 1e-7:
+def gbabylonian(x, y=1, tol=1e-7):
+    if abs(y**2 - x) < tol:
         return y
     else:
-        r = gbabylonian(x, (y + x / y) / 2)
+        r = gbabylonian(x, (y + x / y) / 2, tol)
         return r
 
 def fbabylonian(x):

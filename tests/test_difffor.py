@@ -196,3 +196,30 @@ class TestDiffFor(unittest.TestCase):
 
         #print('rc', dr[0], dr_dxc)
         self.assertTrue(almostEq(dr[0], dr_dxc))
+
+    def test_DiffFor_kw(self):
+        f = fx.gbabylonian
+
+        x = 16
+        dx = [1]
+
+        dr1, r1 = pyadi.DiffFor(f, x, f_kw=dict(tol=1e-4), **self.opts)
+
+        dr2, r2 = pyadi.DiffFor(f, x, f_kw=dict(tol=1e-15), **self.opts)
+
+        self.assertFalse(almostEq(dr1, dr2, tol=1e-7))
+        self.assertFalse(almostEq(dr1, dr2, tol=1e-7))
+
+    def test_DiffFor_deco(self):
+        f = fx.gdeco
+
+        x = [1,2,3]
+        dx = [1,2,3]
+
+        dr1, r1 = pyadi.DiffFor(f, x, **self.opts)
+
+        dr2, r2 = pyadi.DiffFD(f, x, **self.opts)
+
+        assert r1 == f(x)
+
+        assert almostEqFD(dr1, dr2)
