@@ -24,7 +24,7 @@ from .runtime import dzeros, unzd, joind, unjnd, DWith
 from .runtime import binop_add, binop_sub, binop_mult, binop_c_mult, binop_d_mult, binop_matmult, binop_div, binop_floordiv, binop_mod, binop_pow
 from .runtime import unaryop_uadd, unaryop_usub
 from .runtime import augassign_add, augassign_sub, augassign_mult, augassign_div, augassign_truediv, augassign_mod
-from .dtargets import mkActArgFunction
+from .dtargets import mkActArgFunction, mkKwFunction
 
 from .timer import Timer
 
@@ -1465,8 +1465,11 @@ def createFullGradients(args):
 transformOpts = {}
 
 
-def DiffFor(function, *args, seed=1, active=[], timings=True, verbose=0, dump=0, dumpdir='dump', **opts):
-    """Differentiate function and compute first-order derivatives.
+def DiffFor(function, *args, seed=1, active=[], f_kw=None,
+            timings=True, verbose=0, dump=0, dumpdir='dump', **opts):
+    """Differentiate ``function`` and compute first-order derivatives
+    evaluated at ``*args`` and ``**f_kw``, w.r.t. all floats in
+    ``args``, possibly restricted by ``àctive``.
 
     Differentiate function ``function(*args)`` with forward mode
     AD to produce ``adfun``. This function is the main entry point to start the
@@ -1561,6 +1564,10 @@ def DiffFor(function, *args, seed=1, active=[], timings=True, verbose=0, dump=0,
 
     jacobian = opts.get('jacobian', True)
 
+    if f_kw is not None:
+        assert isinstance(f_kw, dict)
+        function = mkKwFunction(function, f_kw)
+
     if len(active) > 0:
         inds = parinds(function, active)
         function, args = mkActArgFunction(function, args, inds)
@@ -1632,7 +1639,7 @@ def Diff(active='all', **opts):
     return _pyadi_diff
 
 
-def DiffFD(f, *args, active=[], seed=1, h=1e-8, **opts):
+def DiffFD(f, *args, active=[], seed=1, h=1e-8, f_kw={}, **opts):
     """Evaluate derivatves using central finite differences.
 
     The function f is called two times for each derivative direction
@@ -1688,12 +1695,12 @@ def DiffFD(f, *args, active=[], seed=1, h=1e-8, **opts):
     dargs = dzeros(args)
     N = v.size
     h2 = h*2
-    r = func(*args)
+    r = func(*args, **f_kw)
 
     def dirder(func, seed):
         #print('FDD', v, seed)
-        r1 = func(*fill(dargs, v + h * seed))
-        r2 = func(*fill(dargs, v - h * seed))
+        r1 = func(*fill(dargs, v + h * seed), **f_kw)
+        r2 = func(*fill(dargs, v - h * seed), **f_kw)
         #print('FDD', r1, r2)
         rv1 = np.array(varv(r1))
         rv2 = np.array(varv(r2))
@@ -1714,7 +1721,7 @@ def DiffFD(f, *args, active=[], seed=1, h=1e-8, **opts):
     return dres, r
 
 
-def DiffFDNP(f, *args, active=[0], seed=1, h=1e-8, **opts):
+def DiffFDNP(f, *args, active=[0], seed=1, h=1e-8, f_kw={}, **opts):
     """An optimized version of :py:func:`DiffFD` with some
     restrictions:
 
@@ -1771,7 +1778,7 @@ def DiffFDNP(f, *args, active=[0], seed=1, h=1e-8, **opts):
     N = v.size
     sh = v.shape
     h2 = h*2
-    r = func(*args)
+    r = func(*args, **f_kw)
 
     if isgeneric(seed) and seed == 1:
         seed = np.eye(N)
@@ -1788,8 +1795,8 @@ def DiffFDNP(f, *args, active=[0], seed=1, h=1e-8, **opts):
         v1 = v + h * getcol(i).reshape(sh)
         v2 = v - h * getcol(i).reshape(sh)
 
-        r1 = func(v1)
-        r2 = func(v2)
+        r1 = func(v1, **f_kw)
+        r2 = func(v2, **f_kw)
         Jac[:,i] = (r1.flat[:] - r2.flat[:])/h2
 
     return Jac, r

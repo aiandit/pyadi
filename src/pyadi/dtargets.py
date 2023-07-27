@@ -22,12 +22,41 @@ def mkActArgFunction(f, args, inds):
       A tuple of the inner function and the remaining arguments.
 
     """
-    def inner(*aargs):
+    def inner(*actargs):
         fullargs = list(args)
         for i, k in enumerate(inds):
-            fullargs[k] = aargs[i]
+            fullargs[k] = actargs[i]
         return f(*fullargs)
 
     actargs = [args[i] for i in inds]
 
     return inner, actargs
+
+def mkKwFunction(f, f_kw):
+    """Create an inner function that adds ``**f_kw`` to the call to
+    ``f``.
+
+    This function is differentiated automatically by
+    :py:func:`.DiffFor` and :py:func:`.DiffFD` when the option
+    ``f_kw`` is used.
+
+    Parameters
+    ----------
+
+    function : function
+      A function of ``args``, for which an inner function is created
+      of only ``[args[i] for i in inds]``
+
+    kw : dict
+      Dictionary of keyword parameters to be added to the call.
+
+    Returns
+    -------
+    function
+      A tuple of the inner function and the remaining arguments.
+
+    """
+    def inner(*args):
+        return f(*args, **f_kw)
+
+    return inner
