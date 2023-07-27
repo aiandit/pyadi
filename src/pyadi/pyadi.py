@@ -1191,7 +1191,11 @@ def doDiffFunction(function, **opts):
             do, o = initType(_class, *args, **f_kw)
             args = [do, o] + list(args)
         elif self is not None:
-            args = [dzeros(self), self] + list(args)
+            try:
+                dself = dzeros(self.__class__())
+            except:
+                dself = dzeros(self)
+            args = [dself, self] + list(args)
 
         adres = adfun(*args, **kw)
         if adres is None:
