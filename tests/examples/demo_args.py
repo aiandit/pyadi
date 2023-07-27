@@ -37,24 +37,37 @@ def run():
       - we want to continue to differentiate w.r.t. to ``x`` only, so
         we use the ``active`` option, as seen above.
 
-    Note that :py:func:`.gbabylonian` itself does use keyword
-    arguments. It is just the entry point function :py:func:`.DiffFor`
-    that does not support them.
+     It is also possible to use the option ``f_kw`` to pass a
+     dictionary as keywords to ``f``, in which case, ``active`` would
+     not be needed any more::
+
+       # also correct: use f_kw for keyword arguments
+       dr1, r1 = pyadi.DiffFor(f, x0, f_kw=dict(tol=1e-15))
+
+
+    Note that :py:func:`~.demo_babylonian.gbabylonian` itself does use
+    keyword arguments normally. It is just the entry point function
+    :py:func:`.DiffFor` where the ``f_kw`` mechanism is applied.
 
     Running this function produces the following output::
 
-        x0 = 12.4
-        dr = [0.1419904585617669], r = 3.5213633723318023
-        dr_fd = [0.1419904638311209], r = 3.5213633723318023
-        F error: 3.552713678800501e-15
-        AD/FD error: 5.269354008685667e-09
-        dr = [0.14199045856176618], r = 3.521363372331802
-        dr_fd = [0.1419904638311209], r = 3.521363372331802
-        F error: 0.0
-        AD/FD error: 5.269354730330633e-09
+       x0 = 12.4
+       dr = [0.1419904585617669], r = 3.5213633723318023
+       dr_fd = [0.1419904638311209], r = 3.5213633723318023
+       F error: 3.552713678800501e-15
+       AD/FD error: 5.269354008685667e-09
+       dr = [0.14199045856176618], r = 3.521363372331802
+       dr_fd = [0.1419904638311209], r = 3.521363372331802
+       F error: 0.0
+       AD/FD error: 5.269354730330633e-09
+       dr = [0.1422608716588418], r = 3.5219794497246726
+       dr_fd = [0.1422608919554591], r = 3.5219794497246726
+       F error: 0.004339244282906662
+       AD/FD error: 2.029661730351684e-08
 
-    As we see, the function result gets better by the tighter
-    tolerance, but the AD vs. FD error remains the same.
+    This shows, the function varies in precision with the square of
+    the tolerance threshold, but the AD vs. FD error remains roughly
+    the same.
 
     """
 
@@ -80,6 +93,17 @@ def run():
     print(f'dr = {dr1}, r = {r1}')
 
     dr_fd1, r1 = pyadi.DiffFD(f, x0, 1, 1e-15, verbose=0, active=[0])
+    print(f'dr_fd = {dr_fd1}, r = {r1}')
+
+    err = numpy.linalg.norm(dr_fd1[0] - dr1[0])
+    assert err < 1e-7
+    print(f'F error: {abs(r1 * r1 - x0)}')
+    print(f'AD/FD error: {err}')
+
+    dr1, r1 = pyadi.DiffFor(f, x0, 1, 1e-2, verbose=0, active=[0])
+    print(f'dr = {dr1}, r = {r1}')
+
+    dr_fd1, r1 = pyadi.DiffFD(f, x0, 1, 1e-2, verbose=0, active=[0])
     print(f'dr_fd = {dr_fd1}, r = {r1}')
 
     err = numpy.linalg.norm(dr_fd1[0] - dr1[0])

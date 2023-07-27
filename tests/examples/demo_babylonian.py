@@ -47,9 +47,10 @@ def run():
       dr = [0.12500000000005562], r = 4.000000000000051
       dr_fd = [0.12500001034254637], r = 4.000000000000051
 
-    In the beginning, or when there are problems it may also be
-    interesting to set ``verbose`` to some integer > 0. With verbose=1,
-    some information on the differentiation process is printed::
+    When getting started with a new funcion, or for deeper insights,
+    it may also be interesting to set ``verbose`` to some integer >
+    0. With verbose=1, information on the differentiation process is
+    printed::
 
       x0 = 16
       Load and parse module __main__ source from /home/dev/src/projects/gh/pyadi/tests/examples/demo_babylonian.py: 3.3 ms
@@ -102,7 +103,7 @@ def run():
 
     assert numpy.linalg.norm(r0 * r0 - x0) < 1e-7
 
-    dr1, r1 = pyadi.DiffFor(f, x0, verbose=0)
+    dr1, r1 = pyadi.DiffFor(f, x0, verbose=1)
     assert numpy.linalg.norm(r1 - r0) < 1e-7
 
     print(f'dr = {dr1}, r = {r1}')
@@ -112,7 +113,7 @@ def run():
 
     assert all([ numpy.linalg.norm(dr_fd1[i] - dr1[i]) < 1e-7 for i in range(len(dr1)) ])
 
-    dr2, r2 = pyadi.DiffFor(f, x0, verbose=0)
+    dr2, r2 = pyadi.DiffFor(f, x0, verbose=1)
     assert all([ numpy.linalg.norm(dr2[i] - dr1[i]) < 1e-15 for i in range(len(dr1)) ])
 
 if __name__ == "__main__":
