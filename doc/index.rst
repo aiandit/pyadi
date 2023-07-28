@@ -6,6 +6,15 @@
 Welcome to the PyADi documentation!
 ===================================
 
+PyADi performs first order automatic differentiation (AD) via source
+transformation for any regular Python function `f`. It is easy to use
+as there is just one function for the user to call,
+:py:func:`.DiffFor`. Read our documentation on installation and basic
+usage for a quick start.
+
+Please support our work through https://www.buymeacoffee.com/aiandit,
+if you like this project or find it useful!
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -15,6 +24,7 @@ Welcome to the PyADi documentation!
    usage
    supported
    testing
+   contributing
    reference
 
 

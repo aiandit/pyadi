@@ -11,7 +11,7 @@ obtained with :py:func:`compile`, source differentiation is performed
 and the resulting function is compiled and loaded, all on the fly.
 
 The source differentiation proceeds as usual in forward mode AD, very
-much like in `ADiMat <https://ai-and-it.de/adimat>` for example. For
+much like in `ADiMat <https://ai-and-it.de/adimat>`_ for example. For
 every parameter ``x`` there will be a derivative parameter ``d_x``,
 which holds the derivative of ``x``, and both are any object of the
 same type and inner structure. They can also be :py:mod:`numpy` arrays
