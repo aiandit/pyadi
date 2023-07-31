@@ -104,7 +104,7 @@ def run():
     assert all( [ abs(res[i][0][0] - res[1][0][0]) < 1e-5 for i in range(1, len(fds)) ] )
 
     contest(fds,
-            timeout=1, input=mkInput, reset=reset,
+            timeout=1e-1, input=mkInput, reset=reset,
             name="M2normtest", title="M2, Norm Test", outdir='out',
             print=True, show=False)
 
