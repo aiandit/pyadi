@@ -888,11 +888,11 @@ def fdeco6(x):
     return fd(x)*x
 
 gfd1 = mydeco3(f1)
-def fdeco7(x):
+def _fdeco7(x):
     return gfd1(x)*x
 
 gfd2 = mydeco4(2.75)(f1)
-def fdeco8(x):
+def _fdeco8(x):
     return gfd2(x)*x
 
 glob_dict = {
