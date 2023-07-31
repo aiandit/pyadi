@@ -37,8 +37,7 @@ def mkKwFunction(f, f_kw):
     ``f``.
 
     This function is differentiated automatically by
-    :py:func:`.DiffFor` and :py:func:`.DiffFD` when the option
-    ``f_kw`` is used.
+    :py:func:`.DiffFor` when the option ``f_kw`` is used.
 
     Parameters
     ----------
