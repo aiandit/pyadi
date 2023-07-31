@@ -1,6 +1,6 @@
 [project]
 name = "pyadi"
-version = "1.0.1"
+version = "1.0.2"
 authors = [
   { name="Johannes Willkomm", email="jwillkomm@ai-and-it.de" },
 ]
