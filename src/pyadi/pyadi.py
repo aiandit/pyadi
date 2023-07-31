@@ -44,9 +44,6 @@ def setprefix(diff, tmp, common=''):
 dumpDir = '.'
 def dumpFile(fname): return os.path.join(dumpDir, fname)
 
-def czip(a, b):
-    return chain(*zip(a, b))
-
 
 def nodiff(tree):
     return tree._class == "Constant"
@@ -731,6 +728,7 @@ def Dpy(func, active=[], **kw):
 
 
 def mkClosDict(function):
+    """Return dictionary of closure variables of ``function``."""
     clos = getattr(function, '__closure__', None)
     cl_data = {}
     if clos is not None:
@@ -786,9 +784,11 @@ Source:
         raise ex
 
     dfunc = dfunc[fkey]
-
+    global adglobalsc
+    adglobalsc[fqname(func)] = dfunc.__globals__
     return (dfunc, active)
 
+adglobalsc = {}
 
 def fid(func, active):
     mod, modfile = getmodule(func)
@@ -833,7 +833,7 @@ def clear(search=None):
         astvisitor.getast(mkActArgFunction)
     else:
         if search in adc:
-            del adc[search]
+            del adc[fqname(search)]
 
 
 def doSourceDiff(function, opts):
@@ -1233,13 +1233,21 @@ def DiffFunction(function, **opts):
     :py:func:`initRules`.
 
     """
-    adfun = adc.get(function, None)
+    adfun = adc.get(fqname(function), None)
     if adfun is None:
-        # print(f'Diff function {function.__name__}')
+        # print(f'Diff function {fqname(function)}')
         adfun = doDiffFunction(function, **(transformOpts|opts))
-        adc[function] = adfun
+        adc[fqname(function)] = adfun
         # print(f'Diff function {function.__name__} cached => {adfun.__name__}')
-        # else: print(f'Found diff function {function.__name__} in cache: {adfun.__name__}')
+    # else: print(f'Found diff function {fqname(function)} in cache: {adfun.__name__}, {adfun.__globals__.keys()}')
+
+    cl_data = mkClosDict(function)
+    if cl_data:
+        if opts.get('verbose', 0) > 1:
+            print(f'DiffFor: Function {function} has a closure: {cl_data.keys()}')
+        if fqname(function) in adglobalsc:
+            adglobalsc[fqname(function)] |= cl_data
+
     return adfun
 
 
