@@ -23,14 +23,13 @@ def run():
         y[:] = objComps(x)
 
     def gobj(x, y, g, udata):
-        (dr, r) = pyadi.DiffFor(objComps, x)
+        (dr, r) = pyadi.DiffFor(objComps, x, timings=False)
         y[:] = r
         for i in range(x.size):
             g[:,i] = dr[i]
 
     def gvobj(x, y, dx, g, udata):
-        # with AD the directional derivative is of course correct!
-        (dr, r) = pyadi.DiffFor(objComps, x, seed=[dx])
+        (dr, r) = pyadi.DiffFor(objComps, x, seed=[dx], timings=False)
         y[:] = r
         N, Ndd = dx.shape
         for i in range(Ndd):
@@ -44,7 +43,7 @@ def run():
     # v0 = np.array([1, 0, 0])
     v0 = np.array([1, 0.01, 0.01])
 
-    N = int(1e2)**2
+    N = int(np.sqrt(190))**2
 
     demopts = mkCylData(N, R0, theta0, phi0)
 
