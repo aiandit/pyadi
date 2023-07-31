@@ -784,9 +784,11 @@ Source:
         raise ex
 
     dfunc = dfunc[fkey]
-
+    global adglobalsc
+    adglobalsc[fqname(func)] = dfunc.__globals__
     return (dfunc, active)
 
+adglobalsc = {}
 
 def fid(func, active):
     mod, modfile = getmodule(func)
@@ -1233,12 +1235,19 @@ def DiffFunction(function, **opts):
     """
     adfun = adc.get(fqname(function), None)
     if adfun is None:
-        print(f'Diff function {fqname(function)}')
+        # print(f'Diff function {fqname(function)}')
         adfun = doDiffFunction(function, **(transformOpts|opts))
         adc[fqname(function)] = adfun
         # print(f'Diff function {function.__name__} cached => {adfun.__name__}')
-    else:
-        print(f'Found diff function {fqname(function)} in cache: {adfun.__name__}')
+    # else: print(f'Found diff function {fqname(function)} in cache: {adfun.__name__}, {adfun.__globals__.keys()}')
+
+    cl_data = mkClosDict(function)
+    if cl_data:
+        if opts.get('verbose', 0) > 1:
+            print(f'DiffFor: Function {function} has a closure: {cl_data.keys()}')
+        if fqname(function) in adglobalsc:
+            adglobalsc[fqname(function)] |= cl_data
+
     return adfun
 
 
