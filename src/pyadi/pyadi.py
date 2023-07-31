@@ -762,7 +762,7 @@ Source:
 
     cl_data = mkClosDict(func)
     if cl_data and kw.get('verbose', 0) > 1:
-        print(f'DiffFor: Function {func} has a closure: {cl_data.keys()}')
+        print(f'difffunction: Function {func} has a closure: {cl_data.keys()}')
 
     fkey = dpref_ + func.__name__
     # globals = func.__globals__ if not isinstance(func, type) else func.__init__.__globals__
@@ -1244,7 +1244,7 @@ def DiffFunction(function, **opts):
     cl_data = mkClosDict(function)
     if cl_data:
         if opts.get('verbose', 0) > 1:
-            print(f'DiffFor: Function {function} has a closure: {cl_data.keys()}')
+            print(f'DiffFunction: Function {function} has a closure: {cl_data.keys()}')
         if fqname(function) in adglobalsc:
             adglobalsc[fqname(function)] |= cl_data
 
