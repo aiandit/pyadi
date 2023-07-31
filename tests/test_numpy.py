@@ -163,6 +163,7 @@ class TestNumpy(unittest.TestCase):
         # print('r0', r0)
         self.assertTrue(almostEq(r0, r02))
 
-        (dr, r) = self.do_sourceDiff_f_xyz(obj, args=[v0])
-        (dr, r) = self.do_sourceDiff_f_xyz(obj2, args=[v0])
-        # print(dr, r)
+        (dr1, r1) = self.do_sourceDiff_f_xyz(obj, args=[v0])
+        (dr2, r2) = self.do_sourceDiff_f_xyz(obj2, args=[v0])
+        self.assertTrue(almostEq(r1, r2))
+        self.assertTrue(almostEq(dr1, dr2))
