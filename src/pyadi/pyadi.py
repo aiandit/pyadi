@@ -13,7 +13,7 @@ from .astvisitor import canonicalize, resolvetmpvars, normalize, unnormalize, fi
 from .astvisitor import infoSignature, filterFunctions, py, getmodule, getast, fqname, fdname, fddname
 from .astvisitor import ASTVisitorID, ASTVisitorImports, ASTVisitorLocals, mkTmp, isbuiltin
 from .nodes import *
-from .runtime import dzeros, unzd, joind, unjnd, DWith
+from .runtime import dzeros, unzd, joind, unjnd, DWith, lzip
 
 from .runtime import binop_add, binop_sub, binop_mult, binop_c_mult, binop_d_mult, binop_matmult, binop_div, binop_floordiv, binop_mod, binop_pow
 from .runtime import unaryop_uadd, unaryop_usub
@@ -282,7 +282,7 @@ Calls methods self._DXYZ for individual node XYZ handling
     def _DList(self, node):
         if len(node.elts):
             dargs = [self.diffUnlessIsTupleDiff(t) for t in node.elts]
-            return List([Starred(Call('zip', dargs))])
+            return List([Starred(Call('lzip', dargs))])
         return Tuple([List([]), List([])])
 
     def __DTuple(self, node):
@@ -303,7 +303,7 @@ Calls methods self._DXYZ for individual node XYZ handling
     def _DListComp(self, node):
         node.elt = self.diffUnlessIsTupleDiff(node.elt)
         node.generators = self.ddispatch(node.generators)
-        return Call('zip', [Starred(node)]) #???
+        return Call('lzip', [Starred(node)])
 
     def _Dcomprehension(self, node):
         self._DForCommon(node)

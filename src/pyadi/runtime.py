@@ -2,6 +2,17 @@ from itertools import chain
 from astunparse.astnode import isgeneric, fields
 import numpy as np
 
+class lzip:
+    def __init__(self, *args):
+        self.zip = zip(*args)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        item = next(self.zip)
+        return list(item)
+
 def dzeros(args, lev=0):
     #print(f'dzeros {args}')
     lev += 1
