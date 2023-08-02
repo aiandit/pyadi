@@ -71,3 +71,30 @@ code cannot be obtained, :py:func:`.DiffFor` will raise
 :py:exc:`.NoSource`. Users can use :py:func:`.setrule` to dynamically
 add rules at runtime to avoid this scenario. This can also be used to
 install custom derivatives for any function.
+
+Limitations
+===========
+
+There are several known limitations:
+
+   - Multiple decorators are untested
+
+   - Coroutines, ``async`` and ``await`` are not supported
+
+   - Iterator functions ``__next__`` and ``__iter__`` are not
+     differentiated so they work correcty when data is copied, but not
+     when float computations are performed inside. Generators using
+     ``yield`` should be used in this case, for example
+
+   - Lambda functions cannot by passed to :py:func:`.DiffFor`
+     directly, they must be wrapped in a regular function
+
+   - List multiplication with ``*`` is not supported, a list
+     comprehension with generator expression should be used
+     instead. List addition with ``+`` is supported.
+
+   - There is no activity analysis
+
+   - There is no vector mode, or `derivative class` as in ADiMat
+
+   - There is no reverse mode
