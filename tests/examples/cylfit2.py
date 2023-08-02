@@ -7,7 +7,7 @@ def dorot(vector, ind, theta):
     assert _ == 3
     tmp = vector[:,(ind+1)%3] + 1j * vector[:,(ind+2)%3]
     tmp = tmp * R
-    hstack = list([0, 0, 0])
+    hstack = [0, 0, 0]
     hstack[(ind+0)%3] = vector[:,(ind+0)%3]
     hstack[(ind+1)%3] = np.real(tmp)
     hstack[(ind+2)%3] = np.imag(tmp)

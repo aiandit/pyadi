@@ -469,7 +469,7 @@ def fcalll3(x):
     return z
 
 def gdiag(l):
-    if isinstance(l[0], list) or  isinstance(l[0], tuple):
+    if isinstance(l[0], list):
         # is list of list == matrix, get diagonal
         return [ l[i][i] for i in range(3) ]
     # else: is list == vector, get build diagonal matrix
@@ -916,7 +916,7 @@ def _flmult(x):
     z = gl_sum(x)
     return z
 
-def _flitemassign(x):
+def flitemassign(x):
     l = [1, 1, 1]
     l[0] += x
     l[1] -= x
@@ -928,7 +928,7 @@ def faugass(x):
     if x < 0:
         x = -x
     y = x*x
-    l = list([x,x,x,x,x,x,x,x])
+    l = [x,x,x,x,x,x,x,x]
     l[0] += y
     l[1] -= y
     l[2] *= y
@@ -943,7 +943,7 @@ def faugass(x):
 def faugass2(x):
     if x < 0:
         x = -x
-    l = list([x,x,x,x,x,x,x,x])
+    l = [x,x,x,x,x,x,x,x]
     l[0] += 2.5
     l[1] -= 2.5
     l[2] *= 2.5
