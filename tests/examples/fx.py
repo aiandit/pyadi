@@ -337,7 +337,7 @@ def flist6(x):
     s = gl_sum(m[0]) + gl_sum(m[1])
     return s
 
-def _flist7(x):
+def flist7(x):
     l = [f1(x), 2*x]
     m = [l, [3*x,f2(4*x)]]
     s = gl_sum2(m)
@@ -913,7 +913,8 @@ def _flmult(x):
     l = [x] * 3
     l[1] = x*x
     l[2] = x*x*x
-    z = gl_sum(x)
+    print(f'{l}')
+    z = gl_sum(l)
     return z
 
 def flitemassign(x):

@@ -65,7 +65,7 @@ class TestDiffFor(unittest.TestCase):
         pyadi.initRules(rules='ad=pyadi.forwardad')
         pyadi.clear()
         cls.verbose = 0
-        cls.dump = 1
+        cls.dump = 0
         cls.opts = {'dump': cls.dump, 'verbose': cls.verbose}
 
     def assertEq(self, f, r1, r2):

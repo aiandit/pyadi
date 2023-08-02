@@ -35,7 +35,7 @@ class TestPyTracer(unittest.TestCase):
         cls.handle2 = lambda x, *args, **kw: cls.handle2_(*args, **kw)
 
         cls.verbose = 0
-        cls.dump = 1
+        cls.dump = 0
         cls.opts = {}
 
 

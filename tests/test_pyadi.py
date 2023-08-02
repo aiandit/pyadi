@@ -67,8 +67,8 @@ class TestPyADi(unittest.TestCase):
         pyadi.initRules(rules='ad=pyadi.forwardad')
         pyadi.clear()
         cls.verbose = 0
-        cls.dump = 1
-        cls.opts = {'dumpdir': 'dump'}
+        cls.dump = 0
+        cls.opts = {'dumpdir': 'dump', 'dump': cls.dump, 'verbose': cls.verbose}
 
     def assertEq(self, f, r1, r2):
         if not almostEq(r1, r2):
@@ -90,7 +90,7 @@ class TestPyADi(unittest.TestCase):
         self.assertTrue(self.assertEq(func, func(*args), res))
 
     def checkDer(self, func, args, dx, seed=1, active=[], **kw):
-        (der, r) = pyadi.DiffFD(func, *args, seed=seed, active=active, h=fdH, verbose=self.verbose, dump=self.dump, **self.opts)
+        (der, r) = pyadi.DiffFD(func, *args, seed=seed, active=active, h=fdH, **self.opts)
         if self.verbose > 0:
             print('cd', (der, dx))
         self.assertTrue(self.assertEqFD(func, dx, der))
@@ -144,7 +144,7 @@ class TestPyADi(unittest.TestCase):
     def do_sourceDiff_f_xyz(self, func, args=None, **kw):
         if args is None:
             args = [0.1,0.2,0.3]
-        (d_r, r) = pyadi.DiffFor(func, *args, **kw, verbose=self.verbose, dump=self.dump, **self.opts)
+        (d_r, r) = pyadi.DiffFor(func, *args, **kw, **self.opts)
         self.checkDer(func, args, d_r)
         self.checkResult(func, args, r)
         return (d_r, r)
@@ -425,4 +425,4 @@ class TestPyADi(unittest.TestCase):
 
     def test_badfcachegl(self):
         with self.assertWarns(UserWarning):
-            pyadi.DiffFor(fx.badfcachegl, 0.234)
+            pyadi.DiffFor(fx.badfcachegl, 0.234, **self.opts)
