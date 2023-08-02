@@ -32,7 +32,7 @@ def cylfit_obj():
 
     data['points'] = np.random.rand(100, 3) - 0.5
 
-    def obj(x):
+    def objv(x):
 
         R = x[0]
         theta = x[1]
@@ -60,6 +60,11 @@ def cylfit_obj():
         assert pdvs.shape == (N,3)
         assert dists.shape == (N,)
 
+        return dists
+
+    def obj1(x):
+        dists = objv(x)
+
         r = np.linalg.norm(dists)
 
         # print(f'res = {r}')
@@ -68,7 +73,7 @@ def cylfit_obj():
     def handle():
         return data
 
-    return obj, handle
+    return objv, obj1, handle
 
 
 def run():

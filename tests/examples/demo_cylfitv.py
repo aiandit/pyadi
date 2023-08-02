@@ -11,7 +11,10 @@ import numpy as np
 import pyadi
 import uopt
 
-from .cylfit import cylfit_obj, mkCylData, relNormMax
+from .cylfit import relNormMax
+
+from .cylfit import cylfit_obj, mkCylData
+#from .cylfit2 import cylfit_obj, mkCylData
 
 def run():
     """
