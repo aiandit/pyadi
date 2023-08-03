@@ -146,7 +146,7 @@ class TestNumpy(unittest.TestCase):
         # v0 = np.array([R0 + 0.01, 0, 0])
         v0 = np.array([R0 + 1e-6, theta0, phi0])
         objComps, obj, handle = cylfit.cylfit_obj()
-        obj2, handle2 = cylfit2.cylfit_obj()
+        objComps2, obj2, handle2 = cylfit2.cylfit_obj()
 
         N = int(1e2)**2
 
