@@ -1228,13 +1228,14 @@ def DiffFunction(function, **opts):
 
     """
     ckey = fquname(function)
-    adfun = adc.get(ckey, None)
-    if adfun is None:
+    centry = adc.get(ckey, None)
+    if centry is None:
         # print(f'Diff function {fqname(function)}')
         adfun = doDiffFunction(function, **(transformOpts|opts))
-        adc[ckey] = adfun
+        adc[ckey] = (adfun, function)
         # print(f'Diff function {function.__name__} cached => {adfun.__name__}')
     else:
+        adfun = centry[0]
         if opts.get('verbose', 0) > 2:
             print(f'Found diff function {fqname(function)} in cache: {adfun.__name__}')
 
