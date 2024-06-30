@@ -49,6 +49,12 @@ def fqname(func):
     fname = getattr(func, '__qualname__', getattr(func, '__name__', None))
     return f'{mod}.{fname}'
 
+def fquname(func):
+    mod, _ = getmodule(func)
+    fname = getattr(func, '__qualname__', getattr(func, '__name__', None))
+    fid = id(func)
+    return f'{mod}.{fname}_at_0x{fid:x}'
+
 def fdname(func):
     return '.'.join([ s for s in fqname(func).split('.') if s != '<locals>' ])
 

@@ -10,7 +10,7 @@ from astunparse import loadast, unparse2j, unparse2x, unparse
 from astunparse.astnode import ASTNode, BinOp, Constant, Name, isgeneric, fields
 
 from .astvisitor import canonicalize, resolvetmpvars, normalize, unnormalize, filterLastFunction
-from .astvisitor import infoSignature, filterFunctions, py, getmodule, getast, fqname, fdname, fddname
+from .astvisitor import infoSignature, filterFunctions, py, getmodule, getast, fqname, fquname, fdname, fddname
 from .astvisitor import ASTVisitorID, ASTVisitorImports, ASTVisitorLocals, mkTmp, isbuiltin
 from .nodes import *
 from .runtime import dzeros, unzd, joind, unjnd, DWith, lzip
@@ -1227,13 +1227,16 @@ def DiffFunction(function, **opts):
     :py:func:`initRules`.
 
     """
-    adfun = adc.get(fqname(function), None)
+    ckey = fquname(function)
+    adfun = adc.get(ckey, None)
     if adfun is None:
         # print(f'Diff function {fqname(function)}')
         adfun = doDiffFunction(function, **(transformOpts|opts))
-        adc[fqname(function)] = adfun
+        adc[ckey] = adfun
         # print(f'Diff function {function.__name__} cached => {adfun.__name__}')
-    # else: print(f'Found diff function {fqname(function)} in cache: {adfun.__name__}, {adfun.__globals__.keys()}')
+    else:
+        if opts.get('verbose', 0) > 2:
+            print(f'Found diff function {fqname(function)} in cache: {adfun.__name__}')
 
     cl_data = mkClosDict(function)
     if cl_data:

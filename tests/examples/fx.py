@@ -866,6 +866,10 @@ def mydeco3(f):
 def fdeco3(x):
     return x*x
 
+@mydeco3
+def fdeco3a(x):
+    return x*x*2
+
 def mydeco4(c):
     def mkDeco(f):
         def inner(*args, **kw):
