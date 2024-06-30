@@ -892,12 +892,23 @@ def fdeco6(x):
     return fd(x)*x
 
 gfd1 = mydeco3(f1)
-def _fdeco7(x):
+def fdeco7(x):
     return gfd1(x)*x
 
-gfd2 = mydeco4(2.75)(f1)
-def _fdeco8(x):
+gfd2 = mydeco3(f1)
+def gdeco7(x):
     return gfd2(x)*x
+
+def fdeco7a(x):
+    return gdeco7(x)
+
+gfd3 = mydeco4(2.75)(f1)
+def fdeco8(x):
+    return gfd3(x)*x
+
+gfd3a = mydeco4(1.75)(f1)
+def fdeco8a(x):
+    return gfd3a(x)*x
 
 glob_dict = {
     'd': {'a': 1, 'b': 2},
