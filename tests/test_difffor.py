@@ -136,7 +136,7 @@ class TestDiffFor(unittest.TestCase):
     def test_DiffFor_partial3(self):
         f = fxyz.f4
         x,y,z = 1,0.2,0.3
-        dr, r = pyadi.DiffFor(f, x, y, z)
+        dr, r = pyadi.DiffFor(f, x, y, z, **self.opts)
         dr_x, r = pyadi.DiffFor(f, x, y, z, active=[0], **self.opts)
         dr_y, r = pyadi.DiffFor(f, x, y, z, active=[1], **self.opts)
         dr_z, r = pyadi.DiffFor(f, x, y, z, active=[2], **self.opts)
